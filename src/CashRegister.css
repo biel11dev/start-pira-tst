@@ -1,0 +1,183 @@
+.cash-register-container {
+  padding: 20px;
+  background-image: url("./assets/startok3.png");
+  background-position: top left; /* Move a imagem de fundo para a esquerda */
+  background-repeat: no-repeat;
+  min-height: 100vh; /* Garante que o contêiner ocupe pelo menos a altura total da janela de visualização */
+  box-sizing: border-box; /* Inclui preenchimento e borda na altura total */
+}
+
+.cash-register-container h2 {
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  margin-left: 30%;
+  transform: translateY(15px);
+}
+
+.input-group .desc-text {
+  display: block;
+  margin-bottom: 10px; /* Adiciona espaço entre o rótulo e o campo de entrada */
+  color: #fff;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px; /* Adiciona espaço entre os campos de entrada */
+  margin-left: 15px;
+  position: relative;
+  transform: translateY(-10px);
+}
+
+.confirm-button {
+  margin-top: 25px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #28a745;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 20px;
+  margin-bottom: 50px;
+}
+
+.balance-list {
+  margin-top: 20px;
+  text-align: left;
+  color: #fff;
+}
+
+.balance-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.balance-list li {
+  margin-bottom: 10px;
+}
+
+.balance-list .balance-amount {
+  margin-bottom: 10px;
+  color: #218838;
+}
+
+.balance-list .final-caixa {
+  text-shadow: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  color-scheme: #fff;
+  width: 150px;
+  background-color: black;
+  color: #fff !important;
+  display: block;
+}
+
+.tabs {
+  margin-top: 20px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #28a745;
+  color: #fff;
+}
+
+.tabs button.active {
+  background-color: #218838;
+}
+
+.tab-content {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 800px !important; /* Define a altura do gráfico */
+  margin-top: 20px;
+}
+
+.tab-content .chart-containerr {
+  width: 100%;
+  height: 600px; /* Define a altura do gráfico */
+  margin-top: 20px;
+}
+
+.update-button {
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #28a745;
+  color: #fff;
+  cursor: pointer;
+}
+
+.desc-text-label {
+  display: block !important;
+  color: #fff;
+  font-size: xx-small;
+  margin-bottom: 5px;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.month-selector {
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: #fff;
+  justify-content: space-between;
+  text-shadow: none;
+}
+
+.month-selector .but-mes {
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  color: #fff;
+  background-color: cornflowerblue;
+  margin-right: 12px;
+  text-shadow: none;
+}
+
+.month-selector .but-prox-mes {
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  color: #fff;
+  background-color: cornflowerblue;
+  margin-left: 10px;
+  text-shadow: none;
+}
+
+.month-selector .but-mes:hover {
+  background-color: #218838;
+}
+
+.month-selector .but-prox-mes:hover {
+  background-color: #218838;
+}
+
+.tab-content .total-lucro-semana {
+  color: green;
+  display: block;
+  text-align: center;
+  margin-top: 50px;
+}

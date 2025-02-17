@@ -1,0 +1,77 @@
+.product-list-container {
+  padding: 20px;
+  text-align: center;
+}
+
+.product-list-container h2 {
+  margin-bottom: 20px;
+  color: #fff;
+  transform: translateY(-60px);
+}
+
+.input-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 35px;
+}
+
+.input-group input,
+.input-group select {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-right: 25px;
+  position: relative;
+  transform: translateY(-10px);
+}
+
+.input-group button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  transform: translateY(-10px);
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+ul li button {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: none;
+  background-color: #dc3545;
+  color: #fff;
+  cursor: pointer;
+}
+
+.export-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #28a745;
+  color: #fff;
+  cursor: pointer;
+}

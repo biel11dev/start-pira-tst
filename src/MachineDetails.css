@@ -1,0 +1,96 @@
+.machine-details-container {
+  padding: 20px;
+  text-align: center;
+  color: #fff;
+}
+
+.machine-details-container h2 {
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.tabs button.active {
+  background-color: #0056b3;
+  color: #fff;
+}
+
+.tab-content {
+  margin-top: 20px;
+}
+
+.tab-content h3 {
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.tab-content input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  margin-right: 10px;
+  text-shadow: none;
+}
+
+.tab-content button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #28a745;
+  color: #fff;
+  cursor: pointer;
+}
+
+.tab-content ul {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.tab-content ul li {
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  margin-bottom: 10px;
+  color: #fff;
+}
+
+.week-selector {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.week-selector button {
+  padding: 10px;
+  font-size: 14px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.week-selector button.active {
+  background-color: #0056b3;
+  color: #fff;
+}

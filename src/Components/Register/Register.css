@@ -1,0 +1,67 @@
+.input-field label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* .input-field input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+} */
+
+.input-field input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.error-message {
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.input-field .icon {
+  position: absolute;
+  right: 10px;
+  top: 39px;
+  color: #aaa;
+}
+
+.input-field .iconn {
+  position: absolute;
+  right: 10px;
+  top: 15px;
+  color: #aaa;
+}
+
+/* .btn-primary-btn-block {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+} */
+
+.btn-primary-btn-block:hover {
+  background-color: #0056b3;
+}
+
+.create-account {
+  margin-top: 20px;
+}
+
+.create-account p {
+  margin: 0;
+}
+
+.create-account a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.create-account a:hover {
+  text-decoration: underline;
+}
