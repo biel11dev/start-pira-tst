@@ -38,7 +38,7 @@ const MachineDetails = () => {
   const fetchDailyReading = async (machineId) => {
     const today = new Date();
     try {
-      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${today.toISOString().split("T")[0]}`);
+      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${format(today, "dd-MM-yyyy")}`);
       if (response.data.length > 0) {
         setDailyReading(response.data[0].value); // Atualizar o estado com a leitura diária obtida
       }
@@ -61,7 +61,7 @@ const MachineDetails = () => {
         text: "Você tem certeza que deseja adicionar esta leitura?",
         type: "confirm",
         onConfirm: () => {
-          const newReading = { date: today, value: parseFloat(dailyReading), machineId: machine.id };
+          const newReading = { date: format(today, "dd-MM-yyyy"), value: parseFloat(dailyReading), machineId: machine.id };
           axios
             .post("https://api-start-pira.vercel.app/daily-readings", newReading)
             .then((response) => {
@@ -103,6 +103,7 @@ const MachineDetails = () => {
   };
 
   const calculateWeeklyReading = () => {
+    if (!machine) return [];
     const start = startOfMonth(new Date());
     const end = endOfMonth(new Date());
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 }); // Weeks starting on Sunday
@@ -128,6 +129,7 @@ const MachineDetails = () => {
   };
 
   const calculateMonthlyReading = () => {
+    if (!machine) return [];
     const start = startOfMonth(new Date());
     const end = endOfMonth(new Date());
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 }); // Weeks starting on Sunday
@@ -152,11 +154,11 @@ const MachineDetails = () => {
   const monthlyReadings = calculateMonthlyReading();
 
   const weeklyData = {
-    labels: weeklyReadings[selectedWeek].readings.map((reading) => reading.day),
+    labels: weeklyReadings[selectedWeek]?.readings.map((reading) => reading.day) || [],
     datasets: [
       {
-        label: weeklyReadings[selectedWeek].week,
-        data: weeklyReadings[selectedWeek].readings.map((reading) => reading.value),
+        label: weeklyReadings[selectedWeek]?.week || "",
+        data: weeklyReadings[selectedWeek]?.readings.map((reading) => reading.value) || [],
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
@@ -209,7 +211,7 @@ const MachineDetails = () => {
 
   return (
     <div className="machine-details-container">
-      <h2>Detalhes da Máquina: {machine.name}</h2>
+      <h2>Detalhes da Máquina: {machine?.name}</h2>
       <div className="tabs">
         <button onClick={() => setActiveTab("daily")} className={activeTab === "daily" ? "active" : ""}>
           Leitura Diária
@@ -227,7 +229,7 @@ const MachineDetails = () => {
           <input type="number" value={dailyReading} onChange={(e) => setDailyReading(e.target.value)} placeholder="Valor da leitura diária" />
           <button onClick={handleAddDailyReading}>Adicionar Leitura</button>
           <ul>
-            {machine.dailyReadings.map((reading, index) => (
+            {machine?.dailyReadings.map((reading, index) => (
               <li key={index}>
                 {format(new Date(reading.date), "dd/MM/yyyy", { locale: ptBR })}: {reading.value}
                 <button className="delete-button" onClick={() => handleDeleteReading(index)}>
