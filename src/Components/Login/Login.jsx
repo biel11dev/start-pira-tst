@@ -47,7 +47,7 @@ const Login = ({ setIsAuthenticated }) => {
       </form>
       <div className="create-account text-right">
         <p>
-          Não tem uma conta? <a href="/register">Crie uma conta</a>
+          Não tem uma conta? <Link to="/register">Crie uma conta</Link>
         </p>
       </div>
     </div>
