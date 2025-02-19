@@ -19,7 +19,7 @@ const MachineDetails = () => {
   useEffect(() => {
     // Buscar dados da máquina da API
     axios
-      .get(`http://localhost:3000/machines/${id}`)
+      .get(`https://api-start-pira.vercel.app/machines/${id}`)
       .then((response) => {
         const machineData = response.data;
         // Inicializar dailyReadings como um array vazio se não estiver presente
@@ -53,7 +53,7 @@ const MachineDetails = () => {
         onConfirm: () => {
           const newReading = { date: today, value: parseFloat(dailyReading), machineId: machine.id };
           axios
-            .post("http://localhost:3000/daily-readings", newReading)
+            .post("https://api-start-pira.vercel.app/daily-readings", newReading)
             .then((response) => {
               setMachine((prevMachine) => ({
                 ...prevMachine,
@@ -77,7 +77,7 @@ const MachineDetails = () => {
       type: "confirm",
       onConfirm: () => {
         axios
-          .delete(`http://localhost:3000/daily-readings/${readingToDelete.id}`)
+          .delete(`https://api-start-pira.vercel.app/daily-readings/${readingToDelete.id}`)
           .then(() => {
             setMachine((prevMachine) => ({
               ...prevMachine,

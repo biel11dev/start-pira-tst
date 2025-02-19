@@ -14,7 +14,7 @@ const ClientDetails = ({ clients, setClients, products }) => {
   useEffect(() => {
     // Buscar detalhes do cliente da API quando o componente for montado
     axios
-      .get(`http://localhost:3000/clients/${id}`)
+      .get(`https://api-start-pira.vercel.app/clients/${id}`)
       .then((response) => {
         setClient(response.data);
       })
@@ -28,7 +28,7 @@ const ClientDetails = ({ clients, setClients, products }) => {
       const product = products.find((p) => p.name === selectedProduct);
       const total = product.price * quantity;
       axios
-        .post("http://localhost:3000/purchases", { product: selectedProduct, quantity, total, date: purchaseDate, clientId: client.id })
+        .post("https://api-start-pira.vercel.app/purchases", { product: selectedProduct, quantity, total, date: purchaseDate, clientId: client.id })
         .then((response) => {
           setClient({ ...client, purchases: [...client.purchases, response.data], totalDebt: client.totalDebt + total });
           setSelectedProduct("");
@@ -44,7 +44,7 @@ const ClientDetails = ({ clients, setClients, products }) => {
   const handlePaidAmount = () => {
     if (paidAmount) {
       axios
-        .post("http://localhost:3000/payments", { amount: parseFloat(paidAmount), date: new Date().toISOString().substr(0, 10), clientId: client.id })
+        .post("https://api-start-pira.vercel.app/payments", { amount: parseFloat(paidAmount), date: new Date().toISOString().substr(0, 10), clientId: client.id })
         .then((response) => {
           setClient({ ...client, payments: [...client.payments, response.data], totalDebt: client.totalDebt - parseFloat(paidAmount) });
           setPaidAmount("");

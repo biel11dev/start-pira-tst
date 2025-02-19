@@ -26,7 +26,7 @@ const CashRegister = () => {
   useEffect(() => {
     // Buscar saldos da API quando o componente for montado
     axios
-      .get("http://localhost:3000/balances")
+      .get("https://api-start-pira.vercel.app/balances")
       .then((response) => {
         setBalances(response.data);
         // Inicializar os estados dos inputs com os valores retornados
@@ -52,7 +52,7 @@ const CashRegister = () => {
     const newBalance = { date: formattedDate, balance: totalBalance, cartao: cardValue, dinheiro: cashValue };
 
     axios
-      .post("http://localhost:3000/balances", newBalance)
+      .post("https://api-start-pira.vercel.app/balances", newBalance)
       .then((response) => {
         setBalances([...balances, response.data]);
         setBalance(totalBalance);
@@ -67,7 +67,7 @@ const CashRegister = () => {
     const cartaofimcaixaValue = parseFloat(cartaofimcaixa[id]) || 0;
     const dinheirofimcaixaValue = parseFloat(dinheirofimcaixa[id]) || 0;
     axios
-      .put(`http://localhost:3000/balances/${id}`, { cartaofimcaixa: cartaofimcaixaValue, dinheirofimcaixa: dinheirofimcaixaValue })
+      .put(`https://api-start-pira.vercel.app/balances/${id}`, { cartaofimcaixa: cartaofimcaixaValue, dinheirofimcaixa: dinheirofimcaixaValue })
       .then((response) => {
         const updatedBalances = balances.map((balance) => (balance.id === id ? response.data : balance));
         setBalances(updatedBalances);
@@ -88,7 +88,7 @@ const CashRegister = () => {
     const { index } = confirmDelete;
     const balanceToDelete = balances[index];
     axios
-      .delete(`http://localhost:3000/balances/${balanceToDelete.id}`)
+      .delete(`https://api-start-pira.vercel.app/balances/${balanceToDelete.id}`)
       .then(() => {
         const updatedBalances = balances.filter((_, i) => i !== index);
         setBalances(updatedBalances);

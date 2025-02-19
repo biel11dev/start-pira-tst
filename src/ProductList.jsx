@@ -12,7 +12,7 @@ const ProductList = () => {
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
     axios
-      .get("http://localhost:3000/products")
+      .get("https://api-start-pira.vercel.app/products")
       .then((response) => {
         setProducts(response.data);
         console.log("Produtos:", response.data);
@@ -26,7 +26,7 @@ const ProductList = () => {
     if (newProduct.trim() !== "" && quantity.trim() !== "") {
       const newProductData = { name: newProduct, quantity, unit };
       axios
-        .post("http://localhost:3000/products", newProductData)
+        .post("https://api-start-pira.vercel.app/products", newProductData)
         .then((response) => {
           setProducts([...products, response.data]);
           setNewProduct("");
@@ -43,7 +43,7 @@ const ProductList = () => {
   const handleDeleteProduct = (index) => {
     const productToDelete = products[index];
     axios
-      .delete(`http://localhost:3000/products/${productToDelete.id}`)
+      .delete(`https://api-start-pira.vercel.app/products/${productToDelete.id}`)
       .then(() => {
         const updatedProducts = products.filter((_, i) => i !== index);
         setProducts(updatedProducts);

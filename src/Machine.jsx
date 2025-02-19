@@ -9,7 +9,7 @@ const Machines = ({ machines, setMachines }) => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/machines")
+      .get("https://api-start-pira.vercel.app/machines")
       .then((response) => {
         setMachines(response.data);
       })
@@ -21,7 +21,7 @@ const Machines = ({ machines, setMachines }) => {
   const handleAddMachine = () => {
     if (newMachine.trim() !== "") {
       axios
-        .post("http://localhost:3000/machines", { name: newMachine })
+        .post("https://api-start-pira.vercel.app/machines", { name: newMachine })
         .then((response) => {
           setMachines([...machines, response.data]);
           setNewMachine("");
