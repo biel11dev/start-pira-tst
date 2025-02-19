@@ -41,8 +41,8 @@ const Fiado = ({ clients, setClients }) => {
         <button onClick={handleAddClient}>Adicionar Cliente</button>
       </div>
       <ul>
-        {clients.map((client, index) => (
-          <li key={index} onClick={() => navigate(`/clients/${index}`)}>
+        {clients.map((client) => (
+          <li key={client.id} onClick={() => navigate(`/clients/${client.id}`)}>
             {client.name}
           </li>
         ))}

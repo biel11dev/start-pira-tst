@@ -36,7 +36,7 @@ function App() {
           <Route path="/machines" element={<Machines machines={machines} setMachines={setMachines} />} />
           <Route path="/machines/:id" element={<MachineDetails machines={machines} />} />
           <Route path="/fiado" element={<Fiado clients={clients} setClients={setClients} />} />
-          <Route path="/clients/:id" element={<ClientDetails clients={clients} products={products} />} />
+          <Route path="/clients/:id" element={<ClientDetails clients={clients} setClients={setClients} products={products} />} />
         </Routes>
       </div>
     </div>
