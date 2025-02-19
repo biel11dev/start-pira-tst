@@ -12,7 +12,7 @@ const Login = ({ setIsAuthenticated }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("https://api-start-pira.vercel.app//login", { username, password });
+      const response = await axios.post("http://localhost:3000/login", { username, password });
       localStorage.setItem("token", response.data.token);
       setIsAuthenticated(true);
       navigate("/dashboard");
@@ -47,7 +47,7 @@ const Login = ({ setIsAuthenticated }) => {
       </form>
       <div className="create-account text-right">
         <p>
-          Não tem uma conta? <Link to="/register">Crie uma conta</Link>
+          Não tem uma conta? <a href="/register">Crie uma conta</a>
         </p>
       </div>
     </div>
