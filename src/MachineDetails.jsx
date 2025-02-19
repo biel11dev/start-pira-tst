@@ -1,6 +1,6 @@
 import axios from "axios";
 import "chart.js/auto";
-import { eachWeekOfInterval, endOfMonth, format, isSameDay, startOfMonth } from "date-fns";
+import { eachWeekOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
@@ -37,9 +37,20 @@ const MachineDetails = () => {
     return <div className="machine-details-container">Máquina não encontrada</div>;
   }
 
-  const handleAddDailyReading = () => {
+  const fetchDailyReading = async () => {
     const today = new Date();
-    const hasReadingToday = machine.dailyReadings.some((reading) => isSameDay(new Date(reading.date), today));
+    try {
+      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machine.id}&date=${today.toISOString().split("T")[0]}`);
+      return response.data.length > 0;
+    } catch (error) {
+      console.error("Erro ao buscar leitura diária:", error);
+      return false;
+    }
+  };
+
+  const handleAddDailyReading = async () => {
+    const today = new Date();
+    const hasReadingToday = await fetchDailyReading();
 
     if (hasReadingToday) {
       setMessage({ text: "Você já adicionou uma leitura para hoje.", type: "error" });

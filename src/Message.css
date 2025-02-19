@@ -20,6 +20,13 @@
   color: #856404;
 }
 
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  text-shadow: none;
+  margin-top: -120px;
+}
+
 .message-buttons {
   display: flex;
   justify-content: flex-end;
