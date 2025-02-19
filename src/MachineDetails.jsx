@@ -37,8 +37,9 @@ const MachineDetails = () => {
 
   const fetchDailyReading = async (machineId) => {
     const today = new Date();
+    const formattedDate = format(today, "dd-MM-yyyy");
     try {
-      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${format(today, "dd-MM-yyyy")}`);
+      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${formattedDate}`);
       if (response.data.length > 0) {
         setDailyReading(response.data[0].value); // Atualizar o estado com a leitura diária obtida
       }
@@ -49,6 +50,7 @@ const MachineDetails = () => {
 
   const handleAddDailyReading = async () => {
     const today = new Date();
+    const formattedDate = format(today, "dd-MM-yyyy");
     const hasReadingToday = await fetchDailyReading(machine.id);
 
     if (hasReadingToday) {
@@ -61,7 +63,7 @@ const MachineDetails = () => {
         text: "Você tem certeza que deseja adicionar esta leitura?",
         type: "confirm",
         onConfirm: () => {
-          const newReading = { date: format(today, "dd-MM-yyyy"), value: parseFloat(dailyReading), machineId: machine.id };
+          const newReading = { date: formattedDate, value: parseFloat(dailyReading), machineId: machine.id };
           axios
             .post("https://api-start-pira.vercel.app/daily-readings", newReading)
             .then((response) => {
