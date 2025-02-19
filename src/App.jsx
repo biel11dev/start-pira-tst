@@ -29,8 +29,8 @@ function App() {
       <div className="content">
         <Routes>
           <Route path="/" element={<Login setIsAuthenticated={setIsAuthenticated} />} /> {/* Passa o setter para o Login */}
-          <Route path="/register" element={<Register />} /> {/* Adicione a rota para o Register */}
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/" />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/cash-register" element={<CashRegister />} />
           <Route path="/machines" element={<Machines machines={machines} setMachines={setMachines} />} />

@@ -31,7 +31,7 @@ const Register = () => {
 
     console.log("Username:", username, "Password:", password); // Adicione este console.log para verificar os valores
     try {
-      await axios.post("http://localhost:3000/register", { username, password });
+      await axios.post("https://api-start-pira.vercel.app/register", { username, password });
       setMessage("Usuário registrado com sucesso!");
       setMessageType("success");
       setShowMessage(true);
