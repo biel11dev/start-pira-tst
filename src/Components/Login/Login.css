@@ -82,3 +82,24 @@
   font-size: 14px;
   margin-top: 20px;
 }
+
+.loading-icon {
+  animation: spin 1s linear infinite; /* Gira continuamente */
+  font-size: 20px;
+}
+
+/* Definição da animação */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estiliza o botão quando desativado */
+.btn-primary-btn-block:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}

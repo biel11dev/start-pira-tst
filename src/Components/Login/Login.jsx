@@ -1,16 +1,19 @@
 import axios from "axios";
 import React, { useState } from "react";
-import { FaLock, FaUser } from "react-icons/fa";
+import { FaLock, FaSpinner, FaUser } from "react-icons/fa"; // Importar ícone de carregamento
 import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 
 const Login = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Estado para carregar animação
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsLoading(true); // Ativa o estado de carregamento
+
     try {
       const response = await axios.post("https://api-start-pira.vercel.app/login", { username, password });
       localStorage.setItem("token", response.data.token);
@@ -18,6 +21,8 @@ const Login = ({ setIsAuthenticated }) => {
       navigate("/dashboard");
     } catch (error) {
       alert("Credenciais inválidas");
+    } finally {
+      setIsLoading(false); // Desativa o estado de carregamento ao finalizar a requisição
     }
   };
 
@@ -41,10 +46,13 @@ const Login = ({ setIsAuthenticated }) => {
             Lembrar senha
           </label>
         </div>
-        <button type="submit" className="btn-primary-btn-block">
-          Entrar
+
+        {/* Botão com efeito de carregamento */}
+        <button type="submit" className="btn-primary-btn-block" disabled={isLoading}>
+          {isLoading ? <FaSpinner className="loading-icon" /> : "Entrar"}
         </button>
       </form>
+
       <div className="create-account text-right">
         <p>
           Não tem uma conta? <Link to="/register">Crie uma conta</Link>
