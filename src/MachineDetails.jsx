@@ -15,18 +15,15 @@ const MachineDetails = () => {
   const [dailyReading, setDailyReading] = useState("");
   const [selectedWeek, setSelectedWeek] = useState(0);
   const [message, setMessage] = useState(null);
+  const [dailyReadings, setDailyReadings] = useState([]);
 
   useEffect(() => {
     const fetchMachineData = async () => {
       try {
         const response = await axios.get(`https://api-start-pira.vercel.app/machines/${id}`);
         const machineData = response.data;
-        // Inicializar dailyReadings como um array vazio se não estiver presente
-        if (!machineData.dailyReadings) {
-          machineData.dailyReadings = [];
-        }
         setMachine(machineData);
-        fetchDailyReading(machineData.id); // Buscar leitura diária ao carregar a página
+        fetchDailyReadings(machineData.id); // Buscar leituras diárias ao carregar a página
       } catch (error) {
         console.error("Erro ao buscar dados da máquina:", error);
       }
@@ -35,23 +32,21 @@ const MachineDetails = () => {
     fetchMachineData();
   }, [id]);
 
-  const fetchDailyReading = async (machineId) => {
+  const fetchDailyReadings = async (machineId) => {
     const today = new Date();
     const formattedDate = format(today, "dd-MM-yyyy");
     try {
       const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${formattedDate}`);
-      if (response.data.length > 0) {
-        setDailyReading(response.data[0].value); // Atualizar o estado com a leitura diária obtida
-      }
+      setDailyReadings(response.data); // Atualizar o estado com as leituras diárias obtidas
     } catch (error) {
-      console.error("Erro ao buscar leitura diária:", error);
+      console.error("Erro ao buscar leituras diárias:", error);
     }
   };
 
   const handleAddDailyReading = async () => {
     const today = new Date();
     const formattedDate = format(today, "dd-MM-yyyy");
-    const hasReadingToday = await fetchDailyReading(machine.id);
+    const hasReadingToday = dailyReadings.some((reading) => reading.date === formattedDate);
 
     if (hasReadingToday) {
       setMessage({ text: "Você já adicionou uma leitura para hoje.", type: "error" });
@@ -67,10 +62,7 @@ const MachineDetails = () => {
           axios
             .post("https://api-start-pira.vercel.app/daily-readings", newReading)
             .then((response) => {
-              setMachine((prevMachine) => ({
-                ...prevMachine,
-                dailyReadings: [...prevMachine.dailyReadings, response.data],
-              }));
+              setDailyReadings((prevReadings) => [...prevReadings, response.data]);
               setDailyReading("");
               setMessage({ text: "Leitura adicionada com sucesso!", type: "success" });
             })
@@ -83,7 +75,7 @@ const MachineDetails = () => {
   };
 
   const handleDeleteReading = (index) => {
-    const readingToDelete = machine.dailyReadings[index];
+    const readingToDelete = dailyReadings[index];
     setMessage({
       text: "Você tem certeza que deseja excluir esta leitura?",
       type: "confirm",
@@ -91,10 +83,7 @@ const MachineDetails = () => {
         axios
           .delete(`https://api-start-pira.vercel.app/daily-readings/${readingToDelete.id}`)
           .then(() => {
-            setMachine((prevMachine) => ({
-              ...prevMachine,
-              dailyReadings: prevMachine.dailyReadings.filter((_, i) => i !== index),
-            }));
+            setDailyReadings((prevReadings) => prevReadings.filter((_, i) => i !== index));
             setMessage({ text: "Leitura excluída com sucesso!", type: "success" });
           })
           .catch((error) => {
@@ -105,14 +94,13 @@ const MachineDetails = () => {
   };
 
   const calculateWeeklyReading = () => {
-    if (!machine) return [];
     const start = startOfMonth(new Date());
     const end = endOfMonth(new Date());
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 }); // Weeks starting on Sunday
 
     const weeklyReadings = weeks.map((weekStart, index) => {
       const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
-      const readings = machine.dailyReadings
+      const readings = dailyReadings
         .filter((reading) => {
           const readingDate = new Date(reading.date);
           return readingDate >= weekStart && readingDate < weekEnd;
@@ -131,14 +119,13 @@ const MachineDetails = () => {
   };
 
   const calculateMonthlyReading = () => {
-    if (!machine) return [];
     const start = startOfMonth(new Date());
     const end = endOfMonth(new Date());
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 }); // Weeks starting on Sunday
 
     const monthlyReadings = weeks.map((weekStart, index) => {
       const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
-      const weeklyReadings = machine.dailyReadings.filter((reading) => {
+      const weeklyReadings = dailyReadings.filter((reading) => {
         const readingDate = new Date(reading.date);
         return readingDate >= weekStart && readingDate < weekEnd;
       });
@@ -231,7 +218,7 @@ const MachineDetails = () => {
           <input type="number" value={dailyReading} onChange={(e) => setDailyReading(e.target.value)} placeholder="Valor da leitura diária" />
           <button onClick={handleAddDailyReading}>Adicionar Leitura</button>
           <ul>
-            {machine?.dailyReadings.map((reading, index) => (
+            {dailyReadings.map((reading, index) => (
               <li key={index}>
                 {format(new Date(reading.date), "dd/MM/yyyy", { locale: ptBR })}: {reading.value}
                 <button className="delete-button" onClick={() => handleDeleteReading(index)}>

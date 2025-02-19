@@ -23,7 +23,7 @@ const Machines = ({ machines, setMachines }) => {
       axios
         .post("https://api-start-pira.vercel.app/machines", { name: newMachine })
         .then((response) => {
-          setMachines([...machines, response.data]);
+          setMachines((prevMachines) => [...prevMachines, response.data]);
           setNewMachine("");
         })
         .catch((error) => {
@@ -40,7 +40,7 @@ const Machines = ({ machines, setMachines }) => {
         <button onClick={handleAddMachine}>Adicionar Máquina</button>
       </div>
       <ul>
-        {machines.map((machine, id) => (
+        {machines.map((machine) => (
           <li key={machine.id} onClick={() => navigate(`/machines/${machine.id}`)}>
             {machine.name}
           </li>
