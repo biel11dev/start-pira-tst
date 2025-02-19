@@ -12,7 +12,7 @@ const Login = ({ setIsAuthenticated }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("https://api-start-pira.vercel.app/login", { username, password });
+      const response = await axios.get("https://api-start-pira.vercel.app/login", { username, password });
       localStorage.setItem("token", response.data.token);
       setIsAuthenticated(true);
       navigate("/dashboard");
