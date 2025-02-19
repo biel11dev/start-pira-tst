@@ -17,10 +17,9 @@ const MachineDetails = () => {
   const [message, setMessage] = useState(null);
 
   useEffect(() => {
-    // Buscar dados da máquina da API
-    axios
-      .get(`https://api-start-pira.vercel.app/machines/${id}`)
-      .then((response) => {
+    const fetchMachineData = async () => {
+      try {
+        const response = await axios.get(`https://api-start-pira.vercel.app/machines/${id}`);
         const machineData = response.data;
         // Inicializar dailyReadings como um array vazio se não estiver presente
         if (!machineData.dailyReadings) {
@@ -28,15 +27,13 @@ const MachineDetails = () => {
         }
         setMachine(machineData);
         fetchDailyReading(machineData.id); // Buscar leitura diária ao carregar a página
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Erro ao buscar dados da máquina:", error);
-      });
-  }, [id]);
+      }
+    };
 
-  if (!machine) {
-    return <div className="machine-details-container">Máquina não encontrada</div>;
-  }
+    fetchMachineData();
+  }, [id]);
 
   const fetchDailyReading = async (machineId) => {
     const today = new Date();
