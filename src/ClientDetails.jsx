@@ -3,9 +3,10 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "./ClientDetails.css";
 
-const ClientDetails = ({ clients, setClients, products }) => {
+const ClientDetails = ({ clients, setClients }) => {
   const { id } = useParams();
   const [client, setClient] = useState(null);
+  const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [quantity, setQuantity] = useState("");
   const [paidAmount, setPaidAmount] = useState("");
@@ -20,6 +21,16 @@ const ClientDetails = ({ clients, setClients, products }) => {
       })
       .catch((error) => {
         console.error("Erro ao buscar detalhes do cliente:", error);
+      });
+
+    // Buscar produtos da API quando o componente for montado
+    axios
+      .get("https://api-start-pira.vercel.app/products")
+      .then((response) => {
+        setProducts(response.data);
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar produtos:", error);
       });
   }, [id]);
 
@@ -69,8 +80,8 @@ const ClientDetails = ({ clients, setClients, products }) => {
       <div className="input-group">
         <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}>
           <option value="">Selecione um produto</option>
-          {products.map((product, index) => (
-            <option key={index} value={product.name}>
+          {products.map((product) => (
+            <option key={product.id} value={product.name}>
               {product.name}
             </option>
           ))}
@@ -85,16 +96,16 @@ const ClientDetails = ({ clients, setClients, products }) => {
       </div>
       <h3 className="section-title">Compras</h3>
       <ul>
-        {client.purchases.map((purchase, index) => (
-          <li key={index}>
+        {client.purchases.map((purchase) => (
+          <li key={purchase.id}>
             {purchase.product} - {purchase.quantity} - {formatCurrency(purchase.total)} - {purchase.date}
           </li>
         ))}
       </ul>
       <h3 className="section-title">Pagamentos</h3>
       <ul>
-        {client.payments.map((payment, index) => (
-          <li key={index}>
+        {client.payments.map((payment) => (
+          <li key={payment.id}>
             {formatCurrency(payment.amount)} - {payment.date}
           </li>
         ))}
