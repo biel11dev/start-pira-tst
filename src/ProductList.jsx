@@ -8,6 +8,7 @@ const ProductList = () => {
   const [newProduct, setNewProduct] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("Unidade");
+  const [value, setPreco] = useState("");
 
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
@@ -24,7 +25,7 @@ const ProductList = () => {
 
   const handleAddProduct = () => {
     if (newProduct.trim() !== "" && quantity.trim() !== "") {
-      const newProductData = { name: newProduct, quantity, unit };
+      const newProductData = { name: newProduct, quantity, unit, valor, value };
       axios
         .post("https://api-start-pira.vercel.app/products", newProductData)
         .then((response) => {
@@ -57,7 +58,7 @@ const ProductList = () => {
   const handleExportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       products.map((product, index) => ({
-        ID: index + 1,
+        ID: product.id,
         Produto: product.name,
         Quantidade: product.quantity,
         Unidade: product.unit,
@@ -74,6 +75,7 @@ const ProductList = () => {
       <div className="input-group">
         <input type="text" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Adicionar novo produto" />
         <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" />
+        <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor" />
         <select value={unit} onChange={(e) => setUnit(e.target.value)}>
           <option value="Maço">Maço</option>
           <option value="Fardo">Fardo</option>
