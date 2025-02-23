@@ -1,10 +1,11 @@
 .cash-register-container {
   padding: 20px;
-  background-image: url("./assets/startok3.png");
-  background-position: top left; /* Move a imagem de fundo para a esquerda */
-  background-repeat: no-repeat;
+  /* background-image: url("./assets/startok3.png"); */
+  /* background-position: top left; /* Mo a imagem de fundo para a esquerda */
+  /* background-repeat: no-repeat; */
   min-height: 100vh; /* Garante que o contêiner ocupe pelo menos a altura total da janela de visualização */
   box-sizing: border-box; /* Inclui preenchimento e borda na altura total */
+  margin-right: 150px;
 }
 
 .cash-register-container h2 {
@@ -12,19 +13,24 @@
   color: #fff;
 }
 
-.input-group {
-  margin-bottom: 20px;
-  margin-left: 30%;
+.input-cash {
+  margin-left: 315px !important;
   transform: translateY(15px);
+  display: flex;
+  flex-direction: column; /* Alinha os elementos verticalmente */
+  justify-content: center;
+  margin-bottom: 4px;
 }
 
-.input-group .desc-text {
-  display: block;
-  margin-bottom: 10px; /* Adiciona espaço entre o rótulo e o campo de entrada */
+.input-cash .desc-text {
+  display: block !important;
+  margin-bottom: 13px !important; /* Adiciona espaço entre o rótulo e o campo de entrada */
   color: #fff;
+  text-shadow: none;
+  margin-right: 345px;
 }
 
-.input-group input {
+.input-cash input {
   width: 100%;
   padding: 10px;
   font-size: 16px;
@@ -34,6 +40,9 @@
   margin-left: 15px;
   position: relative;
   transform: translateY(-10px);
+  text-shadow: none;
+  width: 250px;
+  margin-top: 13px;
 }
 
 .confirm-button {
@@ -55,6 +64,13 @@
   color: #fff;
 }
 
+.balance-list h3.saldo {
+  position: relative;
+  top: -70px; /* Mover a descrição 30px para cima */
+  margin-bottom: -30px; /* Ajustar a margem inferior para compensar a movimentação */
+  color: #fff;
+}
+
 .balance-list ul {
   list-style: none;
   padding: 0;
@@ -62,6 +78,8 @@
 
 .balance-list li {
   margin-bottom: 10px;
+  height: 100px;
+  width: 100%;
 }
 
 .balance-list .balance-amount {

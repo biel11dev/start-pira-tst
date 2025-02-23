@@ -1,6 +1,7 @@
 import axios from "axios";
 import "chart.js/auto";
-import { eachWeekOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { addMonths, eachWeekOfInterval, endOfMonth, format, startOfMonth, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
@@ -16,6 +17,8 @@ const MachineDetails = () => {
   const [selectedWeek, setSelectedWeek] = useState(0);
   const [message, setMessage] = useState(null);
   const [dailyReadings, setDailyReadings] = useState([]);
+  const [allDailyReadings, setAllDailyReadings] = useState([]); // Novo estado para armazenar todas as leituras diárias
+  const [selectedMonth, setSelectedMonth] = useState(new Date()); // Novo estado para armazenar o mês selecionado
 
   useEffect(() => {
     const fetchMachineData = async () => {
@@ -23,7 +26,8 @@ const MachineDetails = () => {
         const response = await axios.get(`https://api-start-pira.vercel.app/machines/${id}`);
         const machineData = response.data;
         setMachine(machineData);
-        fetchDailyReadings(machineData.id); // Buscar leituras diárias ao carregar a página
+        fetchDailyReadings(machineData.id); // Buscar leituras diárias da data atual ao carregar a página
+        fetchDailyReadingsnoDate(machineData.id); // Buscar todas as leituras diárias ao carregar a página
       } catch (error) {
         console.error("Erro ao buscar dados da máquina:", error);
       }
@@ -37,7 +41,16 @@ const MachineDetails = () => {
     const formattedDate = format(today, "dd-MM-yyyy");
     try {
       const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${formattedDate}`);
-      setDailyReadings(response.data); // Atualizar o estado com as leituras diárias obtidas
+      setDailyReadings(response.data); // Atualizar o estado com as leituras diárias da data atual
+    } catch (error) {
+      console.error("Erro ao buscar leituras diárias:", error);
+    }
+  };
+
+  const fetchDailyReadingsnoDate = async (machineId) => {
+    try {
+      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}`);
+      setAllDailyReadings(response.data); // Atualizar o estado com todas as leituras diárias
     } catch (error) {
       console.error("Erro ao buscar leituras diárias:", error);
     }
@@ -45,8 +58,8 @@ const MachineDetails = () => {
 
   const handleAddDailyReading = async () => {
     const today = new Date();
-    const formattedDate = format(today, "dd-MM-yyyy");
-    const hasReadingToday = dailyReadings.some((reading) => reading.date === formattedDate);
+    const date = format(today, "dd-MM-yyyy", { locale: ptBR });
+    const hasReadingToday = dailyReadings.some((reading) => reading.date === date);
 
     if (hasReadingToday) {
       setMessage({ text: "Você já adicionou uma leitura para hoje.", type: "error" });
@@ -58,11 +71,12 @@ const MachineDetails = () => {
         text: "Você tem certeza que deseja adicionar esta leitura?",
         type: "confirm",
         onConfirm: () => {
-          const newReading = { date: formattedDate, value: parseFloat(dailyReading), machineId: machine.id };
+          const newReading = { date: date, value: parseFloat(dailyReading), machineId: machine.id };
           axios
             .post("https://api-start-pira.vercel.app/daily-readings", newReading)
             .then((response) => {
               setDailyReadings((prevReadings) => [...prevReadings, response.data]);
+              setAllDailyReadings((prevReadings) => [...prevReadings, response.data]); // Atualizar também o estado com todas as leituras diárias
               setDailyReading("");
               setMessage({ text: "Leitura adicionada com sucesso!", type: "success" });
             })
@@ -74,16 +88,16 @@ const MachineDetails = () => {
     }
   };
 
-  const handleDeleteReading = (index) => {
-    const readingToDelete = dailyReadings[index];
+  const handleDeleteReading = (readingId) => {
     setMessage({
       text: "Você tem certeza que deseja excluir esta leitura?",
       type: "confirm",
       onConfirm: () => {
         axios
-          .delete(`https://api-start-pira.vercel.app/daily-readings/${readingToDelete.id}`)
+          .delete(`https://api-start-pira.vercel.app/daily-readings/${readingId}`)
           .then(() => {
-            setDailyReadings((prevReadings) => prevReadings.filter((_, i) => i !== index));
+            setDailyReadings((prevReadings) => prevReadings.filter((reading) => reading.id !== readingId));
+            setAllDailyReadings((prevReadings) => prevReadings.filter((reading) => reading.id !== readingId)); // Atualizar também o estado com todas as leituras diárias
             setMessage({ text: "Leitura excluída com sucesso!", type: "success" });
           })
           .catch((error) => {
@@ -93,43 +107,57 @@ const MachineDetails = () => {
     });
   };
 
-  const calculateWeeklyReading = () => {
-    const start = startOfMonth(new Date());
-    const end = endOfMonth(new Date());
+  const calculateWeeklyReading = (month) => {
+    const start = startOfMonth(month);
+    const end = endOfMonth(month);
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 }); // Weeks starting on Sunday
 
     const weeklyReadings = weeks.map((weekStart, index) => {
-      const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
-      const readings = dailyReadings
+      const weekEnd = index < weeks.length - 1 ? subDays(weeks[index + 1], 1) : end;
+      const readings = allDailyReadings
         .filter((reading) => {
-          const readingDate = new Date(reading.date);
-          return readingDate >= weekStart && readingDate < weekEnd;
+          const readingDate = new Date(reading.date.split("-").reverse().join("-")); // Ajustar o formato da data para corresponder ao formato da API
+          return readingDate >= weekStart && readingDate <= weekEnd;
         })
-        .map((reading) => ({
-          day: `${format(new Date(reading.date), "EEEE", { locale: ptBR })} (${format(new Date(reading.date), "dd/MM", { locale: ptBR })})`,
-          value: reading.value,
-        }));
+        .map((reading, i, arr) => {
+          const previousReading = arr[i - 1] ? arr[i - 1].value : 0;
+          return {
+            day: `${format(new Date(reading.date.split("-").reverse().join("-")), "EEEE", { locale: ptBR })} (${format(
+              new Date(reading.date.split("-").reverse().join("-")),
+              "dd/MM",
+              { locale: ptBR }
+            )})`,
+            value: reading.value - previousReading,
+          };
+        });
+
+      const totalEntry = readings.reduce((acc, reading) => acc + reading.value, 0);
+      const totalExit = readings.reduce((acc, reading) => acc + reading.value, 0); // Supondo que a saída seja igual à entrada para simplificação
+
       return {
         week: `Semana ${index + 1} (${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM", { locale: ptBR })})`,
         readings,
+        average: (totalEntry - totalExit) / 2,
       };
     });
 
     return weeklyReadings;
   };
 
-  const calculateMonthlyReading = () => {
-    const start = startOfMonth(new Date());
-    const end = endOfMonth(new Date());
+  const calculateMonthlyReading = (month) => {
+    const start = startOfMonth(month);
+    const end = endOfMonth(month);
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 }); // Weeks starting on Sunday
 
     const monthlyReadings = weeks.map((weekStart, index) => {
-      const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
-      const weeklyReadings = dailyReadings.filter((reading) => {
-        const readingDate = new Date(reading.date);
-        return readingDate >= weekStart && readingDate < weekEnd;
+      const weekEnd = index < weeks.length - 1 ? subDays(weeks[index + 1], 1) : end;
+      const weeklyReadings = allDailyReadings.filter((reading) => {
+        const readingDate = new Date(reading.date.split("-").reverse().join("-")); // Ajustar o formato da data para corresponder ao formato da API
+        return readingDate >= weekStart && readingDate <= weekEnd;
       });
+
       const totalExit = weeklyReadings.reduce((acc, reading) => acc + reading.value, 0);
+
       return {
         week: `Semana ${index + 1} (${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM", { locale: ptBR })})`,
         totalExit,
@@ -139,16 +167,16 @@ const MachineDetails = () => {
     return monthlyReadings;
   };
 
-  const weeklyReadings = calculateWeeklyReading();
-  const monthlyReadings = calculateMonthlyReading();
+  const weeklyReadings = calculateWeeklyReading(selectedMonth); // Atualizar para usar o mês selecionado
+  const monthlyReadings = calculateMonthlyReading(selectedMonth); // Atualizar para usar o mês selecionado
 
   const weeklyData = {
     labels: weeklyReadings[selectedWeek]?.readings.map((reading) => reading.day) || [],
     datasets: [
       {
-        label: weeklyReadings[selectedWeek]?.week || "",
+        label: "Leitura Semanal",
         data: weeklyReadings[selectedWeek]?.readings.map((reading) => reading.value) || [],
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        backgroundColor: "rgba(75, 192, 192, 0.5)",
         borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
       },
@@ -161,7 +189,7 @@ const MachineDetails = () => {
       {
         label: "Saída Semanal",
         data: monthlyReadings.map((reading) => reading.totalExit),
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        backgroundColor: "rgba(255, 99, 132, 0.5)",
         borderColor: "rgba(255, 99, 132, 1)",
         borderWidth: 1,
       },
@@ -174,6 +202,12 @@ const MachineDetails = () => {
         labels: {
           color: "white", // Define a cor do texto da legenda como branca
         },
+      },
+      datalabels: {
+        color: "white",
+        anchor: "center",
+        align: "center",
+        formatter: (value) => value.toFixed(2),
       },
     },
     scales: {
@@ -198,6 +232,10 @@ const MachineDetails = () => {
     },
   };
 
+  const handleMonthChange = (direction) => {
+    setSelectedMonth((prevMonth) => (direction === "prev" ? subMonths(prevMonth, 1) : addMonths(prevMonth, 1)));
+  };
+
   return (
     <div className="machine-details-container">
       <h2>Detalhes da Máquina: {machine?.name}</h2>
@@ -212,16 +250,25 @@ const MachineDetails = () => {
           Leitura Mensal
         </button>
       </div>
+      <div className="month-selector">
+        <button className="but-mes" onClick={() => handleMonthChange("prev")}>
+          Mês Anterior
+        </button>
+        <span>{format(selectedMonth, "MMMM yyyy", { locale: ptBR })}</span>
+        <button className="but-prox-mes" onClick={() => handleMonthChange("next")}>
+          Próximo Mês
+        </button>
+      </div>
       {activeTab === "daily" && (
         <div className="tab-content">
           <h3>Leitura Diária</h3>
           <input type="number" value={dailyReading} onChange={(e) => setDailyReading(e.target.value)} placeholder="Valor da leitura diária" />
           <button onClick={handleAddDailyReading}>Adicionar Leitura</button>
-          <ul>
-            {dailyReadings.map((reading, index) => (
-              <li key={index}>
-                {format(new Date(reading.date), "dd/MM/yyyy", { locale: ptBR })}: {reading.value}
-                <button className="delete-button" onClick={() => handleDeleteReading(index)}>
+          <ul className="daily-readings">
+            {dailyReadings.map((reading) => (
+              <li key={reading.id}>
+                {reading.date}: {reading.value}
+                <button className="deleted-button" onClick={() => handleDeleteReading(reading.id)}>
                   Excluir
                 </button>
               </li>
@@ -239,13 +286,17 @@ const MachineDetails = () => {
               </button>
             ))}
           </div>
-          <Bar data={weeklyData} options={chartOptions} />
+          <div className="chart-container">
+            <Bar data={weeklyData} options={chartOptions} plugins={[ChartDataLabels]} />
+          </div>
         </div>
       )}
       {activeTab === "monthly" && (
         <div className="tab-content">
           <h3>Leitura Mensal</h3>
-          <Bar data={monthlyData} options={chartOptions} />
+          <div className="chart-container">
+            <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
+          </div>
         </div>
       )}
       {message && <Message message={message.text} type={message.type} onClose={() => setMessage(null)} onConfirm={message.onConfirm} />}

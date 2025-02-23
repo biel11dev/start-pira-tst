@@ -24,6 +24,7 @@
 
 .sidebar-content {
   display: none;
+  margin-top: 30px;
 }
 
 .sidebar:hover .sidebar-content {
@@ -34,13 +35,23 @@
   margin-top: 0;
 }
 
-.sidebar ul {
+.sidebar-menu {
   list-style: none;
   padding: 0;
+  margin-top: 60px;
+}
+
+.sidebar-menu-top ul li .active {
+  list-style: none;
+  padding: 0;
+  margin-top: 1000px;
+  margin-left: 500px !important;
 }
 
 .sidebar ul li {
   margin: 15px 0;
+  width: 150px !important;
+  margin-bottom: 30px;
 }
 
 .sidebar ul li a {
@@ -50,4 +61,12 @@
 
 .sidebar ul li a:hover {
   text-decoration: underline;
+}
+
+.icon {
+  margin-right: 15px;
+}
+
+.link-text {
+  flex-grow: 1;
 }

@@ -80,19 +80,18 @@ const CashRegister = () => {
       });
   };
 
-  const handleDeleteBalance = (index) => {
-    setConfirmDelete({ show: true, index });
+  const handleDeleteBalance = (id) => {
+    setConfirmDelete({ show: true, id });
   };
 
   const confirmDeleteBalance = () => {
-    const { index } = confirmDelete;
-    const balanceToDelete = balances[index];
+    const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/balances/${balanceToDelete.id}`)
+      .delete(`https://api-start-pira.vercel.app/balances/${id}`)
       .then(() => {
-        const updatedBalances = balances.filter((_, i) => i !== index);
+        const updatedBalances = balances.filter((balance) => balance.id !== id);
         setBalances(updatedBalances);
-        setConfirmDelete({ show: false, index: null });
+        setConfirmDelete({ show: false, id: null });
       })
       .catch((error) => {
         console.error("Erro ao excluir saldo:", error);
@@ -100,7 +99,7 @@ const CashRegister = () => {
   };
 
   const cancelDeleteBalance = () => {
-    setConfirmDelete({ show: false, index: null });
+    setConfirmDelete({ show: false, id: null });
   };
 
   const formatCurrency = (value) => {
@@ -260,15 +259,15 @@ const CashRegister = () => {
   return (
     <div className="cash-register-container">
       <h2>Registro de Caixa</h2>
-      <div className="input-group">
+      <div className="input-cash">
         <label className="desc-text">Cartão</label>
         <input type="number" value={card} onChange={(e) => setCard(e.target.value)} placeholder="Valor em cartão" />
       </div>
-      <div className="input-group">
+      <div className="input-cash">
         <label className="desc-text">Dinheiro</label>
         <input type="number" value={cash} onChange={(e) => setCash(e.target.value)} placeholder="Valor em dinheiro" />
       </div>
-      <div className="input-group">
+      <div className="input-cash">
         <label className="desc-text">Data</label>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
@@ -277,7 +276,7 @@ const CashRegister = () => {
       </button>
       {balances.length > 0 && (
         <div className="balance-list">
-          <h3>Saldo Caixa</h3>
+          <h3 className="saldo">Saldo Caixa</h3>
           <ul>
             {balances.map((entry, index) => (
               <li key={index}>
@@ -310,7 +309,7 @@ const CashRegister = () => {
                 <button onClick={() => handleUpdateBalance(entry.id)} className="update-button">
                   Atualizar
                 </button>
-                <button onClick={() => handleDeleteBalance(index)} className="delete-button">
+                <button onClick={() => handleDeleteBalance(entry.id)} className="delete-button">
                   Excluir
                 </button>
               </li>
@@ -364,4 +363,5 @@ const CashRegister = () => {
     </div>
   );
 };
+
 export default CashRegister;

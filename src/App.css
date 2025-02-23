@@ -12,6 +12,7 @@
   align-items: center;
   min-height: 100vh;
   background-image: url("./assets/startok3.png");
+  background-attachment: fixed !important;
   background-size: cover;
   background-position: center;
   position: relative;
@@ -24,4 +25,14 @@
   transform: translateX(-50%);
   color: #fff;
   font-size: 30px;
+}
+
+.app-title {
+  position: fixed;
+  top: 15px;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 30px;
+  margin-right: 50%;
+  background-attachment: fixed !important;
 }

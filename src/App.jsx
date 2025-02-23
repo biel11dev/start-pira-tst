@@ -24,7 +24,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1 style={{ position: "absolute", top: "15px", left: "50%", transform: "translateX(-325%)", color: "#fff" }}>Start Pira</h1>
+      <h1 className="app-title">Start Pira</h1>
       {isAuthenticated && <Sidebar />} {/* Renderiza a Sidebar apenas se autenticado */}
       <div className="content">
         <Routes>

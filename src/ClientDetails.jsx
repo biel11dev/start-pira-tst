@@ -37,14 +37,23 @@ const ClientDetails = ({ clients, setClients }) => {
   const handleAddPurchase = () => {
     if (selectedProduct && quantity) {
       const product = products.find((p) => p.name === selectedProduct);
-      const total = product.price * quantity;
+      const total = product.value * parseInt(quantity, 10); // Converter quantity para inteiro
+      const intqtd = parseInt(quantity, 10);
       axios
-        .post("https://api-start-pira.vercel.app/purchases", { product: selectedProduct, quantity, total, date: purchaseDate, clientId: client.id })
+        .post("https://api-start-pira.vercel.app/purchases", { product: selectedProduct, quantity: intqtd, total, date: purchaseDate, clientId: client.id })
         .then((response) => {
-          setClient({ ...client, purchases: [...client.purchases, response.data], totalDebt: client.totalDebt + total });
-          setSelectedProduct("");
-          setQuantity("");
-          setPurchaseDate(new Date().toISOString().substr(0, 10));
+          const updatedTotalDebt = client.totalDebt + total;
+          axios
+            .put(`https://api-start-pira.vercel.app/clients/${client.id}`, { totalDebt: updatedTotalDebt })
+            .then(() => {
+              setClient({ ...client, purchases: [...client.purchases, response.data], totalDebt: updatedTotalDebt });
+              setSelectedProduct("");
+              setQuantity("");
+              setPurchaseDate(new Date().toISOString().substr(0, 10));
+            })
+            .catch((error) => {
+              console.error("Erro ao atualizar totalDebt do cliente:", error);
+            });
         })
         .catch((error) => {
           console.error("Erro ao adicionar compra:", error);
@@ -54,11 +63,20 @@ const ClientDetails = ({ clients, setClients }) => {
 
   const handlePaidAmount = () => {
     if (paidAmount) {
+      const amount = parseFloat(paidAmount);
       axios
-        .post("https://api-start-pira.vercel.app/payments", { amount: parseFloat(paidAmount), date: new Date().toISOString().substr(0, 10), clientId: client.id })
+        .post("https://api-start-pira.vercel.app/payments", { amount, date: new Date().toISOString().substr(0, 10), clientId: client.id })
         .then((response) => {
-          setClient({ ...client, payments: [...client.payments, response.data], totalDebt: client.totalDebt - parseFloat(paidAmount) });
-          setPaidAmount("");
+          const updatedTotalDebt = client.totalDebt - amount;
+          axios
+            .put(`https://api-start-pira.vercel.app/clients/${client.id}`, { totalDebt: updatedTotalDebt })
+            .then(() => {
+              setClient({ ...client, payments: [...client.payments, response.data], totalDebt: updatedTotalDebt });
+              setPaidAmount("");
+            })
+            .catch((error) => {
+              console.error("Erro ao atualizar totalDebt do cliente:", error);
+            });
         })
         .catch((error) => {
           console.error("Erro ao registrar pagamento:", error);
@@ -77,7 +95,8 @@ const ClientDetails = ({ clients, setClients }) => {
   return (
     <div className="client-details-container">
       <h2>Detalhes do Cliente: {client.name}</h2>
-      <div className="input-group">
+
+      <div className="input-group-client">
         <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}>
           <option value="">Selecione um produto</option>
           {products.map((product) => (
@@ -90,26 +109,44 @@ const ClientDetails = ({ clients, setClients }) => {
         <input className="date-style" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
         <button onClick={handleAddPurchase}>Adicionar Compra</button>
       </div>
-      <div className="input-group">
+
+      <div className="input-group-client">
         <input type="number" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)} placeholder="Valor Pago" />
         <button onClick={handlePaidAmount}>Registrar Pagamento</button>
       </div>
-      <h3 className="section-title">Compras</h3>
-      <ul>
-        {client.purchases.map((purchase) => (
-          <li key={purchase.id}>
-            {purchase.product} - {purchase.quantity} - {formatCurrency(purchase.total)} - {purchase.date}
-          </li>
-        ))}
-      </ul>
-      <h3 className="section-title">Pagamentos</h3>
-      <ul>
-        {client.payments.map((payment) => (
-          <li key={payment.id}>
-            {formatCurrency(payment.amount)} - {payment.date}
-          </li>
-        ))}
-      </ul>
+
+      {/* Seção de Compras */}
+      <div>
+        <h3 className="section-title">Compras</h3>
+        <ul className="purchase-list">
+          {client.purchases.length > 0 ? (
+            client.purchases.map((purchase) => (
+              <li key={purchase.id}>
+                {purchase.product} - {purchase.quantity} - {formatCurrency(purchase.total)} - {purchase.date}
+              </li>
+            ))
+          ) : (
+            <li>Nenhuma compra registrada.</li>
+          )}
+        </ul>
+      </div>
+
+      {/* Seção de Pagamentos */}
+      <div>
+        <h3 className="section-title">Pagamentos</h3>
+        <ul className="payment-list">
+          {client.payments.length > 0 ? (
+            client.payments.map((payment) => (
+              <li key={payment.id}>
+                {formatCurrency(payment.amount)} - {payment.date}
+              </li>
+            ))
+          ) : (
+            <li>Nenhum pagamento registrado.</li>
+          )}
+        </ul>
+      </div>
+
       <h3 className="section-title">Valor Devedor: {formatCurrency(client.totalDebt)}</h3>
     </div>
   );

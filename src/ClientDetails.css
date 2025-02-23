@@ -1,34 +1,43 @@
 .client-details-container {
   padding: 20px;
   text-align: center;
+  padding-top: 80px; /* Adiciona espaçamento no topo para o título fixo */
 }
 
 .client-details-container h2 {
   margin-bottom: 20px;
   color: #fff;
-  transform: translateY(-60px);
+  position: fixed;
+  margin-top: 15px; /* Adiciona espaçamento no topo */
+  top: 0;
+  left: 55%;
+  transform: translateX(-40%);
+  background-color: rgba(0, 0, 0, 0.7); /* Adiciona um fundo semi-transparente */
+  border-radius: 10px;
+  border: 1px solid #fff;
+  padding: 10px;
+  z-index: 1000; /* Garante que o título fique acima de outros elementos */
 }
 
-.input-group {
+.input-group-client {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
 }
 
-.input-group select,
-.input-group input {
+.input-group-client select,
+.input-group-client input {
   padding: 10px;
   font-size: 16px;
   border-radius: 5px;
   border: 1px solid #ccc;
-  margin-right: 10px;
-  margin-bottom: 10px; /* Adiciona espaçamento entre os campos */
+  margin-right: 10px !important;
+  margin-bottom: 40px; /* Adiciona espaçamento entre os campos */
   color: black !important; /* Define a cor do texto como preta */
   text-shadow: none;
 }
 
-.input-group button {
-  padding: 10px 20px;
+.input-group-client button {
+  padding: 10px 0;
   font-size: 16px;
   border-radius: 5px;
   border: none;
@@ -36,11 +45,21 @@
   color: #fff;
   cursor: pointer;
   margin-bottom: 10px; /* Adiciona espaçamento entre os botões */
+  height: 42px;
 }
 
-ul {
+.purchase-list {
   list-style-type: none;
   padding: 0;
+  margin-top: 0 !important;
+  margin-left: 110px;
+}
+
+.payment-list {
+  list-style-type: none;
+  padding: 0;
+  margin-top: 0 !important;
+  margin-left: 110px;
 }
 
 ul li {
@@ -55,7 +74,8 @@ ul li {
 .section-title {
   color: #fff;
   margin-top: 20px; /* Adiciona espaçamento acima dos títulos */
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 .date-style {

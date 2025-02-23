@@ -1,13 +1,17 @@
 .fiado-container {
   padding: 20px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .fiado-container h2 {
   margin-bottom: 20px;
   color: #fff;
   transform: translateY(-60px);
-  margin-left: 100px;
+  margin-right: 100px;
 }
 
 .input-group {
@@ -23,6 +27,7 @@
   border: 1px solid #ccc;
   margin-right: 10px;
   color: #fff;
+  text-shadow: none;
 }
 
 .input-group button {

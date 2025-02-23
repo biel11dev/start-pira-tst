@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
+import Message from "./Message";
 import "./ProductList.css";
 
 const ProductList = () => {
@@ -9,6 +10,8 @@ const ProductList = () => {
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("Unidade");
   const [value, setPreco] = useState("");
+  const [message, setMessage] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
 
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
@@ -16,16 +19,21 @@ const ProductList = () => {
       .get("https://api-start-pira.vercel.app/products")
       .then((response) => {
         setProducts(response.data);
-        console.log("Produtos:", response.data);
+        console.log("Produtos carregados:", response.data);
       })
       .catch((error) => {
         console.error("Erro ao buscar produtos:", error);
       });
   }, []);
 
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  };
+
   const handleAddProduct = () => {
-    if (newProduct.trim() !== "" && quantity.trim() !== "") {
-      const newProductData = { name: newProduct, quantity, unit, valor, value };
+    if (newProduct.trim() !== "" && quantity.trim() !== "" && value.trim() !== "") {
+      const newProductData = { name: newProduct, quantity, unit, value };
+
       axios
         .post("https://api-start-pira.vercel.app/products", newProductData)
         .then((response) => {
@@ -33,35 +41,51 @@ const ProductList = () => {
           setNewProduct("");
           setQuantity("");
           setUnit("Unidade");
+          setPreco("");
+          setMessage({ show: true, text: "Produto adicionado com sucesso!", type: "success" });
           console.log("Produto adicionado:", response.data);
         })
         .catch((error) => {
+          setMessage({ show: true, text: "Erro ao adicionar produto!", type: "error" });
           console.error("Erro ao adicionar produto:", error);
         });
+    } else {
+      setMessage({ show: true, text: "Preencha todos os campos!", type: "error" });
     }
   };
 
-  const handleDeleteProduct = (index) => {
-    const productToDelete = products[index];
+  const handleDeleteProduct = (productId) => {
+    setConfirmDelete({ show: true, id: productId });
+  };
+
+  const confirmDeleteProduct = () => {
+    const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/products/${productToDelete.id}`)
+      .delete(`https://api-start-pira.vercel.app/products/${id}`)
       .then(() => {
-        const updatedProducts = products.filter((_, i) => i !== index);
-        setProducts(updatedProducts);
-        console.log("Produto excluído:", productToDelete);
+        setProducts(products.filter((p) => p.id !== id));
+        setConfirmDelete({ show: false, id: null });
+        setMessage({ show: true, text: "Produto excluído com sucesso!", type: "success" });
+        console.log(`Produto ${id} excluído com sucesso!`);
       })
       .catch((error) => {
+        setMessage({ show: true, text: "Erro ao excluir produto!", type: "error" });
         console.error("Erro ao excluir produto:", error);
       });
   };
 
+  const cancelDeleteProduct = () => {
+    setConfirmDelete({ show: false, id: null });
+  };
+
   const handleExportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
-      products.map((product, index) => ({
+      products.map((product) => ({
         ID: product.id,
         Produto: product.name,
         Quantidade: product.quantity,
         Unidade: product.unit,
+        Valor: formatCurrency(product.value),
       }))
     );
     const workbook = XLSX.utils.book_new();
@@ -72,29 +96,43 @@ const ProductList = () => {
   return (
     <div className="product-list-container">
       <h2>Lista de Produtos</h2>
+
       <div className="input-group">
-        <input type="text" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Adicionar novo produto" />
+        <input type="text" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Nome do Produto" />
+
         <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" />
-        <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor" />
+
+        <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor (R$)" />
+
         <select value={unit} onChange={(e) => setUnit(e.target.value)}>
           <option value="Maço">Maço</option>
           <option value="Fardo">Fardo</option>
           <option value="Unidade">Unidade</option>
           <option value="Pacote">Pacote</option>
         </select>
+
         <button onClick={handleAddProduct}>Adicionar</button>
       </div>
+
       <ul>
-        {products.map((product, index) => (
-          <li key={index}>
-            {product.name} - {product.quantity} {product.unit}
-            <button onClick={() => handleDeleteProduct(index)}>Excluir</button>
+        {products.map((product) => (
+          <li key={product.id}>
+            <span className="product-name">{product.name}</span>
+            <span className="product-quantity">{product.quantity}</span>
+            <span className="product-unit">{product.unit}</span>
+            <span className="product-value">{formatCurrency(product.value)}</span>
+            <button onClick={() => handleDeleteProduct(product.id)}>Excluir</button>
           </li>
         ))}
       </ul>
+
       <button onClick={handleExportToExcel} className="export-button">
         Exportar para Excel
       </button>
+
+      {confirmDelete.show && <Message message="Tem certeza que deseja excluir este produto?" type="warning" onClose={cancelDeleteProduct} onConfirm={confirmDeleteProduct} />}
+
+      {message && <Message message={message.text} type={message.type} onClose={() => setMessage(null)} />}
     </div>
   );
 };

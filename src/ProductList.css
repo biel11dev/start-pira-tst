@@ -5,20 +5,26 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Centraliza verticalmente */
+  /* height: 100vh;  */
 }
 
 .product-list-container h2 {
   margin-bottom: 20px;
   color: #fff;
   transform: translateY(-60px);
+  margin-right: 100px;
 }
 
 .input-group {
   display: flex;
   justify-content: center;
   margin-bottom: 35px;
-  flex-wrap: wrap; /* Permite que os elementos quebrem linha se necessário */
+  margin-left: -80px;
+  margin-top: 20px;
+  /* flex-wrap: wrap; */
+  width: 300px;
+  height: 150px;
+  text-shadow: none;
 }
 
 .input-group input,
@@ -31,6 +37,9 @@
   /* position: relative;
   transform: translateY(-10px); */
   margin: 10px;
+  margin-bottom: 20px;
+  width: 150px;
+  text-shadow: none;
 }
 
 .input-group button {
@@ -44,16 +53,20 @@
   /* position: relative;
   transform: translateY(-10px); */
   margin: 10px;
+  margin-top: -2px;
 }
 
 ul {
   list-style-type: none;
   padding: 0;
+  margin-top: -70px;
+  align-items: center;
+  margin-right: 70px;
 }
 
 ul li {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between !important;
   align-items: center;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.15);
@@ -61,6 +74,7 @@ ul li {
   border-radius: 5px;
   margin-bottom: 10px;
   color: #fff;
+  width: 500px;
 }
 
 ul li button {
@@ -73,8 +87,17 @@ ul li button {
   cursor: pointer;
 }
 
+ul li span {
+  margin-right: 10px; /* Adiciona espaço entre os valores */
+}
+
+ul li span:not(:nth-last-child(-n + 2))::after {
+  content: "|";
+  margin-left: 37px; /* Adiciona espaço após a barra vertical */
+}
+
 .export-button {
-  margin-top: 20px;
+  margin-top: 60px;
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 5px;
@@ -82,4 +105,5 @@ ul li button {
   background-color: #28a745;
   color: #fff;
   cursor: pointer;
+  margin-right: 90px;
 }

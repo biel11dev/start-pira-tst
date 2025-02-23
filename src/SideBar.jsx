@@ -1,5 +1,7 @@
 import React from "react";
+import { FaBox, FaCashRegister, FaCogs, FaUser } from "react-icons/fa"; // Importar ícones
 import { Link } from "react-router-dom";
+
 import "./SideBar.css";
 
 const Sidebar = () => {
@@ -8,18 +10,30 @@ const Sidebar = () => {
       <div className="sidebar-indicator">☰</div>
       <div className="sidebar-content">
         <h3>Módulos</h3>
-        <ul>
+        <ul className="sidebar-menu">
           <li>
-            <Link to="/cash-register">Caixa</Link>
+            <Link to="/cash-register">
+              <FaCashRegister className="icon" />
+              <span className="link-text">Caixa</span>
+            </Link>
           </li>
           <li>
-            <Link to="/products">Produtos</Link>
+            <Link to="/products">
+              <FaBox className="icon" />
+              <span className="link-text">Produtos</span>
+            </Link>
           </li>
           <li>
-            <Link to="/machines">Máquinas</Link>
+            <Link to="/machines">
+              <FaCogs className="icon" />
+              <span className="link-text">Máquinas</span>
+            </Link>
           </li>
           <li>
-            <Link to="/fiado">Fiado</Link>
+            <Link to="/fiado">
+              <FaUser className="icon" />
+              <span className="link-text">Fiado</span>
+            </Link>
           </li>
         </ul>
       </div>

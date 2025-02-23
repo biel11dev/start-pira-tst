@@ -1,13 +1,17 @@
 .machines-container {
   padding: 20px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .machines-container h2 {
   margin-bottom: 20px;
   color: #fff;
-  margin-left: 80px;
-  transform: translateY(-60px);
+  transform: translateY(-55px);
+  margin-right: 100px;
 }
 
 .input-group {
@@ -27,6 +31,7 @@
   border-radius: 5px;
   border: 1px solid #ccc;
   margin-right: 10px !important;
+  margin: 10px;
 }
 
 .input-group button {
@@ -38,6 +43,7 @@
   color: #fff;
   cursor: pointer;
   margin-bottom: 5px;
+  margin: 10px;
 }
 
 ul {
