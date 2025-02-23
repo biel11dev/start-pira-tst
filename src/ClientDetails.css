@@ -82,3 +82,7 @@ ul li {
   background-color: white;
   text-shadow: none;
 }
+
+.payment-amount {
+  color: green;
+}

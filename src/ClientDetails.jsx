@@ -122,7 +122,7 @@ const ClientDetails = ({ clients, setClients }) => {
           {client.purchases.length > 0 ? (
             client.purchases.map((purchase) => (
               <li key={purchase.id}>
-                {purchase.product} - {purchase.quantity} - {formatCurrency(purchase.total)} - {purchase.date}
+                {purchase.product} - {purchase.quantity} - <span className="payment-amount">{formatCurrency(purchase.total)}</span> - {purchase.date}
               </li>
             ))
           ) : (
@@ -138,7 +138,7 @@ const ClientDetails = ({ clients, setClients }) => {
           {client.payments.length > 0 ? (
             client.payments.map((payment) => (
               <li key={payment.id}>
-                {formatCurrency(payment.amount)} - {payment.date}
+                <span className="payment-amount">{formatCurrency(payment.amount)}</span> - {payment.date}
               </li>
             ))
           ) : (

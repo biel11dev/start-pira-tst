@@ -107,3 +107,7 @@ ul li span:not(:nth-last-child(-n + 2))::after {
   cursor: pointer;
   margin-right: 90px;
 }
+
+.product-value {
+  color: #24a943;
+}
