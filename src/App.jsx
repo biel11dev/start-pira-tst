@@ -15,11 +15,7 @@ import Sidebar from "./SideBar";
 function App() {
   const [machines, setMachines] = useState([]);
   const [clients, setClients] = useState([]);
-  const [products, setProducts] = useState([
-    { name: "Produto 1", price: 10 },
-    { name: "Produto 2", price: 20 },
-    { name: "Produto 3", price: 30 },
-  ]);
+  const [products, setProducts] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Estado de autenticação
 
   return (
@@ -37,6 +33,7 @@ function App() {
           <Route path="/machines/:id" element={<MachineDetails machines={machines} />} />
           <Route path="/fiado" element={<Fiado clients={clients} setClients={setClients} />} />
           <Route path="/clients/:id" element={<ClientDetails clients={clients} setClients={setClients} products={products} />} />
+          <Route path="/despesas" element={<ExpenseList />} />
         </Routes>
       </div>
     </div>
