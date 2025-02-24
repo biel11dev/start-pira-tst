@@ -85,4 +85,25 @@ ul li {
 
 .payment-amount {
   color: green;
+  display: inline !important;
+  margin: 0;
+  padding: 0;
+}
+
+.purchase-list li,
+.payment-list li {
+  margin-bottom: 10px; /* Adiciona espaçamento entre os itens da lista */
+}
+
+.payment-date {
+  margin-left: 5px; /* Adiciona espaçamento entre o valor e a data do pagamento */
+}
+
+.purchase-product,
+.purchase-quantity,
+.purchase-total,
+.purchase-date,
+.payment-amount,
+.payment-date {
+  margin-right: 5px; /* Adiciona espaçamento entre os elementos */
 }

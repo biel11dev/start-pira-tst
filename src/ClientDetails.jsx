@@ -121,12 +121,14 @@ const ClientDetails = ({ clients, setClients }) => {
         <ul className="purchase-list">
           {client.purchases.length > 0 ? (
             client.purchases.map((purchase) => (
-              <li key={purchase.id}>
-                {purchase.product} - {purchase.quantity} - <span className="payment-amount">{formatCurrency(purchase.total)}</span> - {purchase.date}
+              <li key={purchase.id} className="purchase-item">
+                {" "}
+                <span className="purchase-product">{purchase.product}</span> <span className="purchase-quantity">{purchase.quantity}</span> -
+                <span className="purchase-total payment-amount">{formatCurrency(purchase.total)}</span> <span className="purchase-date">{purchase.date}</span>
               </li>
             ))
           ) : (
-            <li>Nenhuma compra registrada.</li>
+            <li className="no-purchases">Nenhuma compra registrada.</li>
           )}
         </ul>
       </div>
@@ -137,12 +139,12 @@ const ClientDetails = ({ clients, setClients }) => {
         <ul className="payment-list">
           {client.payments.length > 0 ? (
             client.payments.map((payment) => (
-              <li key={payment.id}>
-                <span className="payment-amount">{formatCurrency(payment.amount)}</span> - {payment.date}
+              <li key={payment.id} className="payment-item">
+                <span className="payment-amount">{formatCurrency(payment.amount)}</span> -<span className="payment-date">{payment.date}</span>
               </li>
             ))
           ) : (
-            <li>Nenhum pagamento registrado.</li>
+            <li className="no-payments">Nenhum pagamento registrado.</li>
           )}
         </ul>
       </div>
