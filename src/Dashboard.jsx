@@ -21,6 +21,9 @@ const Dashboard = () => {
         <div className="module" onClick={() => navigate("/fiado")}>
           FIADO
         </div>
+        <div className="module" onClick={() => navigate("/despesas")}>
+          DESPESAS
+        </div>
       </div>
     </div>
   );

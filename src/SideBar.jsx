@@ -1,5 +1,5 @@
 import React from "react";
-import { FaBox, FaCashRegister, FaCogs, FaUser } from "react-icons/fa"; // Importar ícones
+import { FaBox, FaCashRegister, FaCogs, FaMoneyBillWave, FaUser } from "react-icons/fa"; // Importar ícones
 import { Link } from "react-router-dom";
 
 import "./SideBar.css";
@@ -33,6 +33,12 @@ const Sidebar = () => {
             <Link to="/fiado">
               <FaUser className="icon" />
               <span className="link-text">Fiado</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/despesas">
+              <FaMoneyBillWave className="icon" />
+              <span className="link-text">Despesas</span>
             </Link>
           </li>
         </ul>
