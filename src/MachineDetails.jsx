@@ -122,8 +122,8 @@ const MachineDetails = () => {
         .map((reading, i, arr) => {
           const previousReading = arr[i - 1] ? arr[i - 1].value : 0;
           return {
-            day: `${format(new Date(reading.date.split("-").reverse().join("-")), "EEEE", { locale: ptBR })} (${format(
-              new Date(reading.date.split("-").reverse().join("-")),
+            day: `${format(new Date(reading.date.split("-").reverse().join("-") + "T00:00:00"), "EEEE", { locale: ptBR })} (${format(
+              new Date(reading.date.split("-").reverse().join("-") + "T00:00:00"),
               "dd/MM",
               { locale: ptBR }
             )})`,
@@ -174,7 +174,7 @@ const MachineDetails = () => {
     labels: weeklyReadings[selectedWeek]?.readings.map((reading) => reading.day) || [],
     datasets: [
       {
-        label: "Leitura Semanal",
+        label: "Entrada Semanal",
         data: weeklyReadings[selectedWeek]?.readings.map((reading) => reading.value) || [],
         backgroundColor: "rgba(75, 192, 192, 0.5)",
         borderColor: "rgba(75, 192, 192, 1)",
@@ -207,7 +207,7 @@ const MachineDetails = () => {
         color: "white",
         anchor: "center",
         align: "center",
-        formatter: (value) => value.toFixed(2),
+        formatter: (value) => `R$ ${value.toFixed(2)}`, // Exibir o valor em "R$"
       },
     },
     scales: {
@@ -278,7 +278,7 @@ const MachineDetails = () => {
       )}
       {activeTab === "weekly" && (
         <div className="tab-content">
-          <h3>Leitura Semanal</h3>
+          <h3 className="leitura-semanal">Leitura Semanal</h3>
           <div className="week-selector">
             {weeklyReadings.map((week, index) => (
               <button key={index} onClick={() => setSelectedWeek(index)} className={selectedWeek === index ? "active" : ""}>
@@ -289,13 +289,27 @@ const MachineDetails = () => {
           <div className="chart-container">
             <Bar data={weeklyData} options={chartOptions} plugins={[ChartDataLabels]} />
           </div>
+
+          <h3 className="leitura-mensal">Leitura Mensal</h3>
+          <div className="chart-containerrr">
+            <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
+          </div>
+
+          {activeTab === "monthly" && (
+            <div className="tab-content">
+              <h3>Leitura Mensal</h3>
+              <div className="chart-container">
+                <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
+              </div>
+            </div>
+          )}
         </div>
       )}
       {activeTab === "monthly" && (
         <div className="tab-content">
           <h3>Leitura Mensal</h3>
-          <div className="chart-container">
-            <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
+          <div className="vaibuceta">
+            <Bar className="grafico" data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
           </div>
         </div>
       )}
