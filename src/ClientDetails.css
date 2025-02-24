@@ -107,3 +107,13 @@ ul li {
 .payment-date {
   margin-right: 5px; /* Adiciona espaçamento entre os elementos */
 }
+
+.no-purchases,
+.no-payments {
+  color: #fff;
+}
+
+.purchase-item,
+.payment-item {
+  margin-bottom: 10px; /* Adiciona espaçamento entre os itens da lista */
+}
