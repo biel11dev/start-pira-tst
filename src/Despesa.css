@@ -1,24 +1,31 @@
 .expense-list-container {
-  padding: 20px;
+  padding: 5px !important;
   text-align: center;
 }
 
-.input-group {
+.desp {
+  text-align: center;
+  padding: 30px;
+  color: #fff;
+}
+
+.input-group-desp {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
 }
 
-.input-group input,
-.input-group select {
+.input-group-desp input,
+.input-group-desp select {
   padding: 10px;
   font-size: 16px;
   border-radius: 5px;
   border: 1px solid #ccc;
   margin-right: 10px;
+  text-shadow: none;
 }
 
-.input-group button {
+.input-group-desp button {
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 5px;
@@ -28,14 +35,17 @@
   cursor: pointer;
 }
 
-ul {
+.expense-list {
   list-style-type: none;
   padding: 0;
+  margin-top: 50px;
+  width: 100%; /* Adicionar margem superior para garantir que os itens da lista fiquem abaixo dos inputs */
 }
 
-ul li {
+.lista {
   display: flex;
-  justify-content: space-between;
+  grid-template-columns: repeat(5, 1fr) auto; /* Definir colunas para os elementos */
+  gap: 10px; /* Espaçamento entre os elementos */
   align-items: center;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.15);
@@ -43,9 +53,41 @@ ul li {
   border-radius: 5px;
   margin-bottom: 10px;
   color: #fff;
+  width: 80%;
+  min-width: 200px; /* Define um tamanho mínimo */
+  margin-left: 100px;
 }
 
-ul li button {
+.lista span {
+  flex: 1; /* Faz o campo crescer e ocupar o espaço disponível */
+}
+
+.lista span:not(:nth-last-child(-n + 1))::after {
+  content: "|";
+  margin-left: 50px; /* Adiciona espaço após a barra vertical */
+  margin-right: 50px; /* Adiciona espaço após a barra vertical */
+}
+
+.month-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.month-selector button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+  margin: 0 10px;
+}
+
+.update-button,
+.delete-button {
   padding: 5px 10px;
   font-size: 14px;
   border-radius: 5px;
@@ -53,15 +95,7 @@ ul li button {
   background-color: #dc3545;
   color: #fff;
   cursor: pointer;
-}
-
-ul li span {
-  margin-right: 10px; /* Adiciona espaço entre os valores */
-}
-
-ul li span:not(:nth-last-child(-n + 2))::after {
-  content: "|";
-  margin-left: 10px; /* Adiciona espaço após a barra vertical */
+  justify-content: right;
 }
 
 .export-button {
@@ -73,4 +107,16 @@ ul li span:not(:nth-last-child(-n + 2))::after {
   background-color: #28a745;
   color: #fff;
   cursor: pointer;
+}
+
+.expense-amount {
+  color: #28a745;
+}
+
+.container-desp {
+  margin-top: 20px;
+}
+
+.update-button {
+  background-color: #28a745;
 }

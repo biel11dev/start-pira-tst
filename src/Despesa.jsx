@@ -1,5 +1,9 @@
 import axios from "axios";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { addMonths, endOfYear, format, startOfMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import React, { useEffect, useState } from "react";
+import { Bar } from "react-chartjs-2";
 import * as XLSX from "xlsx";
 import "./Despesa.css";
 import Message from "./Message";
@@ -9,10 +13,14 @@ const Despesa = () => {
   const [newExpense, setNewExpense] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().substr(0, 10));
+  const [date, setDate] = useState(new Date().toISOString().substr(0, 23)); // Inclui milissegundos
   const [isFixed, setIsFixed] = useState(false);
   const [message, setMessage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [editExpenseId, setEditExpenseId] = useState(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
@@ -32,8 +40,14 @@ const Despesa = () => {
   };
 
   const handleAddExpense = () => {
-    if (newExpense.trim() !== "" && amount.trim() !== "" && description.trim() !== "") {
-      const newExpenseData = { nomeDespesa: newExpense, valorDespesa: parseFloat(amount), descDespesa: description, date, DespesaFixa: isFixed };
+    if (newExpense.trim() !== "" && amount.trim() !== "") {
+      const newExpenseData = {
+        nomeDespesa: newExpense,
+        valorDespesa: parseFloat(amount),
+        descDespesa: description.trim() !== "" ? description : null, // Permitir descrição nula
+        date,
+        DespesaFixa: isFixed,
+      };
 
       axios
         .post("https://api-start-pira.vercel.app/despesas", newExpenseData)
@@ -42,18 +56,70 @@ const Despesa = () => {
           setNewExpense("");
           setAmount("");
           setDescription("");
-          setDate(new Date().toISOString().substr(0, 10));
+          setDate(new Date().toISOString().substr(0, 17)); // Inclui milissegundos
           setIsFixed(false);
           setMessage({ show: true, text: "Despesa adicionada com sucesso!", type: "success" });
           console.log("Despesa adicionada:", response.data);
+
+          // Se a despesa for fixa, criar registros para os meses restantes do ano
+          if (isFixed) {
+            const currentMonth = new Date(date);
+            let nextMonth = addMonths(currentMonth, 1);
+            const endOfYearDate = endOfYear(currentMonth);
+
+            while (nextMonth <= endOfYearDate) {
+              const futureExpenseData = {
+                nomeDespesa: newExpense,
+                valorDespesa: 0, // Valor vazio
+                descDespesa: null, // Descrição nula
+                date: format(startOfMonth(nextMonth), "yyyy-MM-dd'T'HH:mm:ss"), // Definir a data como o primeiro dia do mês com milissegundos
+                DespesaFixa: isFixed,
+              };
+
+              axios
+                .post("https://api-start-pira.vercel.app/despesas", futureExpenseData)
+                .then((response) => {
+                  setExpenses((prevExpenses) => [...prevExpenses, response.data]);
+                })
+                .catch((error) => {
+                  console.error("Erro ao adicionar despesa futura:", error);
+                });
+
+              nextMonth = addMonths(nextMonth, 1);
+            }
+          }
         })
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao adicionar despesa!", type: "error" });
           console.error("Erro ao adicionar despesa:", error);
         });
     } else {
-      setMessage({ show: true, text: "Preencha todos os campos!", type: "error" });
+      setMessage({ show: true, text: "Preencha todos os campos obrigatórios!", type: "error" });
     }
+  };
+
+  const handleUpdateExpense = (id) => {
+    const updatedExpense = expenses.find((expense) => expense.id === id);
+    const updatedAmount = parseFloat(editAmount) || 0;
+    const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
+
+    axios
+      .put(`https://api-start-pira.vercel.app/despesas/${id}`, {
+        valorDespesa: updatedAmount,
+        descDespesa: updatedDescription,
+      })
+      .then((response) => {
+        const updatedExpenses = expenses.map((expense) => (expense.id === id ? response.data : expense));
+        setExpenses(updatedExpenses);
+        setMessage({ show: true, text: "Despesa atualizada com sucesso!", type: "success" });
+        setEditExpenseId(null);
+        setEditAmount("");
+        setEditDescription("");
+      })
+      .catch((error) => {
+        setMessage({ show: true, text: "Erro ao atualizar despesa!", type: "error" });
+        console.error("Erro ao atualizar despesa:", error);
+      });
   };
 
   const handleDeleteExpense = (expenseId) => {
@@ -80,13 +146,21 @@ const Despesa = () => {
     setConfirmDelete({ show: false, id: null });
   };
 
+  const handleMonthChange = (direction) => {
+    setSelectedMonth((prevMonth) => (direction === "prev" ? addMonths(prevMonth, -1) : addMonths(prevMonth, 1)));
+  };
+
+  const filteredExpenses = expenses.filter(
+    (expense) => new Date(expense.date).getMonth() === selectedMonth.getMonth() && new Date(expense.date).getFullYear() === selectedMonth.getFullYear()
+  );
+
   const handleExportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
-      expenses.map((expense) => ({
+      filteredExpenses.map((expense) => ({
         ID: expense.id,
         Despesa: expense.nomeDespesa,
         Valor: formatCurrency(expense.valorDespesa),
-        Descrição: expense.descDespesa,
+        Descrição: expense.descDespesa || "", // Exibir descrição vazia se for nula
         Data: new Date(expense.date).toLocaleDateString("pt-BR"),
         Fixa: expense.DespesaFixa ? "Sim" : "Não",
       }))
@@ -96,11 +170,71 @@ const Despesa = () => {
     XLSX.writeFile(workbook, "despesas.xlsx");
   };
 
+  const chartData = {
+    labels: filteredExpenses.map((expense) => expense.nomeDespesa),
+    datasets: [
+      {
+        label: "Despesas",
+        data: filteredExpenses.map((expense) => expense.valorDespesa),
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    plugins: {
+      legend: {
+        labels: {
+          color: "white",
+        },
+      },
+      datalabels: {
+        color: "white",
+        anchor: "center",
+        align: "center",
+        formatter: (value, context) => {
+          const expense = filteredExpenses[context.dataIndex];
+          return expense.descDespesa ? `${formatCurrency(value)}\n${expense.descDespesa}` : formatCurrency(value);
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: "white",
+        },
+        grid: {
+          color: "rgba(255, 255, 255, 0.2)",
+        },
+      },
+      y: {
+        ticks: {
+          color: "white",
+        },
+        grid: {
+          color: "rgba(255, 255, 255, 0.2)",
+        },
+      },
+    },
+  };
+
   return (
     <div className="expense-list-container">
-      <h2>Lista de Despesas</h2>
+      <h2 className="desp">Lista de Despesas</h2>
 
-      <div className="input-group">
+      <div className="month-selector">
+        <button className="but-mes" onClick={() => handleMonthChange("prev")}>
+          Mês Anterior
+        </button>
+        <span>{format(selectedMonth, "MMMM yyyy", { locale: ptBR })}</span>
+        <button className="but-prox-mes" onClick={() => handleMonthChange("next")}>
+          Próximo Mês
+        </button>
+      </div>
+
+      <div className="input-group-desp">
         <input type="text" value={newExpense} onChange={(e) => setNewExpense(e.target.value)} placeholder="Nome da Despesa" />
 
         <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Valor (R$)" />
@@ -117,15 +251,29 @@ const Despesa = () => {
         <button onClick={handleAddExpense}>Adicionar</button>
       </div>
 
-      <ul>
-        {expenses.map((expense) => (
-          <li key={expense.id}>
-            <span className="expense-name">{expense.nomeDespesa}</span>
-            <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
-            <span className="expense-description">{expense.descDespesa}</span>
-            <span className="expense-date">{new Date(expense.date).toLocaleDateString("pt-BR")}</span>
-            <span className="expense-fixed">{expense.DespesaFixa ? "Fixa" : "Variável"}</span>
-            <button onClick={() => handleDeleteExpense(expense.id)}>Excluir</button>
+      <ul className="expense-list">
+        {filteredExpenses.map((expense) => (
+          <li className="lista" key={expense.id}>
+            <div className="expense-info">
+              <span className="expense-name">{expense.nomeDespesa}</span>
+              <span className="expense-date">{new Date(expense.date).toLocaleDateString("pt-BR")}</span>
+              <span className="expense-fixed">{expense.DespesaFixa ? "Fixa" : "Variável"}</span>
+              <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
+            </div>
+            {expense.valorDespesa === 0 && (
+              <div className="edit-expense">
+                <label>Valor Despesa</label>
+                <input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Valor (R$)" />
+                <label>Descrição</label>
+                <input type="text" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Descrição" />
+                <button onClick={() => handleUpdateExpense(expense.id)} className="update-button">
+                  Atualizar
+                </button>
+              </div>
+            )}
+            <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
+              Excluir
+            </button>
           </li>
         ))}
       </ul>
@@ -133,6 +281,10 @@ const Despesa = () => {
       <button onClick={handleExportToExcel} className="export-button">
         Exportar para Excel
       </button>
+
+      <div className="container-desp">
+        <Bar data={chartData} options={chartOptions} plugins={[ChartDataLabels]} />
+      </div>
 
       {confirmDelete.show && <Message message="Tem certeza que deseja excluir esta despesa?" type="warning" onClose={cancelDeleteExpense} onConfirm={confirmDeleteExpense} />}
 

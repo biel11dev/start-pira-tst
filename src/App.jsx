@@ -6,6 +6,7 @@ import ClientDetails from "./ClientDetails";
 import Login from "./Components/Login/Login";
 import Register from "./Components/Register/Register"; // Importe o componente Register
 import Dashboard from "./Dashboard";
+import Despesa from "./Despesa";
 import Fiado from "./Fiado";
 import Machines from "./Machine";
 import MachineDetails from "./MachineDetails";
@@ -33,7 +34,7 @@ function App() {
           <Route path="/machines/:id" element={<MachineDetails machines={machines} />} />
           <Route path="/fiado" element={<Fiado clients={clients} setClients={setClients} />} />
           <Route path="/clients/:id" element={<ClientDetails clients={clients} setClients={setClients} products={products} />} />
-          <Route path="/despesas" element={<ExpenseList />} />
+          <Route path="/despesas" element={<Despesa />} />
         </Routes>
       </div>
     </div>

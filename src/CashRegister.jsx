@@ -256,6 +256,9 @@ const CashRegister = () => {
   // Calcular o lucro total da semana atual
   const totalLucroSemana = weeklyBalances[selectedWeek].balances.reduce((acc, balance) => acc + (balance.lucro || 0), 0);
 
+  // Ordenar os registros por data (da mais atual para a mais antiga)
+  const sortedBalances = [...balances].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <div className="cash-register-container">
       <h2>Registro de Caixa</h2>
@@ -278,7 +281,7 @@ const CashRegister = () => {
         <div className="balance-list">
           <h3 className="saldo">Saldo Caixa</h3>
           <ul>
-            {balances.map((entry, index) => (
+            {sortedBalances.map((entry, index) => (
               <li key={index}>
                 <span className="balance-value">
                   {format(parseISO(entry.date), "dd/MM/yyyy", { locale: ptBR })}: <span className="balance-amount">{formatCurrency(entry.balance)}</span>
