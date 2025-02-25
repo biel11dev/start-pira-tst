@@ -1,6 +1,6 @@
 import axios from "axios";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { addMonths, endOfYear, format, startOfMonth } from "date-fns";
+import { addDays, addMonths, endOfYear, format, parseISO, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
@@ -13,7 +13,7 @@ const Despesa = () => {
   const [newExpense, setNewExpense] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().substr(0, 23)); // Inclui milissegundos
+  const [date, setDate] = useState(new Date().toISOString().substr(0, 10)); // Formato inicial da data
   const [isFixed, setIsFixed] = useState(false);
   const [message, setMessage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
@@ -41,13 +41,16 @@ const Despesa = () => {
 
   const handleAddExpense = () => {
     if (newExpense.trim() !== "" && amount.trim() !== "") {
+      const formattedDate = format(new Date(date), "yyyy-MM-dd HH:mm:ss"); // Formatar a data corretamente
       const newExpenseData = {
         nomeDespesa: newExpense,
         valorDespesa: parseFloat(amount),
         descDespesa: description.trim() !== "" ? description : null, // Permitir descrição nula
-        date,
+        date: formattedDate,
         DespesaFixa: isFixed,
       };
+
+      console.log("Dados enviados:", newExpenseData); // Log dos dados enviados
 
       axios
         .post("https://api-start-pira.vercel.app/despesas", newExpenseData)
@@ -56,7 +59,7 @@ const Despesa = () => {
           setNewExpense("");
           setAmount("");
           setDescription("");
-          setDate(new Date().toISOString().substr(0, 17)); // Inclui milissegundos
+          setDate(new Date().toISOString().substr(0, 10)); // Resetar a data para o formato inicial
           setIsFixed(false);
           setMessage({ show: true, text: "Despesa adicionada com sucesso!", type: "success" });
           console.log("Despesa adicionada:", response.data);
@@ -68,11 +71,12 @@ const Despesa = () => {
             const endOfYearDate = endOfYear(currentMonth);
 
             while (nextMonth <= endOfYearDate) {
+              const secondDayOfNextMonth = addDays(startOfMonth(nextMonth), 1); // Definir a data como o segundo dia do mês
               const futureExpenseData = {
                 nomeDespesa: newExpense,
                 valorDespesa: 0, // Valor vazio
                 descDespesa: null, // Descrição nula
-                date: format(startOfMonth(nextMonth), "yyyy-MM-dd'T'HH:mm:ss"), // Definir a data como o primeiro dia do mês com milissegundos
+                date: format(secondDayOfNextMonth, "yyyy-MM-dd HH:mm:ss"), // Definir a data como o segundo dia do mês com milissegundos
                 DespesaFixa: isFixed,
               };
 
@@ -91,7 +95,7 @@ const Despesa = () => {
         })
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao adicionar despesa!", type: "error" });
-          console.error("Erro ao adicionar despesa:", error);
+          console.error("Erro ao adicionar despesa:", newExpenseData, error);
         });
     } else {
       setMessage({ show: true, text: "Preencha todos os campos obrigatórios!", type: "error" });
@@ -256,16 +260,20 @@ const Despesa = () => {
           <li className="lista" key={expense.id}>
             <div className="expense-info">
               <span className="expense-name">{expense.nomeDespesa}</span>
-              <span className="expense-date">{new Date(expense.date).toLocaleDateString("pt-BR")}</span>
+              <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
               <span className="expense-fixed">{expense.DespesaFixa ? "Fixa" : "Variável"}</span>
               <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
             </div>
             {expense.valorDespesa === 0 && (
               <div className="edit-expense">
-                <label>Valor Despesa</label>
-                <input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Valor (R$)" />
-                <label>Descrição</label>
-                <input type="text" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Descrição" />
+                <div className="input-group-desc">
+                  <label>Valor Despesa</label>
+                  <input className="bot-valor" type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Valor (R$)" />
+                </div>
+                <div className="input-group-desc">
+                  <label>Descrição</label>
+                  <input type="text" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Descrição" />
+                </div>
                 <button onClick={() => handleUpdateExpense(expense.id)} className="update-button">
                   Atualizar
                 </button>

@@ -290,14 +290,9 @@ const MachineDetails = () => {
             <Bar data={weeklyData} options={chartOptions} plugins={[ChartDataLabels]} />
           </div>
 
-          <h3 className="leitura-mensal">Leitura Mensal</h3>
-          <div className="chart-containerrr">
-            <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
-          </div>
-
           {activeTab === "monthly" && (
             <div className="tab-content">
-              <h3>Leitura Mensal</h3>
+              <h3 className="visao-mensal">Leitura Mensal</h3>
               <div className="chart-container">
                 <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
               </div>

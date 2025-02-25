@@ -66,8 +66,16 @@ const CashRegister = () => {
   const handleUpdateBalance = (id) => {
     const cartaofimcaixaValue = parseFloat(cartaofimcaixa[id]) || 0;
     const dinheirofimcaixaValue = parseFloat(dinheirofimcaixa[id]) || 0;
+    const balancefimValue = cartaofimcaixaValue + dinheirofimcaixaValue;
+    const lucroValue = balancefimValue - (balances.find((balance) => balance.id === id)?.balance || 0);
+
     axios
-      .put(`https://api-start-pira.vercel.app/balances/${id}`, { cartaofimcaixa: cartaofimcaixaValue, dinheirofimcaixa: dinheirofimcaixaValue })
+      .put(`https://api-start-pira.vercel.app/balances/${id}`, {
+        cartaofimcaixa: cartaofimcaixaValue,
+        dinheirofimcaixa: dinheirofimcaixaValue,
+        balancefim: balancefimValue,
+        lucro: lucroValue,
+      })
       .then((response) => {
         const updatedBalances = balances.map((balance) => (balance.id === id ? response.data : balance));
         setBalances(updatedBalances);
@@ -144,9 +152,9 @@ const CashRegister = () => {
         const balanceDate = new Date(balance.date);
         return balanceDate >= weekStart && balanceDate < weekEnd;
       });
-      const totalBalance = weeklyBalances.reduce((acc, balance) => acc + balance.balance, 0);
-      const totalLucro = weeklyBalances.reduce((acc, balance) => acc + balance.lucro, 0);
-      const totalBalancefim = weeklyBalances.reduce((acc, balance) => acc + balance.balancefim, 0);
+      const totalBalance = weeklyBalances.reduce((acc, balance) => acc + (balance.balance || 0), 0);
+      const totalLucro = weeklyBalances.reduce((acc, balance) => acc + (balance.lucro || 0), 0);
+      const totalBalancefim = weeklyBalances.reduce((acc, balance) => acc + (balance.balancefim || 0), 0);
       return {
         week: `Semana ${index + 1} (${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM", { locale: ptBR })})`,
         totalBalance,
@@ -159,26 +167,29 @@ const CashRegister = () => {
   const weeklyBalances = calculateWeeklyBalances(selectedMonth);
   const monthlyBalances = calculateMonthlyBalances(selectedMonth);
 
-  const weeklyData = {
-    labels: weeklyBalances[selectedWeek].balances.map((balance) => format(parseISO(balance.date), "eee - dd/MM/yy", { locale: ptBR })),
+  const semanaData = {
+    labels: weeklyBalances[selectedWeek].balances.map((balance) => {
+      const localDate = parseISO(balance.date); // Remover a adição de um dia à data
+      return format(localDate, "eee - dd/MM", { locale: ptBR });
+    }),
     datasets: [
       {
         label: "Saldo Inicial",
-        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.balance),
+        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.balance || 0),
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
       },
       {
         label: "Lucro",
-        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.lucro),
+        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.lucro || 0),
         backgroundColor: "rgba(255, 206, 86, 0.2)",
         borderColor: "rgba(255, 206, 86, 1)",
         borderWidth: 1,
       },
       {
         label: "Saldo Final",
-        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.balancefim),
+        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.balancefim || 0),
         backgroundColor: "rgba(153, 102, 255, 0.2)",
         borderColor: "rgba(153, 102, 255, 1)",
         borderWidth: 1,
@@ -186,7 +197,7 @@ const CashRegister = () => {
     ],
   };
 
-  const monthlyData = {
+  const mesData = {
     labels: monthlyBalances.map((balance) => balance.week),
     datasets: [
       {
@@ -256,6 +267,8 @@ const CashRegister = () => {
   // Calcular o lucro total da semana atual
   const totalLucroSemana = weeklyBalances[selectedWeek].balances.reduce((acc, balance) => acc + (balance.lucro || 0), 0);
 
+  const totalLucroMes = monthlyBalances.reduce((acc, balance) => acc + balance.totalLucro, 0);
+
   // Ordenar os registros por data (da mais atual para a mais antiga)
   const sortedBalances = [...balances].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -282,9 +295,9 @@ const CashRegister = () => {
           <h3 className="saldo">Saldo Caixa</h3>
           <ul>
             {sortedBalances.map((entry, index) => (
-              <li key={index}>
+              <li className="registro" key={index}>
                 <span className="balance-value">
-                  {format(parseISO(entry.date), "dd/MM/yyyy", { locale: ptBR })}: <span className="balance-amount">{formatCurrency(entry.balance)}</span>
+                  {format(parseISO(entry.date), "eee - dd/MM", { locale: ptBR })}: <span className="balance-amount">{formatCurrency(entry.balance)}</span>
                 </span>
                 <div className="input-container">
                   <label className="desc-text-label">Valor Final Cartão</label>
@@ -341,7 +354,7 @@ const CashRegister = () => {
       </div>
       {activeTab === "weekly" && (
         <div className="tab-content">
-          <h3>Saldo Semanal</h3>
+          <h3 className="titulo-semanal">Saldo Semanal</h3>
           <div className="week-selector">
             {weeklyBalances.map((week, index) => (
               <button key={index} onClick={() => setSelectedWeek(index)} className={selectedWeek === index ? "active" : ""}>
@@ -350,7 +363,7 @@ const CashRegister = () => {
             ))}
           </div>
           <div className="chart-container">
-            <Bar data={weeklyData} options={chartOptions} plugins={[ChartDataLabels]} />
+            <Bar data={semanaData} options={chartOptions} plugins={[ChartDataLabels]} />
             <span className="total-lucro-semana">Lucro Total da Semana: {formatCurrency(totalLucroSemana)}</span>
           </div>
         </div>
@@ -358,11 +371,12 @@ const CashRegister = () => {
       {activeTab === "monthly" && (
         <div className="tab-content">
           <h3>Saldo Mensal</h3>
+          <div className="grafico-mes">
+            <Bar data={mesData} options={chartOptions} plugins={[ChartDataLabels]} />
+            <span className="total-lucro-semana">Lucro Total do Mês: {formatCurrency(totalLucroMes)}</span>
+          </div>
         </div>
       )}
-      <div className="chart-containerr">
-        <Bar data={monthlyData} options={chartOptions} plugins={[ChartDataLabels]} />
-      </div>
     </div>
   );
 };

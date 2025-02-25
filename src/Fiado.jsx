@@ -38,7 +38,9 @@ const Fiado = ({ clients, setClients }) => {
       <h2>Cadastro de Clientes</h2>
       <div className="input-group">
         <input type="text" value={newClient} onChange={(e) => setNewClient(e.target.value)} placeholder="Nome do cliente" />
-        <button onClick={handleAddClient}>Adicionar Cliente</button>
+        <button className="button-add-cli" onClick={handleAddClient}>
+          Adicionar Cliente
+        </button>
       </div>
       <ul>
         {clients.map((client) => (

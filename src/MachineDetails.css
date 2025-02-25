@@ -105,6 +105,12 @@
   cursor: pointer;
 }
 
+.tab-content .visao-mensal {
+  display: flex;
+  justify-content: center;
+  margin-top: 1000px;
+}
+
 .vaibuceta .grafico {
   width: 100%;
   height: 800px; /* Define a altura do gráfico */

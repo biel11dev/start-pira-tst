@@ -120,3 +120,41 @@
 .update-button {
   background-color: #28a745;
 }
+
+.edit-expense {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-expense label {
+  font-size: xx-small;
+  margin-bottom: 3px; /* Adiciona margem abaixo do label */
+  color: #fff;
+}
+
+.edit-expense input {
+  text-shadow: none;
+  background-color: black;
+  color: white !important;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.edit-expense .update-button {
+  background-color: #28a745;
+  margin-left: 10px;
+}
+
+.edit-expense .input-group-desc {
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+}
+
+.bot-valor {
+  display: flex;
+  justify-content: center;
+  width: 90%;
+}

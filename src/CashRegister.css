@@ -6,6 +6,7 @@
   min-height: 100vh; /* Garante que o contêiner ocupe pelo menos a altura total da janela de visualização */
   box-sizing: border-box; /* Inclui preenchimento e borda na altura total */
   margin-right: 150px;
+  align-items: center !important;
 }
 
 .cash-register-container h2 {
@@ -14,12 +15,12 @@
 }
 
 .input-cash {
-  margin-left: 315px !important;
   transform: translateY(15px);
   display: flex;
   flex-direction: column; /* Alinha os elementos verticalmente */
   justify-content: center;
   margin-bottom: 4px;
+  align-items: center;
 }
 
 .input-cash .desc-text {
@@ -27,7 +28,6 @@
   margin-bottom: 13px !important; /* Adiciona espaço entre o rótulo e o campo de entrada */
   color: #fff;
   text-shadow: none;
-  margin-right: 345px;
 }
 
 .input-cash input {
@@ -123,14 +123,16 @@
 
 .chart-container {
   width: 100%;
-  height: 800px !important; /* Define a altura do gráfico */
   margin-top: 20px;
 }
 
-.tab-content .chart-containerr {
+.tab-content .grafico-mes {
   width: 100%;
-  height: 600px; /* Define a altura do gráfico */
   margin-top: 20px;
+}
+
+.registro {
+  width: 100% !important;
 }
 
 .update-button {
@@ -198,4 +200,16 @@
   display: block;
   text-align: center;
   margin-top: 50px;
+}
+
+.titulo-mes {
+  color: #fff;
+  text-shadow: none;
+  margin-top: -200px !important;
+  margin-bottom: 38px;
+}
+.tab-content .titulo-semana {
+  color: #fff;
+  text-shadow: none;
+  margin-bottom: 38px;
 }
