@@ -10,6 +10,7 @@ const ProductList = () => {
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("Unidade");
   const [value, setPreco] = useState("");
+  const [valuecusto, setPrecoCusto] = useState("");
   const [message, setMessage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
 
@@ -31,8 +32,8 @@ const ProductList = () => {
   };
 
   const handleAddProduct = () => {
-    if (newProduct.trim() !== "" && quantity.trim() !== "" && value.trim() !== "") {
-      const newProductData = { name: newProduct, quantity, unit, value };
+    if (newProduct.trim() !== "" && quantity.trim() !== "" && value.trim() !== "" && valuecusto.trim() !== "") {
+      const newProductData = { name: newProduct, quantity, unit, value, valuecusto };
 
       axios
         .post("https://api-start-pira.vercel.app/products", newProductData)
@@ -86,6 +87,7 @@ const ProductList = () => {
         Quantidade: product.quantity,
         Unidade: product.unit,
         Valor: formatCurrency(product.value),
+        Custo: formatCurrency(product.valuecusto),
       }))
     );
     const workbook = XLSX.utils.book_new();
@@ -104,6 +106,8 @@ const ProductList = () => {
 
         <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor (R$)" />
 
+        <input type="number" value={valuecusto} onChange={(e) => setPrecoCusto(e.target.value)} placeholder="Custo (R$)" />
+
         <select value={unit} onChange={(e) => setUnit(e.target.value)}>
           <option value="Maço">Maço</option>
           <option value="Fardo">Fardo</option>
@@ -116,11 +120,27 @@ const ProductList = () => {
 
       <ul>
         {products.map((product) => (
-          <li key={product.id}>
-            <span className="product-name">{product.name}</span>
-            <span className="product-quantity">{product.quantity}</span>
-            <span className="product-unit">{product.unit}</span>
-            <span className="product-value">{formatCurrency(product.value)}</span>
+          <li className="lista-produtos" key={product.id}>
+            <div className="product-info">
+              <label className="product-label">Nome</label>
+              <span className="product-name">{product.name}</span>
+            </div>
+            <div className="product-info">
+              <label className="product-label">Quantidade</label>
+              <span className="product-quantity">{product.quantity}</span>
+            </div>
+            <div className="product-info">
+              <label className="product-label">Unidade</label>
+              <span className="product-unit">{product.unit}</span>
+            </div>
+            <div className="product-info">
+              <label className="product-label">Valor</label>
+              <span className="product-value">{formatCurrency(product.value)}</span>
+            </div>
+            <div className="product-info">
+              <label className="product-label">Custo</label>
+              <span className="product-value">{formatCurrency(product.valuecusto)}</span>
+            </div>
             <button onClick={() => handleDeleteProduct(product.id)}>Excluir</button>
           </li>
         ))}

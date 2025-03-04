@@ -111,3 +111,23 @@ ul li span:not(:nth-last-child(-n + 2))::after {
 .product-value {
   color: #24a943;
 }
+
+.lista-produtos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 800px !important;
+}
+
+.product-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.product-label {
+  font-size: xx-small;
+  color: #ccc;
+  margin-bottom: 7px;
+}

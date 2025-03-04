@@ -102,8 +102,13 @@ const Despesa = () => {
     }
   };
 
+  const handleEditExpense = (expense) => {
+    setEditExpenseId(expense.id);
+    setEditAmount(expense.valorDespesa);
+    setEditDescription(expense.descDespesa || "");
+  };
+
   const handleUpdateExpense = (id) => {
-    const updatedExpense = expenses.find((expense) => expense.id === id);
     const updatedAmount = parseFloat(editAmount) || 0;
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
 
@@ -264,7 +269,7 @@ const Despesa = () => {
               <span className="expense-fixed">{expense.DespesaFixa ? "Fixa" : "Variável"}</span>
               <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
             </div>
-            {expense.valorDespesa === 0 && (
+            {editExpenseId === expense.id ? (
               <div className="edit-expense">
                 <div className="input-group-desc">
                   <label>Valor Despesa</label>
@@ -278,6 +283,10 @@ const Despesa = () => {
                   Atualizar
                 </button>
               </div>
+            ) : (
+              <button onClick={() => handleEditExpense(expense)} className="edit-button">
+                Editar
+              </button>
             )}
             <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
               Excluir

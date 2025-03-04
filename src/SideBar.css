@@ -12,6 +12,16 @@
   cursor: pointer;
 }
 
+.sidebarr {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50px; /* Largura inicial da sidebar */
+  height: 100%;
+
+  padding: 20px;
+}
+
 .sidebar:hover {
   width: 200px; /* Largura expandida da sidebar */
   background-color: rgba(51, 51, 51, 0.8); /* Menos transparente quando acionada */
@@ -33,12 +43,14 @@
 
 .sidebar h3 {
   margin-top: 0;
+  margin-left: 35px;
 }
 
 .sidebar-menu {
   list-style: none;
   padding: 0;
   margin-top: 60px;
+  margin-left: 6px;
 }
 
 .sidebar-menu-top ul li .active {
@@ -69,4 +81,35 @@
 
 .link-text {
   flex-grow: 1;
+}
+
+.sidebar-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.animated-logo {
+  width: 155px;
+  height: auto;
+  margin-top: 550px;
+  margin-left: 2px;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-20px);
+  }
+  60% {
+    transform: translateY(-10px);
+  }
 }

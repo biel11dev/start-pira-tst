@@ -127,7 +127,7 @@
 }
 
 .tab-content .grafico-mes {
-  width: 100%;
+  width: 1067px;
   margin-top: 20px;
 }
 
@@ -146,7 +146,7 @@
 
 .desc-text-label {
   display: block !important;
-  color: #fff;
+  color: #ccc;
   font-size: xx-small;
   margin-bottom: 5px;
 }

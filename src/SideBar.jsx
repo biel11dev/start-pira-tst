@@ -42,6 +42,13 @@ const Sidebar = () => {
             </Link>
           </li>
         </ul>
+        <div className="sidebarr">
+          <img
+            src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2F4bnU5eTZtaTBkNDY4cjhodmtsdmt4eGVlY3h0NndtcncxbjFhNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/VhWVAa7rUtT3xKX6Cd/giphy.gif"
+            alt="Bar Logo"
+            className="animated-logo"
+          />
+        </div>
       </div>
     </div>
   );
