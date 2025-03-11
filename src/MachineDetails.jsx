@@ -236,6 +236,11 @@ const MachineDetails = () => {
     setSelectedMonth((prevMonth) => (direction === "prev" ? subMonths(prevMonth, 1) : addMonths(prevMonth, 1)));
   };
 
+  const filteredDailyReadings = dailyReadings.filter((reading) => {
+    const readingDate = new Date(reading.date.split("-").reverse().join("-"));
+    return readingDate.getMonth() === selectedMonth.getMonth() && readingDate.getFullYear() === selectedMonth.getFullYear();
+  });
+
   return (
     <div className="machine-details-container">
       <h2>Detalhes da Máquina: {machine?.name}</h2>
@@ -265,7 +270,7 @@ const MachineDetails = () => {
           <input type="number" value={dailyReading} onChange={(e) => setDailyReading(e.target.value)} placeholder="Valor da leitura diária" />
           <button onClick={handleAddDailyReading}>Adicionar Leitura</button>
           <ul className="daily-readings">
-            {dailyReadings.map((reading) => (
+            {filteredDailyReadings.map((reading) => (
               <li key={reading.id}>
                 {reading.date}: {reading.value}
                 <button className="deleted-button" onClick={() => handleDeleteReading(reading.id)}>
