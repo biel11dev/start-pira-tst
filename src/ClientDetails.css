@@ -93,6 +93,7 @@ ul li {
 .purchase-list li,
 .payment-list li {
   margin-bottom: 10px; /* Adiciona espaçamento entre os itens da lista */
+  margin-right: 50px; /* Adiciona espaçamento entre os itens da lista */
 }
 
 .payment-date {
@@ -106,14 +107,42 @@ ul li {
 .payment-amount,
 .payment-date {
   margin-right: 5px; /* Adiciona espaçamento entre os elementos */
+  text-shadow: none;
 }
 
 .no-purchases,
 .no-payments {
   color: #fff;
+  text-shadow: none;
 }
 
 .purchase-item,
-.payment-item {
+.payment-item,
+.no-payments,
+.no-purchases {
   margin-bottom: 10px; /* Adiciona espaçamento entre os itens da lista */
+  width: 720px;
+  text-shadow: none;
+  text-align: center !important;
+}
+
+.no-payments {
+  text-shadow: none;
+  text-align: right !important;
+}
+
+.save-button {
+  background-color: #007bff; /* Adiciona espaçamento acima do botão */
+}
+
+.purchase-item input {
+  width: 100px;
+  margin-right: 10px;
+  text-shadow: none;
+}
+
+.payment-item input {
+  width: 100px;
+  margin-right: 10px;
+  text-shadow: none;
 }

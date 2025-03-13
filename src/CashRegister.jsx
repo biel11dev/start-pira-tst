@@ -131,7 +131,7 @@ const CashRegister = () => {
     return weeks.map((weekStart, index) => {
       const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
       const weeklyBalances = balances.filter((balance) => {
-        const balanceDate = new Date(balance.date);
+        const balanceDate = parseISO(balance.date);
         return balanceDate >= weekStart && balanceDate < weekEnd;
       });
       return {
@@ -149,7 +149,7 @@ const CashRegister = () => {
     return weeks.map((weekStart, index) => {
       const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
       const weeklyBalances = balances.filter((balance) => {
-        const balanceDate = new Date(balance.date);
+        const balanceDate = parseISO(balance.date);
         return balanceDate >= weekStart && balanceDate < weekEnd;
       });
       const totalBalance = weeklyBalances.reduce((acc, balance) => acc + (balance.balance || 0), 0);
@@ -270,7 +270,12 @@ const CashRegister = () => {
   const totalLucroMes = monthlyBalances.reduce((acc, balance) => acc + balance.totalLucro, 0);
 
   // Ordenar os registros por data (da mais atual para a mais antiga)
-  const sortedBalances = [...balances].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedBalances = [...balances]
+    .filter((balance) => {
+      const balanceDate = parseISO(balance.date);
+      return balanceDate >= startOfMonth(selectedMonth) && balanceDate <= endOfMonth(selectedMonth);
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <div className="cash-register-container">

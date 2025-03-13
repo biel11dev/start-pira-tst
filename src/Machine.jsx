@@ -32,6 +32,19 @@ const Machines = ({ machines, setMachines }) => {
     }
   };
 
+  const handleDeleteMachine = (machineId) => {
+    const parsedMachineId = parseInt(machineId, 10);
+    axios
+      .delete(`https://api-start-pira.vercel.app/machines/${parsedMachineId}`)
+      .then(() => {
+        setMachines((prevMachines) => prevMachines.filter((machine) => machine.id !== parsedMachineId));
+      })
+      .catch((error) => {
+        console.error("Erro ao excluir máquina:", error);
+        console.error("Dados enviados para a API:", { machineId: parsedMachineId });
+      });
+  };
+
   return (
     <div className="machines-container">
       <h2>Cadastro de Máquinas</h2>
@@ -41,8 +54,9 @@ const Machines = ({ machines, setMachines }) => {
       </div>
       <ul>
         {machines.map((machine) => (
-          <li key={machine.id} onClick={() => navigate(`/machines/${machine.id}`)}>
-            {machine.name}
+          <li key={machine.id}>
+            <span onClick={() => navigate(`/machines/${machine.id}`)}>{machine.name}</span>
+            <button onClick={() => handleDeleteMachine(machine.id)}>Excluir</button>
           </li>
         ))}
       </ul>
