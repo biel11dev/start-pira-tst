@@ -169,3 +169,17 @@
   color: #fff;
   cursor: pointer;
 }
+
+.save-buttonn {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+}
+
+.save-buttonn:hover {
+  background-color: #28a745;
+}

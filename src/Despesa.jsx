@@ -257,7 +257,9 @@ const Despesa = () => {
           <option value="true">Fixa</option>
         </select>
 
-        <button onClick={handleAddExpense}>Adicionar</button>
+        <button className="save-buttonn" onClick={handleAddExpense}>
+          Adicionar
+        </button>
       </div>
 
       <ul className="expense-list">
