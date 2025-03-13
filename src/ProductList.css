@@ -131,3 +131,12 @@ ul li span:not(:nth-last-child(-n + 2))::after {
   color: #ccc;
   margin-bottom: 7px;
 }
+
+.product-info input {
+  width: 150px;
+  text-shadow: none;
+}
+
+.unidade-text {
+  text-shadow: none;
+}

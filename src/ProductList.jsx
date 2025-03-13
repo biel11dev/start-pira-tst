@@ -13,6 +13,8 @@ const ProductList = () => {
   const [valuecusto, setPrecoCusto] = useState("");
   const [message, setMessage] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProductData, setEditingProductData] = useState({});
 
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
@@ -43,6 +45,7 @@ const ProductList = () => {
           setQuantity("");
           setUnit("Unidade");
           setPreco("");
+          setPrecoCusto("");
           setMessage({ show: true, text: "Produto adicionado com sucesso!", type: "success" });
           console.log("Produto adicionado:", response.data);
         })
@@ -95,6 +98,36 @@ const ProductList = () => {
     XLSX.writeFile(workbook, "produtos.xlsx");
   };
 
+  const handleUpdateProduct = (product) => {
+    setEditingProduct(product.id);
+    setEditingProductData({
+      name: product.name,
+      quantity: product.quantity,
+      unit: product.unit,
+      value: product.value,
+      valuecusto: product.valuecusto,
+    });
+  };
+
+  const handleSaveProduct = () => {
+    if (editingProduct) {
+      const { name, quantity, unit, value, valuecusto } = editingProductData;
+      axios
+        .put(`https://api-start-pira.vercel.app/products/${editingProduct}`, { name, quantity, unit, value, valuecusto })
+        .then((response) => {
+          setProducts(products.map((product) => (product.id === editingProduct ? response.data : product)));
+          setEditingProduct(null);
+          setEditingProductData({});
+          setMessage({ show: true, text: "Produto atualizado com sucesso!", type: "success" });
+          console.log("Produto atualizado:", response.data);
+        })
+        .catch((error) => {
+          setMessage({ show: true, text: "Erro ao atualizar produto!", type: "error" });
+          console.error("Erro ao atualizar produto:", error);
+        });
+    }
+  };
+
   return (
     <div className="product-list-container">
       <h2>Lista de Produtos</h2>
@@ -121,27 +154,67 @@ const ProductList = () => {
       <ul>
         {products.map((product) => (
           <li className="lista-produtos" key={product.id}>
-            <div className="product-info">
-              <label className="product-label">Nome</label>
-              <span className="product-name">{product.name}</span>
-            </div>
-            <div className="product-info">
-              <label className="product-label">Quantidade</label>
-              <span className="product-quantity">{product.quantity}</span>
-            </div>
-            <div className="product-info">
-              <label className="product-label">Unidade</label>
-              <span className="product-unit">{product.unit}</span>
-            </div>
-            <div className="product-info">
-              <label className="product-label">Valor</label>
-              <span className="product-value">{formatCurrency(product.value)}</span>
-            </div>
-            <div className="product-info">
-              <label className="product-label">Custo</label>
-              <span className="product-value">{formatCurrency(product.valuecusto)}</span>
-            </div>
-            <button onClick={() => handleDeleteProduct(product.id)}>Excluir</button>
+            {editingProduct === product.id ? (
+              <>
+                <div className="product-info">
+                  <label className="product-label">Nome</label>
+                  <input type="text" value={editingProductData.name} onChange={(e) => setEditingProductData({ ...editingProductData, name: e.target.value })} />
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Quantidade</label>
+                  <input type="number" value={editingProductData.quantity} onChange={(e) => setEditingProductData({ ...editingProductData, quantity: e.target.value })} />
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Unidade</label>
+                  <select className="unidade-text" value={editingProductData.unit} onChange={(e) => setEditingProductData({ ...editingProductData, unit: e.target.value })}>
+                    <option value="Maço">Maço</option>
+                    <option value="Fardo">Fardo</option>
+                    <option value="Unidade">Unidade</option>
+                    <option value="Pacote">Pacote</option>
+                  </select>
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Valor</label>
+                  <input type="number" value={editingProductData.value} onChange={(e) => setEditingProductData({ ...editingProductData, value: e.target.value })} />
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Custo</label>
+                  <input type="number" value={editingProductData.valuecusto} onChange={(e) => setEditingProductData({ ...editingProductData, valuecusto: e.target.value })} />
+                </div>
+                <button className="save-button" onClick={handleSaveProduct}>
+                  Salvar
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="product-info">
+                  <label className="product-label">Nome</label>
+                  <span className="product-name">{product.name}</span>
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Quantidade</label>
+                  <span className="product-quantity">{product.quantity}</span>
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Unidade</label>
+                  <span className="product-unit">{product.unit}</span>
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Valor</label>
+                  <span className="product-value">{formatCurrency(product.value)}</span>
+                </div>
+                <div className="product-info">
+                  <label className="product-label">Custo</label>
+                  <span className="product-value">{formatCurrency(product.valuecusto)}</span>
+                </div>
+                <button className="update-button" onClick={() => handleUpdateProduct(product)}>
+                  Atualizar
+                </button>
+                <button className="delete-button" onClick={() => handleDeleteProduct(product.id)}>
+                  Excluir
+                </button>
+              </>
+            )}
           </li>
         ))}
       </ul>
