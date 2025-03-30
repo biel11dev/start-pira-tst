@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { FaSpinner } from "react-icons/fa"; // Importa o ícone de carregamento
 import * as XLSX from "xlsx";
 import Message from "./Message";
 import "./ProductList.css";
@@ -15,6 +16,10 @@ const ProductList = () => {
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingProductData, setEditingProductData] = useState({});
+  const [units, setUnits] = useState(["Maço", "Fardo", "Unidade", "Pacote"]); // Lista dinâmica de unidades
+  const [newUnit, setNewUnit] = useState(""); // Campo para adicionar nova unidade
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false); // Controle do pop-up
+  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
 
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
@@ -35,10 +40,9 @@ const ProductList = () => {
 
   const handleAddProduct = () => {
     if (newProduct.trim() !== "" && quantity.trim() !== "" && value.trim() !== "" && valuecusto.trim() !== "") {
-      const newProductData = { name: newProduct, quantity, unit, value, valuecusto };
-
+      setIsLoading(true); // Ativa o estado de carregamento
       axios
-        .post("https://api-start-pira.vercel.app/products", newProductData)
+        .post("https://api-start-pira.vercel.app/products", { name: newProduct, quantity, unit, value, valuecusto })
         .then((response) => {
           setProducts([...products, response.data]);
           setNewProduct("");
@@ -47,15 +51,32 @@ const ProductList = () => {
           setPreco("");
           setPrecoCusto("");
           setMessage({ show: true, text: "Produto adicionado com sucesso!", type: "success" });
-          console.log("Produto adicionado:", response.data);
         })
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao adicionar produto!", type: "error" });
-          console.error("Erro ao adicionar produto:", error);
+        })
+        .finally(() => {
+          setIsLoading(false); // Desativa o estado de carregamento
         });
     } else {
       setMessage({ show: true, text: "Preencha todos os campos!", type: "error" });
     }
+  };
+
+  const handleAddUnit = () => {
+    if (newUnit.trim() !== "" && !units.includes(newUnit)) {
+      setUnits([...units, newUnit]);
+      setNewUnit("");
+      setIsUnitModalOpen(false); // Fecha o modal ao confirmar
+    }
+  };
+
+  const handleDeleteUnit = (unitToDelete) => {
+    setUnits(units.filter((u) => u !== unitToDelete));
+  };
+
+  const handleEditUnit = (oldUnit, newUnitValue) => {
+    setUnits(units.map((u) => (u === oldUnit ? newUnitValue : u)));
   };
 
   const handleDeleteProduct = (productId) => {
@@ -130,27 +151,59 @@ const ProductList = () => {
 
   return (
     <div className="product-list-container">
-      <h2>Lista de Produtos</h2>
+      <h2 className="fixed-title">Lista de Produtos</h2>
+      {/* Pop-up para adicionar nova unidade */}
+      {isUnitModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3 className="texto-add-unidade">Adicionar Nova Unidade</h3>
+            <input className="texto-unidade" type="text" value={newUnit} onChange={(e) => setNewUnit(e.target.value)} placeholder="Digite a nova unidade" />
+            <div className="modal-buttons">
+              <button onClick={handleAddUnit}>Confirmar</button>
+              <button onClick={() => setIsUnitModalOpen(false)}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <div className="input-group">
-        <input type="text" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Nome do Produto" />
-
-        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" />
-
-        <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor (R$)" />
-
-        <input type="number" value={valuecusto} onChange={(e) => setPrecoCusto(e.target.value)} placeholder="Custo (R$)" />
-
-        <select value={unit} onChange={(e) => setUnit(e.target.value)}>
-          <option value="Maço">Maço</option>
-          <option value="Fardo">Fardo</option>
-          <option value="Unidade">Unidade</option>
-          <option value="Pacote">Pacote</option>
-        </select>
-
-        <button onClick={handleAddProduct}>Adicionar</button>
+      {/* Formulário para adicionar produtos */}
+      <div
+        className="input-group"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddProduct();
+          }
+        }}
+      >
+        <input type="text" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Nome do Produto" disabled={isLoading} />
+        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" disabled={isLoading} />
+        <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor (R$)" disabled={isLoading} />
+        <input type="number" value={valuecusto} onChange={(e) => setPrecoCusto(e.target.value)} placeholder="Custo (R$)" disabled={isLoading} />
+        {/* Campo de seleção de unidades com exclusão */}
+        <div className="custom-select">
+          <div className="selected-unit">{unit || "Selecione uma unidade"}</div>
+          <ul className="unit-dropdown">
+            {units.map((u, index) => (
+              <li key={index} className="unit-item">
+                <span className="unit-name" onClick={() => setUnit(u)}>
+                  {u}
+                </span>
+                <button className="delete-unit-button" onClick={() => handleDeleteUnit(u)} title="Excluir unidade" disabled={isLoading}>
+                  🗑️
+                </button>
+              </li>
+            ))}
+            <li className="add-unit-option" onClick={() => setIsUnitModalOpen(true)}>
+              + Adicionar nova unidade
+            </li>
+          </ul>
+        </div>
+        <button onClick={handleAddProduct} disabled={isLoading}>
+          {isLoading ? <FaSpinner className="loading-iconn" /> : "Adicionar Produto"}
+        </button>
       </div>
 
+      {/* Lista de produtos */}
       <ul>
         {products.map((product) => (
           <li className="lista-produtos" key={product.id}>
@@ -167,10 +220,11 @@ const ProductList = () => {
                 <div className="product-info">
                   <label className="product-label">Unidade</label>
                   <select className="unidade-text" value={editingProductData.unit} onChange={(e) => setEditingProductData({ ...editingProductData, unit: e.target.value })}>
-                    <option value="Maço">Maço</option>
-                    <option value="Fardo">Fardo</option>
-                    <option value="Unidade">Unidade</option>
-                    <option value="Pacote">Pacote</option>
+                    {units.map((u, index) => (
+                      <option key={index} value={u}>
+                        {u}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="product-info">

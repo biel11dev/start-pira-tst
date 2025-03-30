@@ -1,10 +1,10 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { FaLock, FaSpinner, FaUser } from "react-icons/fa"; // Importar ícone de carregamento
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
-const Login = ({ setIsAuthenticated }) => {
+const Login = ({ setIsAuthenticated, setPermissions }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false); // Estado para carregar animação
@@ -18,6 +18,7 @@ const Login = ({ setIsAuthenticated }) => {
       const response = await axios.post("https://api-start-pira.vercel.app/login", { username, password });
       localStorage.setItem("token", response.data.token);
       setIsAuthenticated(true);
+      setPermissions(response.data.permissions); // Armazena as permissões no estado pai
       navigate("/dashboard");
     } catch (error) {
       alert("Credenciais inválidas");
@@ -53,11 +54,11 @@ const Login = ({ setIsAuthenticated }) => {
         </button>
       </form>
 
-      <div className="create-account text-right">
+      {/* <div className="create-account text-right">
         <p>
           Não tem uma conta? <Link to="/register">Crie uma conta</Link>
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };

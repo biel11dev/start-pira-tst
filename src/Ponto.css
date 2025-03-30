@@ -1,0 +1,172 @@
+.ponto-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #0a0303;
+}
+
+.ponto-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.message {
+  text-align: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 4px;
+}
+
+.ponto-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ponto-table th,
+.ponto-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.ponto-table th {
+  background-color: #007bff;
+  color: white;
+}
+
+.ponto-table input[type="time"] {
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.input-funcionario {
+  text-shadow: none;
+  color: #fff !important;
+  background-color: #0a0303;
+  align-items: center;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 5vh !important;
+}
+
+.td-funcionario {
+  text-shadow: none;
+  color: #fff;
+}
+
+.nome-ponto {
+  text-shadow: none;
+  color: #fff;
+}
+
+.add-employee {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  margin-left: 65px;
+}
+
+/* Estilo para o botão "Adicionar Empregado" */
+.add-employee button {
+  padding: 5px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff; /* Azul */
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-bottom: 20px;
+  justify-content: space-between;
+}
+
+.add-employee input {
+  padding: 5px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-bottom: 20px;
+  justify-content: space-between;
+  text-shadow: none;
+  margin-right: 45px;
+}
+
+.add-employee button:hover {
+  background-color: #0056b3; /* Azul mais escuro */
+  transform: scale(1.05); /* Leve aumento ao passar o mouse */
+}
+
+.add-employee button:active {
+  background-color: #003f7f; /* Azul ainda mais escuro */
+  transform: scale(0.95); /* Leve redução ao clicar */
+}
+
+/* Estilo para o botão "Remover" */
+.ponto-table button {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  background-color: #f44336; /* Vermelho */
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.ponto-table button:hover {
+  background-color: #d32f2f; /* Vermelho mais escuro */
+  transform: scale(1.05); /* Leve aumento ao passar o mouse */
+}
+
+.ponto-table button:active {
+  background-color: #b71c1c; /* Vermelho ainda mais escuro */
+  transform: scale(0.95); /* Leve redução ao clicar */
+}
+
+.td-funcionario-atz {
+  background-color: #4caf50 !important;
+  margin-bottom: 10px;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.date-selector input[type="date"] {
+  padding: 5px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-shadow: none;
+}
+
+.date-selector button {
+  padding: 5px 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.date-selector button:hover {
+  background-color: #0056b3;
+}

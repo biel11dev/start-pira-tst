@@ -11,20 +11,21 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  position: relative;
+}
+
+.background-login-register-dashboard {
   background-image: url("./assets/startok3.png");
   background-attachment: fixed !important;
   background-size: cover;
   background-position: center;
-  position: relative;
 }
 
-.App .h1 {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff;
-  font-size: 30px;
+.background-other {
+  background-image: url("./assets/Fundo_startpira.png");
+  background-attachment: fixed !important;
+  background-size: cover;
+  background-position: center;
 }
 
 .app-title {

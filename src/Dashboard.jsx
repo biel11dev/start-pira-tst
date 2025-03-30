@@ -2,28 +2,31 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
-const Dashboard = () => {
+const Dashboard = ({ permissions }) => {
   const navigate = useNavigate();
 
+  const modules = [
+    { name: "CAIXA", path: "/cash-register", key: "caixa" },
+    { name: "PRODUTOS", path: "/products", key: "produtos" },
+    { name: "MÁQUINAS", path: "/machines", key: "maquinas" },
+    { name: "FIADO", path: "/fiado", key: "fiado" },
+    { name: "DESPESAS", path: "/despesas", key: "despesas" },
+    { name: "PONTO", path: "/ponto", key: "ponto" },
+    { name: "ACESSOS", path: "/acessos", key: "acessos" },
+  ];
+
   return (
-    <div className="dashboard-container">
-      <h2>Escolha um módulo</h2>
+    <div className="dashboard">
+      <h1>Dashboard</h1>
       <div className="modules">
-        <div className="module" onClick={() => navigate("/cash-register")}>
-          CAIXA
-        </div>
-        <div className="module" onClick={() => navigate("/products")}>
-          PRODUTOS
-        </div>
-        <div className="module" onClick={() => navigate("/machines")}>
-          MÁQUINAS
-        </div>
-        <div className="module" onClick={() => navigate("/fiado")}>
-          FIADO
-        </div>
-        <div className="module" onClick={() => navigate("/despesas")}>
-          DESPESAS
-        </div>
+        {modules.map(
+          (module) =>
+            permissions[module.key] && (
+              <div key={module.key} className="module" onClick={() => navigate(module.path)}>
+                {module.name}
+              </div>
+            )
+        )}
       </div>
     </div>
   );

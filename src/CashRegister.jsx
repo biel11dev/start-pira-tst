@@ -114,14 +114,14 @@ const CashRegister = () => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
-  const handleCurrencyChange = (setter) => (e) => {
-    const value = e.target.value;
-    const formattedValue = value
-      .replace(/\D/g, "")
-      .replace(/(\d)(\d{2})$/, "$1,$2")
-      .replace(/(?=(\d{3})+(\D))\B/g, ".");
-    setter(formattedValue);
-  };
+  // const handleCurrencyChange = (setter) => (e) => {
+  //   const value = e.target.value;
+  //   const formattedValue = value
+  //     .replace(/\D/g, "")
+  //     .replace(/(\d)(\d{2})$/, "$1,$2")
+  //     .replace(/(?=(\d{3})+(\D))\B/g, ".");
+  //   setter(formattedValue);
+  // };
 
   const calculateWeeklyBalances = (month) => {
     const start = startOfMonth(month);
@@ -305,25 +305,25 @@ const CashRegister = () => {
                   {format(parseISO(entry.date), "eee - dd/MM", { locale: ptBR })}: <span className="balance-amount">{formatCurrency(entry.balance)}</span>
                 </span>
                 <div className="input-container">
-                  <label className="desc-text-label">Valor Final Cartão</label>
-                  <input
-                    className="final-caixa"
-                    type="text"
-                    value={cartaofimcaixa[entry.id] || ""}
-                    onChange={(e) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: e.target.value })}
-                    onBlur={handleCurrencyChange((value) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: value }))}
-                    placeholder="Final caixa cartão"
-                  />
-                </div>
-                <div className="input-container">
                   <label className="desc-text-label">Valor Final Dinheiro</label>
                   <input
                     className="final-caixa"
                     type="text"
                     value={dinheirofimcaixa[entry.id] || ""}
                     onChange={(e) => setDinheirofimcaixa({ ...dinheirofimcaixa, [entry.id]: e.target.value })}
-                    onBlur={handleCurrencyChange((value) => setDinheirofimcaixa({ ...dinheirofimcaixa, [entry.id]: value }))}
+                    // onBlur={handleCurrencyChange((value) => setDinheirofimcaixa({ ...dinheirofimcaixa, [entry.id]: value }))}
                     placeholder="Final caixa dinheiro"
+                  />
+                </div>
+                <div className="input-container">
+                  <label className="desc-text-label">Valor Final Cartão</label>
+                  <input
+                    className="final-caixa"
+                    type="text"
+                    value={cartaofimcaixa[entry.id] || ""}
+                    onChange={(e) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: e.target.value })}
+                    // onBlur={handleCurrencyChange((value) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: value }))}
+                    placeholder="Final caixa cartão"
                   />
                 </div>
 
