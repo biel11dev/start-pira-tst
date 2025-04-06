@@ -115,7 +115,8 @@
 
 .container-desp {
   margin-top: 20px;
-  margin-left: 75px;
+  height: 150%;
+  width: 100%;
 }
 
 .update-button {
@@ -182,4 +183,37 @@
 
 .save-buttonn:hover {
   background-color: #28a745;
+}
+
+.expense-group {
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 0.5rem;
+  width: 920px;
+  margin-left: 60px;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.group-details {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+}
+
+.expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.botao-expend {
+  color: #fff;
+  background-color: #007bff;
 }

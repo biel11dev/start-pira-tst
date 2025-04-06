@@ -1,7 +1,7 @@
 import axios from "axios";
 import "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { addMonths, eachWeekOfInterval, endOfMonth, format, startOfMonth, subDays, subMonths } from "date-fns";
+import { addDays, addMonths, eachWeekOfInterval, endOfMonth, format, parseISO, startOfMonth, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
@@ -16,9 +16,11 @@ const MachineDetails = () => {
   const [dailyReading, setDailyReading] = useState("");
   const [selectedWeek, setSelectedWeek] = useState(0);
   const [message, setMessage] = useState(null);
+  const [messagetype, setMessageType] = useState("");
   const [dailyReadings, setDailyReadings] = useState([]);
   const [allDailyReadings, setAllDailyReadings] = useState([]); // Novo estado para armazenar todas as leituras diárias
   const [selectedMonth, setSelectedMonth] = useState(new Date()); // Novo estado para armazenar o mês selecionado
+  const [selectedDate, setSelectedDate] = useState(new Date()); // Estado para armazenar a data selecionada
 
   useEffect(() => {
     const fetchMachineData = async () => {
@@ -26,7 +28,7 @@ const MachineDetails = () => {
         const response = await axios.get(`https://api-start-pira.vercel.app/machines/${id}`);
         const machineData = response.data;
         setMachine(machineData);
-        fetchDailyReadings(machineData.id); // Buscar leituras diárias da data atual ao carregar a página
+        fetchDailyReadings(machineData.id, selectedDate); // Buscar leituras diárias da data atual ao carregar a página
         fetchDailyReadingsnoDate(machineData.id); // Buscar todas as leituras diárias ao carregar a página
       } catch (error) {
         console.error("Erro ao buscar dados da máquina:", error);
@@ -36,16 +38,51 @@ const MachineDetails = () => {
     fetchMachineData();
   }, [id]);
 
-  const fetchDailyReadings = async (machineId) => {
-    const today = new Date();
-    const formattedDate = format(today, "dd-MM-yyyy");
+  const fetchDailyReadings = async (machineId, date) => {
+    if (!date || isNaN(new Date(date).getTime())) {
+      console.error("Data inválida fornecida para fetchDailyReadings:", date);
+      return;
+    }
+
+    // Formata a data para o formato `dd-MM-yyyy`
+    const formattedDate = format(new Date(date), "dd-MM-yyyy");
+    console.log(`Buscando leituras para a máquina ${machineId} na data ${formattedDate}`); // Log para depuração
+
     try {
       const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${formattedDate}`);
-      setDailyReadings(response.data); // Atualizar o estado com as leituras diárias da data atual
+      setDailyReadings(response.data); // Atualiza o estado com as leituras diárias da data selecionada
     } catch (error) {
       console.error("Erro ao buscar leituras diárias:", error);
     }
   };
+
+  const handleDateChange = (event) => {
+    const newDate = new Date(event.target.value); // Converte o valor do input para uma instância de Date
+    if (!isNaN(newDate.getTime())) {
+      setSelectedDate(newDate); // Atualiza o estado apenas se a data for válida
+    } else {
+      setMessage({ text: `Data inválida selecionada: ${event.target.value}`, type: "error" });
+    }
+  };
+
+  const handleDayChange = (direction) => {
+    setSelectedDate((prevDate) => {
+      const newDate = direction === "prev" ? subDays(prevDate, 1) : addDays(prevDate, 1);
+
+      // Verifica se o mês mudou e atualiza o estado `selectedMonth`
+      if (newDate.getMonth() !== prevDate.getMonth() || newDate.getFullYear() !== prevDate.getFullYear()) {
+        setSelectedMonth(newDate);
+      }
+
+      return newDate;
+    });
+  };
+
+  useEffect(() => {
+    if (machine?.id && selectedDate && !isNaN(new Date(selectedDate).getTime())) {
+      fetchDailyReadings(machine.id, selectedDate); // Busca registros para o dia selecionado
+    }
+  }, [selectedDate, machine?.id]);
 
   const fetchDailyReadingsnoDate = async (machineId) => {
     try {
@@ -58,7 +95,7 @@ const MachineDetails = () => {
 
   const handleAddDailyReading = async () => {
     const today = new Date();
-    const date = format(today, "dd-MM-yyyy", { locale: ptBR });
+    const date = format(today, "dd-MM-yyyy"); // Formata a data para `dd-MM-yyyy`
     const hasReadingToday = dailyReadings.some((reading) => reading.date === date);
 
     if (hasReadingToday) {
@@ -67,24 +104,17 @@ const MachineDetails = () => {
     }
 
     if (dailyReading.trim() !== "") {
-      setMessage({
-        text: "Você tem certeza que deseja adicionar esta leitura?",
-        type: "confirm",
-        onConfirm: () => {
-          const newReading = { date: date, value: parseFloat(dailyReading), machineId: machine.id };
-          axios
-            .post("https://api-start-pira.vercel.app/daily-readings", newReading)
-            .then((response) => {
-              setDailyReadings((prevReadings) => [...prevReadings, response.data]);
-              setAllDailyReadings((prevReadings) => [...prevReadings, response.data]); // Atualizar também o estado com todas as leituras diárias
-              setDailyReading("");
-              setMessage({ text: "Leitura adicionada com sucesso!", type: "success" });
-            })
-            .catch((error) => {
-              console.error("Erro ao adicionar leitura diária:", error);
-            });
-        },
-      });
+      const newReading = { date: date, value: parseFloat(dailyReading), machineId: machine.id };
+      try {
+        const response = await axios.post("https://api-start-pira.vercel.app/daily-readings", newReading);
+        setDailyReadings((prevReadings) => [...prevReadings, response.data]);
+        setAllDailyReadings((prevReadings) => [...prevReadings, response.data]); // Atualiza também o estado com todas as leituras diárias
+        setDailyReading("");
+        setMessage({ text: "Leitura adicionada com sucesso!", type: "success" });
+      } catch (error) {
+        console.error("Erro ao adicionar leitura diária:", error);
+        setMessage({ text: "Erro ao adicionar leitura diária.", type: "error" });
+      }
     }
   };
 
@@ -233,7 +263,17 @@ const MachineDetails = () => {
   };
 
   const handleMonthChange = (direction) => {
-    setSelectedMonth((prevMonth) => (direction === "prev" ? subMonths(prevMonth, 1) : addMonths(prevMonth, 1)));
+    setSelectedMonth((prevMonth) => {
+      const newMonth = direction === "prev" ? subMonths(prevMonth, 1) : addMonths(prevMonth, 1);
+
+      // Atualiza o estado `selectedDate` para o primeiro dia do novo mês
+      setSelectedDate((prevDate) => {
+        const updatedDate = startOfMonth(newMonth);
+        return new Date(updatedDate.setHours(prevDate.getHours(), prevDate.getMinutes(), prevDate.getSeconds(), prevDate.getMilliseconds()));
+      });
+
+      return newMonth;
+    });
   };
 
   const filteredDailyReadings = dailyReadings.filter((reading) => {
@@ -264,6 +304,23 @@ const MachineDetails = () => {
           Próximo Mês
         </button>
       </div>
+      {/* Exibe o seletor de data e os botões de alternância de dias apenas na aba "daily" */}
+      {activeTab === "daily" && (
+        <div className="date-selector">
+          <button className="but-dia" onClick={() => handleDayChange("prev")}>
+            Dia Anterior
+          </button>
+          <input
+            type="date"
+            value={format(selectedDate, "yyyy-MM-dd")} // Formata a data para o formato aceito pelo input
+            onChange={handleDateChange}
+          />
+          <button className="but-dia" onClick={() => handleDayChange("next")}>
+            Próximo Dia
+          </button>
+        </div>
+      )}
+      {/* Conteúdo adicional */}
       {activeTab === "daily" && (
         <div className="tab-content">
           <h3>Leitura Diária</h3>
@@ -272,7 +329,7 @@ const MachineDetails = () => {
           <ul className="daily-readings">
             {filteredDailyReadings.map((reading) => (
               <li key={reading.id}>
-                {reading.date}: {reading.value}
+                {format(parseISO(reading.date.split("-").reverse().join("-")), "dd/MM/yyyy")}: {reading.value}
                 <button className="deleted-button" onClick={() => handleDeleteReading(reading.id)}>
                   Excluir
                 </button>

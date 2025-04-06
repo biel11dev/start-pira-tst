@@ -10,12 +10,26 @@
   text-shadow: none;
 }
 
+.text {
+  text-align: center;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+  color: #333;
+  text-shadow: none;
+}
+
 .message.success {
   background-color: #d4edda;
   color: #155724;
 }
 
 .message.warning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.message.confirm {
   background-color: #fff3cd;
   color: #856404;
 }

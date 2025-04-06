@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import Message from "./Message";
 import "./Ponto.css";
 
 const Ponto = () => {
@@ -9,6 +10,7 @@ const Ponto = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]); // Data atual no formato YYYY-MM-DD
+  const [tempValues, setTempValues] = useState({});
 
   const fetchEmployees = async (date) => {
     setLoading(true);
@@ -57,48 +59,52 @@ const Ponto = () => {
     fetchEmployees(selectedDate); // Busca os registros sempre que a data for alterada
   }, [selectedDate]);
 
-  const handleRegisterTime = async (id, type, value) => {
+  const handleRegisterTime = async (id) => {
     try {
+      const updatedData = tempValues[id]; // Obtém os valores temporários para o funcionário
+      if (!updatedData) return; // Se não houver valores temporários, não faz nada
+
       const currentDate = new Date().toISOString().split("T")[0]; // Data atual no formato YYYY-MM-DD
 
-      const updatedData = {
-        [type]: value, // Apenas o horário no formato HH:mm
+      const dataToUpdate = {
+        ...updatedData, // Inclui os valores de entrada, saída e portão aberto
         date: currentDate, // Inclui a data para garantir que o ponto seja atualizado corretamente
       };
 
       // Atualiza o ponto no banco de dados
-      await axios.put(`https://api-start-pira.vercel.app/daily-points/${id}`, updatedData);
+      await axios.put(`https://api-start-pira.vercel.app/daily-points/${id}`, dataToUpdate);
 
       // Atualiza o estado local
       setEmployees((prev) =>
         prev.map((employee) => {
           if (employee.id === id) {
-            const updatedEntry = type === "entry" ? value : employee.entry;
-            const updatedExit = type === "exit" ? value : employee.exit;
-            const updatedGateOpen = type === "gateOpen" ? value : employee.gateOpen;
+            const updatedEntry = updatedData.entry || employee.entry;
+            const updatedExit = updatedData.exit || employee.exit;
+            const updatedGateOpen = updatedData.gateOpen || employee.gateOpen;
 
             return {
               ...employee,
-              [type]: value, // Atualiza o horário correspondente
               entry: updatedEntry,
               exit: updatedExit,
               gateOpen: updatedGateOpen,
               workedHours: calculateWorkedHours(updatedEntry, updatedExit), // Recalcula as horas trabalhadas
-              extraOrMissingHours: calculateExtraOrMissingHours(
-                updatedEntry,
-                updatedExit,
-                employee.carga // Usa a carga horária do funcionário
-              ), // Recalcula as horas extras ou faltantes
+              extraOrMissingHours: calculateExtraOrMissingHours(updatedEntry, updatedExit, employee.carga), // Recalcula as horas extras ou faltantes
             };
           }
           return employee;
         })
       );
 
-      setMessage("Horário registrado com sucesso!");
+      // Limpa os valores temporários após a atualização
+      setTempValues((prev) => {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      });
+
+      setMessage("Horários atualizados com sucesso!");
     } catch (error) {
-      console.error("Erro ao registrar horário:", error);
-      setMessage("Erro ao registrar horário.");
+      console.error("Erro ao atualizar horários:", error);
+      setMessage("Erro ao atualizar horários.");
     } finally {
       setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     }
@@ -160,19 +166,27 @@ const Ponto = () => {
   };
 
   const handleRemoveEmployee = async (id) => {
-    try {
-      // Remove o funcionário do banco de dados
-      await axios.delete("https://api-start-pira.vercel.app/employees/${id}");
+    setMessage({
+      text: "Você tem certeza que deseja excluir este funcionário? Todos os registros de ponto também serão excluídos.",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          // Exclui os registros de DailyPoints associados ao funcionário
+          await axios.delete(`https://api-start-pira.vercel.app/daily-points?employeeId=${id}`);
 
-      // Atualiza o estado local
-      setEmployees(employees.filter((employee) => employee.id !== id));
-      setMessage("Funcionário removido com sucesso!");
-    } catch (error) {
-      console.error("Erro ao remover funcionário:", error);
-      setMessage("Erro ao remover funcionário.");
-    } finally {
-      setTimeout(() => setMessage(""), 3000);
-    }
+          // Exclui o funcionário do banco de dados
+          await axios.delete(`https://api-start-pira.vercel.app/employees/${id}`);
+
+          // Atualiza o estado local
+          setEmployees((prevEmployees) => prevEmployees.filter((employee) => employee.id !== id));
+          setMessage({ text: "Funcionário removido com sucesso!", type: "success" });
+        } catch (error) {
+          console.error("Erro ao remover funcionário:", error);
+          setMessage({ text: "Erro ao remover funcionário.", type: "error" });
+        }
+      },
+      onClose: () => setMessage(null), // Fecha o modal de confirmação
+    });
   };
 
   const handleUpdateEmployee = async (id, updatedData) => {
@@ -194,32 +208,57 @@ const Ponto = () => {
 
   const calculateWorkedHours = (entry, exit) => {
     if (!entry || !exit) return "0h 0m";
+
     const entryTime = new Date(`1970-01-01T${entry}:00`);
-    const exitTime = new Date(`1970-01-01T${exit}:00`);
+    let exitTime = new Date(`1970-01-01T${exit}:00`);
+
+    // Ajusta o horário de saída se for no dia seguinte
+    if (exitTime < entryTime) {
+      exitTime.setDate(exitTime.getDate() + 1);
+    }
+
     const diffMs = exitTime - entryTime;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
     return `${diffHours}h ${diffMinutes}m`;
   };
 
   const calculateExtraOrMissingHours = (entry, exit, carga) => {
     if (!entry || !exit) return "0h 0m";
+
     const entryTime = new Date(`1970-01-01T${entry}:00`);
-    const exitTime = new Date(`1970-01-01T${exit}:00`);
+    let exitTime = new Date(`1970-01-01T${exit}:00`);
+
+    // Ajusta o horário de saída se for no dia seguinte
+    if (exitTime < entryTime) {
+      exitTime.setDate(exitTime.getDate() + 1);
+    }
+
     const diffMs = exitTime - entryTime;
     const workedHours = diffMs / (1000 * 60 * 60);
     const extraOrMissing = workedHours - carga;
+
     const absHours = Math.floor(Math.abs(extraOrMissing));
     const absMinutes = Math.floor((Math.abs(extraOrMissing) % 1) * 60);
+
     return extraOrMissing > 0 ? `+${absHours}h ${absMinutes}m` : `-${absHours}h ${absMinutes}m`;
   };
 
   const calculateGateOpenTime = (entry, gateOpen) => {
-    if (!entry || !gateOpen || gateOpen === "--:--" || gateOpen === "00:00") return ""; // Retorna vazio se o valor for inválido
+    if (!entry || !gateOpen || gateOpen === "--:--" || gateOpen === "00:00") return "";
+
     const entryTime = new Date(`1970-01-01T${entry}:00`);
-    const gateOpenTime = new Date(`1970-01-01T${gateOpen}:00`);
+    let gateOpenTime = new Date(`1970-01-01T${gateOpen}:00`);
+
+    // Ajusta o horário do portão aberto se for no dia seguinte
+    if (gateOpenTime < entryTime) {
+      gateOpenTime.setDate(gateOpenTime.getDate() + 1);
+    }
+
     const diffMs = gateOpenTime - entryTime;
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
     return `${diffMinutes}m`;
   };
 
@@ -227,14 +266,14 @@ const Ponto = () => {
     <div className="ponto-container">
       <h2 className="nome-ponto">Gerenciamento de Ponto</h2>
       {loading && <div className="loading">Carregando...</div>}
-      {message && <div className="message">{message}</div>}
+      {message && <Message message={message.text} type={message.type} onClose={message.onClose} onConfirm={message.onConfirm} />}
 
       <div className="date-selector">
         <button onClick={handlePreviousMonth}>&lt;&lt; Mês</button>
         <button onClick={handlePreviousDay}>&lt; Dia</button>
         <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-        <button onClick={handleNextMonth}>&gt;&gt; Mês</button>
         <button onClick={handleNextDay}>&gt; Dia</button>
+        <button onClick={handleNextMonth}>&gt;&gt; Mês</button>
       </div>
 
       <div className="add-employee">
@@ -262,13 +301,43 @@ const Ponto = () => {
             <tr key={employee.id}>
               <td className="td-funcionario">{employee.name}</td>
               <td>
-                <input className="input-funcionario" type="time" value={employee.entry} onChange={(e) => handleRegisterTime(employee.id, "entry", e.target.value)} />
+                <input
+                  className="input-funcionario"
+                  type="time"
+                  value={tempValues[employee.id]?.entry || employee.entry}
+                  onChange={(e) =>
+                    setTempValues((prev) => ({
+                      ...prev,
+                      [employee.id]: { ...prev[employee.id], entry: e.target.value },
+                    }))
+                  }
+                />
               </td>
               <td>
-                <input className="input-funcionario" type="time" value={employee.exit} onChange={(e) => handleRegisterTime(employee.id, "exit", e.target.value)} />
+                <input
+                  className="input-funcionario"
+                  type="time"
+                  value={tempValues[employee.id]?.exit || employee.exit}
+                  onChange={(e) =>
+                    setTempValues((prev) => ({
+                      ...prev,
+                      [employee.id]: { ...prev[employee.id], exit: e.target.value },
+                    }))
+                  }
+                />
               </td>
               <td>
-                <input className="input-funcionario" type="time" value={employee.gateOpen} onChange={(e) => handleRegisterTime(employee.id, "gateOpen", e.target.value)} />
+                <input
+                  className="input-funcionario"
+                  type="time"
+                  value={tempValues[employee.id]?.gateOpen || employee.gateOpen}
+                  onChange={(e) =>
+                    setTempValues((prev) => ({
+                      ...prev,
+                      [employee.id]: { ...prev[employee.id], gateOpen: e.target.value },
+                    }))
+                  }
+                />
               </td>
               <td>
                 <input
@@ -288,6 +357,9 @@ const Ponto = () => {
               <td className="td-funcionario">{calculateExtraOrMissingHours(employee.entry, employee.exit, employee.carga)}</td>
               <td className="td-funcionario">{calculateGateOpenTime(employee.entry, employee.gateOpen)}</td>
               <td>
+                <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
+                  Atualizar
+                </button>
                 <button className="td-funcionario" onClick={() => handleRemoveEmployee(employee.id)}>
                   Excluir
                 </button>

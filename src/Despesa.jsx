@@ -21,6 +21,7 @@ const Despesa = () => {
   const [editExpenseId, setEditExpenseId] = useState(null);
   const [editAmount, setEditAmount] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [expandedGroups, setExpandedGroups] = useState({});
 
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
@@ -179,12 +180,32 @@ const Despesa = () => {
     XLSX.writeFile(workbook, "despesas.xlsx");
   };
 
+  const groupExpensesByDescription = (expenses) => {
+    return expenses.reduce((groups, expense) => {
+      const key = expense.nomeDespesa || "Sem Descrição"; // Use "Sem Descrição" para despesas sem descrição
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(expense);
+      return groups;
+    }, {});
+  };
+
+  const toggleGroup = (description) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [description]: !prev[description],
+    }));
+  };
+
+  const groupedExpenses = groupExpensesByDescription(filteredExpenses);
+
   const chartData = {
-    labels: filteredExpenses.map((expense) => expense.nomeDespesa),
+    labels: Object.keys(groupedExpenses),
     datasets: [
       {
         label: "Despesas",
-        data: filteredExpenses.map((expense) => expense.valorDespesa),
+        data: Object.values(groupedExpenses).map((group) => group.reduce((sum, expense) => sum + expense.valorDespesa, 0)),
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         borderColor: "rgba(75, 192, 192, 1)",
         borderWidth: 1,
@@ -263,40 +284,35 @@ const Despesa = () => {
       </div>
 
       <ul className="expense-list">
-        {filteredExpenses.map((expense) => (
-          <li className="lista" key={expense.id}>
-            <div className="expense-info">
-              <span className="expense-name">{expense.nomeDespesa}</span>
-              <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
-              <span className="expense-fixed">{expense.DespesaFixa ? "Fixa" : "Variável"}</span>
-              <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
+        {Object.entries(groupedExpenses).map(([description, group]) => (
+          <li key={description} className="expense-group">
+            <div className="group-header" onClick={() => toggleGroup(description)}>
+              <span>{description}</span>
+              <span>Total: {formatCurrency(group.reduce((sum, expense) => sum + expense.valorDespesa, 0))}</span>
+              <button className="botao-expend">{expandedGroups[description] ? "Ocultar" : "Expandir"}</button>
             </div>
-            {editExpenseId === expense.id ? (
-              <div className="edit-expense">
-                <div className="input-group-desc">
-                  <label>Valor Despesa</label>
-                  <input className="bot-valor" type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="Valor (R$)" />
-                </div>
-                <div className="input-group-desc">
-                  <label>Descrição</label>
-                  <input type="text" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="Descrição" />
-                </div>
-                <button onClick={() => handleUpdateExpense(expense.id)} className="update-button">
-                  Atualizar
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => handleEditExpense(expense)} className="edit-button">
-                Editar
-              </button>
+            {expandedGroups[description] && (
+              <ul className="group-details">
+                {group.map((expense) => (
+                  <li key={expense.id} className="expense-item">
+                    <div className="expense-info">
+                      <span className="expense-name">{expense.nomeDespesa}</span>
+                      <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
+                      <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
+                    </div>
+                    <button onClick={() => handleEditExpense(expense)} className="edit-button">
+                      Editar
+                    </button>
+                    <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
+                      Excluir
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-            <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
-              Excluir
-            </button>
           </li>
         ))}
       </ul>
-
       <button onClick={handleExportToExcel} className="export-button">
         Exportar para Excel
       </button>
