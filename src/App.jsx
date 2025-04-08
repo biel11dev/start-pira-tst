@@ -9,10 +9,12 @@ import Register from "./Components/Register/Register";
 import Dashboard from "./Dashboard";
 import Despesa from "./Despesa";
 import Fiado from "./Fiado";
+import ForgotPassword from "./ForgotPassword";
 import Machines from "./Machine";
 import MachineDetails from "./MachineDetails";
 import Ponto from "./Ponto";
 import ProductList from "./ProductList";
+import ResetPassword from "./ResetPassword";
 import Sidebar from "./SideBar";
 
 function App() {
@@ -52,6 +54,8 @@ function App() {
           <Route path="/despesas" element={<Despesa />} />
           <Route path="/ponto" element={<Ponto />} />
           <Route path="/acessos" element={<Acessos />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </div>
     </div>

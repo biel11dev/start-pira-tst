@@ -86,7 +86,17 @@
   margin: 0 10px;
 }
 
-.update-button,
+.update-button {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: none;
+  background-color: #dc3545;
+  color: #fff;
+  cursor: pointer;
+  justify-content: space-between;
+}
+
 .delete-button {
   padding: 5px 10px;
   font-size: 14px;
@@ -96,10 +106,15 @@
   color: #fff;
   cursor: pointer;
   justify-content: right;
+  margin-left: 20px;
+}
+
+.cancel-button {
+  margin-left: 10px;
 }
 
 .export-button {
-  margin-top: 20px;
+  margin-top: 18px !important;
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 5px;
@@ -190,7 +205,7 @@
   border: 1px solid #ccc;
   border-radius: 5px;
   padding: 0.5rem;
-  width: 920px;
+  width: 950px;
   margin-left: 60px;
 }
 
@@ -211,9 +226,35 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
+  width: 550px;
+  margin-left: 60px;
 }
 
 .botao-expend {
   color: #fff;
   background-color: #007bff;
+}
+
+.edit-input-val {
+  width: 70px;
+}
+
+.edit-input-desc {
+  width: 120px;
+}
+
+.edit-input-nome {
+  width: 120px;
+}
+
+.total-expenses {
+  color: green;
+  margin-top: 30px;
+  display: block;
+  text-align: center;
+}
+
+.total-despesa-mes {
+  margin-top: 30px;
+  color: #fff;
 }

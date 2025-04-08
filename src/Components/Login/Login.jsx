@@ -54,11 +54,13 @@ const Login = ({ setIsAuthenticated, setPermissions }) => {
         </button>
       </form>
 
-      {/* <div className="create-account text-right">
+      <div className="forgot-password text-right">
         <p>
-          Não tem uma conta? <Link to="/register">Crie uma conta</Link>
+          <button type="button" className="link-button" onClick={() => navigate("/forgot-password")}>
+            Esqueceu sua senha?
+          </button>
         </p>
-      </div> */}
+      </div>
     </div>
   );
 };

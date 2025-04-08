@@ -21,6 +21,7 @@ const Despesa = () => {
   const [editExpenseId, setEditExpenseId] = useState(null);
   const [editAmount, setEditAmount] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editDespesa, setEditDespesa] = useState("");
   const [expandedGroups, setExpandedGroups] = useState({});
 
   useEffect(() => {
@@ -104,17 +105,20 @@ const Despesa = () => {
   };
 
   const handleEditExpense = (expense) => {
+    setEditDespesa(expense.nomeDespesa);
     setEditExpenseId(expense.id);
     setEditAmount(expense.valorDespesa);
     setEditDescription(expense.descDespesa || "");
   };
 
   const handleUpdateExpense = (id) => {
+    const updateNome = editDespesa.trim() !== "" && editDespesa !== expenses.find((expense) => expense.id === id)?.nomeDespesa ? editDespesa : null;
     const updatedAmount = parseFloat(editAmount) || 0;
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
 
     axios
       .put(`https://api-start-pira.vercel.app/despesas/${id}`, {
+        nomeDespesa: updateNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
       })
@@ -125,6 +129,7 @@ const Despesa = () => {
         setEditExpenseId(null);
         setEditAmount("");
         setEditDescription("");
+        setEditDespesa("");
       })
       .catch((error) => {
         setMessage({ show: true, text: "Erro ao atualizar despesa!", type: "error" });
@@ -295,17 +300,63 @@ const Despesa = () => {
               <ul className="group-details">
                 {group.map((expense) => (
                   <li key={expense.id} className="expense-item">
-                    <div className="expense-info">
-                      <span className="expense-name">{expense.nomeDespesa}</span>
-                      <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
-                      <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
-                    </div>
-                    <button onClick={() => handleEditExpense(expense)} className="edit-button">
-                      Editar
-                    </button>
-                    <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
-                      Excluir
-                    </button>
+                    {editExpenseId === expense.id ? (
+                      // Renderiza os campos de edição
+                      <div className="edit-expense">
+                        <div className="input-group-desc">
+                          <label htmlFor={`edit-amount-${expense.id}`}>Nome Despesa</label>
+                          <input
+                            id={`edit-amount-${expense.id}`}
+                            type="text"
+                            value={editDespesa}
+                            onChange={(e) => setEditDespesa(e.target.value)}
+                            placeholder="Novo nome"
+                            className="edit-input-nome"
+                          />
+                        </div>
+                        <div className="input-group-desc">
+                          <label htmlFor={`edit-amount-${expense.id}`}>Valor</label>
+                          <input
+                            id={`edit-amount-${expense.id}`}
+                            type="number"
+                            value={editAmount}
+                            onChange={(e) => setEditAmount(e.target.value)}
+                            placeholder="Novo valor"
+                            className="edit-input-val"
+                          />
+                        </div>
+                        <div className="input-group-desc">
+                          <label htmlFor={`edit-description-${expense.id}`}>Descrição</label>
+                          <input
+                            id={`edit-description-${expense.id}`}
+                            type="text"
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            placeholder="Nova descrição"
+                            className="edit-input-desc"
+                          />
+                        </div>
+                        <button onClick={() => handleUpdateExpense(expense.id)} className="update-button">
+                          Salvar
+                        </button>
+                        <button onClick={() => setEditExpenseId(null)} className="cancel-button">
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      // Renderiza os dados normais da despesa
+                      <div className="expense-info">
+                        <span className="expense-name">{expense.nomeDespesa}</span>
+                        <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
+                        <button onClick={() => handleEditExpense(expense)} className="edit-button">
+                          Editar
+                        </button>
+                        <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
+                          Excluir
+                        </button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -319,6 +370,11 @@ const Despesa = () => {
 
       <div className="container-desp">
         <Bar data={chartData} options={chartOptions} plugins={[ChartDataLabels]} />
+      </div>
+
+      <div className="total-expenses">
+        <span>Total de Despesas do Mês: </span>
+        <span>{formatCurrency(filteredExpenses.reduce((sum, expense) => sum + expense.valorDespesa, 0))}</span>
       </div>
 
       {confirmDelete.show && <Message message="Tem certeza que deseja excluir esta despesa?" type="warning" onClose={cancelDeleteExpense} onConfirm={confirmDeleteExpense} />}

@@ -46,7 +46,7 @@ const Register = () => {
   const handleCloseMessage = () => {
     setShowMessage(false);
     if (messageType === "success") {
-      navigate("/");
+      navigate("/acessos");
     }
   };
 
