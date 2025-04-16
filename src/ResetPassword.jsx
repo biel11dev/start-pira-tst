@@ -17,7 +17,7 @@ const ResetPassword = () => {
   useEffect(() => {
     const validateToken = async () => {
       try {
-        await axios.post("https://api-start-pira.vercel.app/api/validate-token", { token });
+        await axios.post("http://localhost:3000/api/validate-token", { token });
       } catch (error) {
         console.error("Token inválido ou expirado:", error);
         navigate("/"); // Redireciona para a página inicial se o token for inválido
