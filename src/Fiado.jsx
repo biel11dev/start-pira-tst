@@ -12,7 +12,7 @@ const Fiado = ({ clients, setClients }) => {
   useEffect(() => {
     // Buscar clientes da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/clients")
+      .get("https://api-start-pira.vercel.app/api/clients")
       .then((response) => {
         setClients(response.data);
       })
@@ -24,7 +24,7 @@ const Fiado = ({ clients, setClients }) => {
   const handleAddClient = () => {
     if (newClient.trim() !== "") {
       axios
-        .post("https://api-start-pira.vercel.app/clients", { name: newClient, totalDebt: 0 })
+        .post("https://api-start-pira.vercel.app/api/clients", { name: newClient, totalDebt: 0 })
         .then((response) => {
           setClients([...clients, response.data]);
           setNewClient("");
@@ -42,7 +42,7 @@ const Fiado = ({ clients, setClients }) => {
   const confirmDeleteClient = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/clients/${id}`)
+      .delete(`https://api-start-pira.vercel.app/api/clients/${id}`)
       .then(() => {
         setClients(clients.filter((client) => client.id !== id));
         setConfirmDelete({ show: false, id: null });

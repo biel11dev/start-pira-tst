@@ -172,10 +172,10 @@ const Ponto = () => {
       onConfirm: async () => {
         try {
           // Exclui os registros de DailyPoints associados ao funcionário
-          await axios.delete(`https://api-start-pira.vercel.app/daily-points?employeeId=${id}`);
+          await axios.delete(`https://api-start-pira.vercel.app/api/daily-points?employeeId=${id}`);
 
           // Exclui o funcionário do banco de dados
-          await axios.delete(`https://api-start-pira.vercel.app/employees/${id}`);
+          await axios.delete(`https://api-start-pira.vercel.app/api/employees/${id}`);
 
           // Atualiza o estado local
           setEmployees((prevEmployees) => prevEmployees.filter((employee) => employee.id !== id));
@@ -192,7 +192,7 @@ const Ponto = () => {
   const handleUpdateEmployee = async (id, updatedData) => {
     try {
       // Atualiza o funcionário no banco de dados
-      await axios.put(`https://api-start-pira.vercel.app/employees/${id}`, updatedData);
+      await axios.put(`https://api-start-pira.vercel.app/api/employees/${id}`, updatedData);
 
       // Atualiza o estado local
       setEmployees((prev) => prev.map((employee) => (employee.id === id ? { ...employee, ...updatedData } : employee)));

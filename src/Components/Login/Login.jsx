@@ -15,7 +15,7 @@ const Login = ({ setIsAuthenticated, setPermissions }) => {
     setIsLoading(true); // Ativa o estado de carregamento
 
     try {
-      const response = await axios.post("https://api-start-pira.vercel.app/login", { username, password });
+      const response = await axios.post("https://api-start-pira.vercel.app/api/login", { username, password });
       localStorage.setItem("token", response.data.token);
       setIsAuthenticated(true);
       setPermissions(response.data.permissions); // Armazena as permissões no estado pai

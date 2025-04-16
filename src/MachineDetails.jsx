@@ -25,7 +25,7 @@ const MachineDetails = () => {
   useEffect(() => {
     const fetchMachineData = async () => {
       try {
-        const response = await axios.get(`https://api-start-pira.vercel.app/machines/${id}`);
+        const response = await axios.get(`https://api-start-pira.vercel.app/api/machines/${id}`);
         const machineData = response.data;
         setMachine(machineData);
         fetchDailyReadings(machineData.id, selectedDate); // Buscar leituras diárias da data atual ao carregar a página
@@ -49,7 +49,7 @@ const MachineDetails = () => {
     console.log(`Buscando leituras para a máquina ${machineId} na data ${formattedDate}`); // Log para depuração
 
     try {
-      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}&date=${formattedDate}`);
+      const response = await axios.get(`https://api-start-pira.vercel.app/api/daily-readings?machineId=${machineId}&date=${formattedDate}`);
       setDailyReadings(response.data); // Atualiza o estado com as leituras diárias da data selecionada
     } catch (error) {
       console.error("Erro ao buscar leituras diárias:", error);
@@ -86,7 +86,7 @@ const MachineDetails = () => {
 
   const fetchDailyReadingsnoDate = async (machineId) => {
     try {
-      const response = await axios.get(`https://api-start-pira.vercel.app/daily-readings?machineId=${machineId}`);
+      const response = await axios.get(`https://api-start-pira.vercel.app/api/daily-readings?machineId=${machineId}`);
       setAllDailyReadings(response.data); // Atualizar o estado com todas as leituras diárias
     } catch (error) {
       console.error("Erro ao buscar leituras diárias:", error);
@@ -106,7 +106,7 @@ const MachineDetails = () => {
     if (dailyReading.trim() !== "") {
       const newReading = { date: date, value: parseFloat(dailyReading), machineId: machine.id };
       try {
-        const response = await axios.post("https://api-start-pira.vercel.app/daily-readings", newReading);
+        const response = await axios.post("https://api-start-pira.vercel.app/api/daily-readings", newReading);
         setDailyReadings((prevReadings) => [...prevReadings, response.data]);
         setAllDailyReadings((prevReadings) => [...prevReadings, response.data]); // Atualiza também o estado com todas as leituras diárias
         setDailyReading("");
@@ -124,7 +124,7 @@ const MachineDetails = () => {
       type: "confirm",
       onConfirm: () => {
         axios
-          .delete(`https://api-start-pira.vercel.app/daily-readings/${readingId}`)
+          .delete(`https://api-start-pira.vercel.app/api/daily-readings/${readingId}`)
           .then(() => {
             setDailyReadings((prevReadings) => prevReadings.filter((reading) => reading.id !== readingId));
             setAllDailyReadings((prevReadings) => prevReadings.filter((reading) => reading.id !== readingId)); // Atualizar também o estado com todas as leituras diárias

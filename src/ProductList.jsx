@@ -24,7 +24,7 @@ const ProductList = () => {
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/products")
+      .get("https://api-start-pira.vercel.app/api/products")
       .then((response) => {
         setProducts(response.data);
         console.log("Produtos carregados:", response.data);
@@ -42,7 +42,7 @@ const ProductList = () => {
     if (newProduct.trim() !== "" && quantity.trim() !== "" && value.trim() !== "" && valuecusto.trim() !== "") {
       setIsLoading(true); // Ativa o estado de carregamento
       axios
-        .post("https://api-start-pira.vercel.app/products", { name: newProduct, quantity, unit, value, valuecusto })
+        .post("https://api-start-pira.vercel.app/api/products", { name: newProduct, quantity, unit, value, valuecusto })
         .then((response) => {
           setProducts([...products, response.data]);
           setNewProduct("");
@@ -86,7 +86,7 @@ const ProductList = () => {
   const confirmDeleteProduct = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/products/${id}`)
+      .delete(`https://api-start-pira.vercel.app/api/products/${id}`)
       .then(() => {
         setProducts(products.filter((p) => p.id !== id));
         setConfirmDelete({ show: false, id: null });
@@ -134,7 +134,7 @@ const ProductList = () => {
     if (editingProduct) {
       const { name, quantity, unit, value, valuecusto } = editingProductData;
       axios
-        .put(`https://api-start-pira.vercel.app/products/${editingProduct}`, { name, quantity, unit, value, valuecusto })
+        .put(`https://api-start-pira.vercel.app/api/products/${editingProduct}`, { name, quantity, unit, value, valuecusto })
         .then((response) => {
           setProducts(products.map((product) => (product.id === editingProduct ? response.data : product)));
           setEditingProduct(null);

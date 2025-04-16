@@ -9,7 +9,7 @@ const Machines = ({ machines, setMachines }) => {
 
   useEffect(() => {
     axios
-      .get("https://api-start-pira.vercel.app/machines")
+      .get("https://api-start-pira.vercel.app/api/machines")
       .then((response) => {
         setMachines(response.data);
       })
@@ -21,7 +21,7 @@ const Machines = ({ machines, setMachines }) => {
   const handleAddMachine = () => {
     if (newMachine.trim() !== "") {
       axios
-        .post("https://api-start-pira.vercel.app/machines", { name: newMachine })
+        .post("https://api-start-pira.vercel.app/api/machines", { name: newMachine })
         .then((response) => {
           setMachines((prevMachines) => [...prevMachines, response.data]);
           setNewMachine("");
@@ -35,7 +35,7 @@ const Machines = ({ machines, setMachines }) => {
   const handleDeleteMachine = (machineId) => {
     const parsedMachineId = parseInt(machineId, 10);
     axios
-      .delete(`https://api-start-pira.vercel.app/machines/${parsedMachineId}`)
+      .delete(`https://api-start-pira.vercel.app/api/machines/${parsedMachineId}`)
       .then(() => {
         setMachines((prevMachines) => prevMachines.filter((machine) => machine.id !== parsedMachineId));
       })

@@ -27,7 +27,7 @@ const Despesa = () => {
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/despesas")
+      .get("https://api-start-pira.vercel.app/api/despesas")
       .then((response) => {
         setExpenses(response.data);
         console.log("Despesas carregadas:", response.data);
@@ -55,7 +55,7 @@ const Despesa = () => {
       console.log("Dados enviados:", newExpenseData); // Log dos dados enviados
 
       axios
-        .post("https://api-start-pira.vercel.app/despesas", newExpenseData)
+        .post("https://api-start-pira.vercel.app/api/despesas", newExpenseData)
         .then((response) => {
           setExpenses([...expenses, response.data]);
           setNewExpense("");
@@ -83,7 +83,7 @@ const Despesa = () => {
               };
 
               axios
-                .post("https://api-start-pira.vercel.app/despesas", futureExpenseData)
+                .post("https://api-start-pira.vercel.app/api/despesas", futureExpenseData)
                 .then((response) => {
                   setExpenses((prevExpenses) => [...prevExpenses, response.data]);
                 })
@@ -117,7 +117,7 @@ const Despesa = () => {
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
 
     axios
-      .put(`https://api-start-pira.vercel.app/despesas/${id}`, {
+      .put(`https://api-start-pira.vercel.app/api/despesas/${id}`, {
         nomeDespesa: updateNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
@@ -144,7 +144,7 @@ const Despesa = () => {
   const confirmDeleteExpense = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/despesas/${id}`)
+      .delete(`https://api-start-pira.vercel.app/api/despesas/${id}`)
       .then(() => {
         setExpenses(expenses.filter((e) => e.id !== id));
         setConfirmDelete({ show: false, id: null });

@@ -13,7 +13,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("https://api-start-pira.vercel.app/forgot-password", { email });
+      const response = await axios.post("https://api-start-pira.vercel.app/api/forgot-password", { email });
       setMessage({ text: response.data.message, type: "success" });
     } catch (error) {
       setMessage({ text: "Erro ao enviar e-mail de redefinição. Verifique o e-mail informado.", type: "error" });
