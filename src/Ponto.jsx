@@ -16,11 +16,11 @@ const Ponto = () => {
     setLoading(true);
     try {
       // Busca os funcionários
-      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/employees");
+      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
       const employeesData = employeesResponse.data;
 
       // Busca os pontos diários
-      const dailyPointsResponse = await axios.get("https://api-start-pira.vercel.app/daily-points");
+      const dailyPointsResponse = await axios.get("https://api-start-pira.vercel.app/api/daily-points");
       const dailyPointsData = dailyPointsResponse.data;
 
       // Filtrar os pontos diários pela data selecionada
@@ -72,7 +72,7 @@ const Ponto = () => {
       };
 
       // Atualiza o ponto no banco de dados
-      await axios.put(`https://api-start-pira.vercel.app/daily-points/${id}`, dataToUpdate);
+      await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${id}`, dataToUpdate);
 
       // Atualiza o estado local
       setEmployees((prev) =>
@@ -151,7 +151,7 @@ const Ponto = () => {
       };
 
       // Cria o funcionário no banco de dados
-      const response = await axios.post("https://api-start-pira.vercel.app/employees", newEmployee);
+      const response = await axios.post("https://api-start-pira.vercel.app/api/employees", newEmployee);
 
       // Atualiza o estado local
       setEmployees([...employees, response.data]);

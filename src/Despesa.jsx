@@ -4,6 +4,7 @@ import { addDays, addMonths, endOfYear, format, parseISO, startOfMonth } from "d
 import { ptBR } from "date-fns/locale";
 import React, { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
+import { FaSpinner } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import "./Despesa.css";
 import Message from "./Message";
@@ -23,6 +24,8 @@ const Despesa = () => {
   const [editDescription, setEditDescription] = useState("");
   const [editDespesa, setEditDespesa] = useState("");
   const [expandedGroups, setExpandedGroups] = useState({});
+  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
+  const [isLoadingSave, setIsLoadingSave] = useState(false); // Estado de carregamento
 
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
@@ -43,6 +46,7 @@ const Despesa = () => {
 
   const handleAddExpense = () => {
     if (newExpense.trim() !== "" && amount.trim() !== "") {
+      setIsLoading(true); // Ativa o estado de carregamento
       const formattedDate = format(new Date(date), "yyyy-MM-dd HH:mm:ss"); // Formatar a data corretamente
       const newExpenseData = {
         nomeDespesa: newExpense,
@@ -65,6 +69,9 @@ const Despesa = () => {
           setIsFixed(false);
           setMessage({ show: true, text: "Despesa adicionada com sucesso!", type: "success" });
           console.log("Despesa adicionada:", response.data);
+          setTimeout(() => {
+            setMessage(null);
+          }, 3000);
 
           // Se a despesa for fixa, criar registros para os meses restantes do ano
           if (isFixed) {
@@ -98,9 +105,18 @@ const Despesa = () => {
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao adicionar despesa!", type: "error" });
           console.error("Erro ao adicionar despesa:", newExpenseData, error);
+          setTimeout(() => {
+            setMessage(null);
+          }, 3000);
+        })
+        .finally(() => {
+          setIsLoading(false); // Desativa o estado de carregamento
         });
     } else {
       setMessage({ show: true, text: "Preencha todos os campos obrigatórios!", type: "error" });
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
     }
   };
 
@@ -112,6 +128,7 @@ const Despesa = () => {
   };
 
   const handleUpdateExpense = (id) => {
+    setIsLoadingSave(true); // Ativa o estado de carregamento
     const updateNome = editDespesa.trim() !== "" && editDespesa !== expenses.find((expense) => expense.id === id)?.nomeDespesa ? editDespesa : null;
     const updatedAmount = parseFloat(editAmount) || 0;
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
@@ -130,10 +147,19 @@ const Despesa = () => {
         setEditAmount("");
         setEditDescription("");
         setEditDespesa("");
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       })
       .catch((error) => {
         setMessage({ show: true, text: "Erro ao atualizar despesa!", type: "error" });
         console.error("Erro ao atualizar despesa:", error);
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
+      })
+      .finally(() => {
+        setIsLoadingSave(false); // Desativa o estado de carregamento
       });
   };
 
@@ -150,10 +176,16 @@ const Despesa = () => {
         setConfirmDelete({ show: false, id: null });
         setMessage({ show: true, text: "Despesa excluída com sucesso!", type: "success" });
         console.log(`Despesa ${id} excluída com sucesso!`);
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       })
       .catch((error) => {
         setMessage({ show: true, text: "Erro ao excluir despesa!", type: "error" });
         console.error("Erro ao excluir despesa:", error);
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       });
   };
 
@@ -226,12 +258,15 @@ const Despesa = () => {
         },
       },
       datalabels: {
-        color: "white",
-        anchor: "center",
-        align: "center",
-        formatter: (value, context) => {
-          const expense = filteredExpenses[context.dataIndex];
-          return expense.descDespesa ? `${formatCurrency(value)}\n${expense.descDespesa}` : formatCurrency(value);
+        display: false, // Desativa os rótulos no gráfico
+      },
+      tooltip: {
+        enabled: true, // Mantém os valores visíveis ao passar o mouse
+        callbacks: {
+          label: (context) => {
+            const value = context.raw;
+            return `R$ ${value.toFixed(2).replace(".", ",")}`; // Formata o valor no tooltip
+          },
         },
       },
     },
@@ -269,7 +304,14 @@ const Despesa = () => {
         </button>
       </div>
 
-      <div className="input-group-desp">
+      <div
+        className="input-group-desp"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddExpense(); // Chama a função ao pressionar Enter
+          }
+        }}
+      >
         <input type="text" value={newExpense} onChange={(e) => setNewExpense(e.target.value)} placeholder="Nome da Despesa" />
 
         <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Valor (R$)" />
@@ -283,8 +325,8 @@ const Despesa = () => {
           <option value="true">Fixa</option>
         </select>
 
-        <button className="save-buttonn" onClick={handleAddExpense}>
-          Adicionar
+        <button className="save-buttonn" onClick={handleAddExpense} disabled={isLoading}>
+          {isLoading ? <FaSpinner className="loading-iconnn" /> : "Adicionar Despesa"}
         </button>
       </div>
 

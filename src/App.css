@@ -17,8 +17,8 @@
 .background-login-register-dashboard {
   background-image: url("./assets/startok3.png");
   background-attachment: fixed !important;
-  background-size: cover;
   background-position: center;
+  background-size: cover;
 }
 
 .background-other {

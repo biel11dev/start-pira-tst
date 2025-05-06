@@ -56,3 +56,17 @@ ul li {
   color: #fff;
   cursor: pointer;
 }
+
+.loading-iconnn {
+  animation: spin 1s linear infinite !important; /* Animação de rotação */
+  font-size: 25px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

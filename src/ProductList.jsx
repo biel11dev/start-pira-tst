@@ -51,15 +51,30 @@ const ProductList = () => {
           setPreco("");
           setPrecoCusto("");
           setMessage({ show: true, text: "Produto adicionado com sucesso!", type: "success" });
+
+          // Adicionar timeout para esconder a mensagem após 3 segundos
+          setTimeout(() => {
+            setMessage(null);
+          }, 3000);
         })
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao adicionar produto!", type: "error" });
+
+          // Adicionar timeout para esconder a mensagem após 3 segundos
+          setTimeout(() => {
+            setMessage(null);
+          }, 3000);
         })
         .finally(() => {
           setIsLoading(false); // Desativa o estado de carregamento
         });
     } else {
       setMessage({ show: true, text: "Preencha todos os campos!", type: "error" });
+
+      // Adicionar timeout para esconder a mensagem após 3 segundos
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
     }
   };
 
@@ -92,10 +107,16 @@ const ProductList = () => {
         setConfirmDelete({ show: false, id: null });
         setMessage({ show: true, text: "Produto excluído com sucesso!", type: "success" });
         console.log(`Produto ${id} excluído com sucesso!`);
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       })
       .catch((error) => {
         setMessage({ show: true, text: "Erro ao excluir produto!", type: "error" });
         console.error("Erro ao excluir produto:", error);
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       });
   };
 
@@ -141,10 +162,16 @@ const ProductList = () => {
           setEditingProductData({});
           setMessage({ show: true, text: "Produto atualizado com sucesso!", type: "success" });
           console.log("Produto atualizado:", response.data);
+          setTimeout(() => {
+            setMessage(null);
+          }, 3000);
         })
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao atualizar produto!", type: "error" });
           console.error("Erro ao atualizar produto:", error);
+          setTimeout(() => {
+            setMessage(null);
+          }, 3000);
         });
     }
   };

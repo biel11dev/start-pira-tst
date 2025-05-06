@@ -19,6 +19,7 @@
   justify-content: center; /* Centraliza os módulos */
   gap: 20px; /* Adiciona espaçamento entre os módulos */
   margin-top: 20px;
+  flex-wrap: wrap; /* Permite que os módulos se movam para a linha seguinte se não houver espaço suficiente */
 }
 
 .module {

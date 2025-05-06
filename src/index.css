@@ -4,3 +4,9 @@ textarea {
   color: black !important; /* Define a cor do texto como preta */
   background-color: white; /* Define a cor de fundo como branca */
 }
+
+body {
+  height: 100vh; /* Ajusta a altura para ocupar toda a tela */
+  width: 100%; /* Ajusta a largura para ocupar toda a tela */
+  box-sizing: border-box; /* Inclui padding e border no tamanho total */
+}

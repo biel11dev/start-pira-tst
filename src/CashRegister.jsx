@@ -57,6 +57,9 @@ const CashRegister = () => {
         setBalances([...balances, response.data]);
         setBalance(totalBalance);
         setShowMessage(true);
+        setTimeout(() => {
+          setShowMessage(false);
+        }, 3000);
       })
       .catch((error) => {
         console.error("Erro ao adicionar saldo:", error);
@@ -82,6 +85,10 @@ const CashRegister = () => {
         setCartaofimcaixa((prev) => ({ ...prev, [id]: cartaofimcaixaValue }));
         setDinheirofimcaixa((prev) => ({ ...prev, [id]: dinheirofimcaixaValue }));
         setShowMessage(true);
+
+        setTimeout(() => {
+          setShowMessage(false);
+        }, 3000);
       })
       .catch((error) => {
         console.error("Erro ao atualizar saldo:", error);

@@ -62,6 +62,9 @@ const MachineDetails = () => {
       setSelectedDate(newDate); // Atualiza o estado apenas se a data for válida
     } else {
       setMessage({ text: `Data inválida selecionada: ${event.target.value}`, type: "error" });
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
     }
   };
 
@@ -100,6 +103,9 @@ const MachineDetails = () => {
 
     if (hasReadingToday) {
       setMessage({ text: "Você já adicionou uma leitura para hoje.", type: "error" });
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
       return;
     }
 
@@ -111,9 +117,15 @@ const MachineDetails = () => {
         setAllDailyReadings((prevReadings) => [...prevReadings, response.data]); // Atualiza também o estado com todas as leituras diárias
         setDailyReading("");
         setMessage({ text: "Leitura adicionada com sucesso!", type: "success" });
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       } catch (error) {
         console.error("Erro ao adicionar leitura diária:", error);
         setMessage({ text: "Erro ao adicionar leitura diária.", type: "error" });
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
       }
     }
   };
@@ -129,6 +141,9 @@ const MachineDetails = () => {
             setDailyReadings((prevReadings) => prevReadings.filter((reading) => reading.id !== readingId));
             setAllDailyReadings((prevReadings) => prevReadings.filter((reading) => reading.id !== readingId)); // Atualizar também o estado com todas as leituras diárias
             setMessage({ text: "Leitura excluída com sucesso!", type: "success" });
+            setTimeout(() => {
+              setMessage(null);
+            }, 3000);
           })
           .catch((error) => {
             console.error("Erro ao excluir leitura diária:", error);

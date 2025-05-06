@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { FaSpinner } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import "./Fiado.css";
 import Message from "./Message";
@@ -7,6 +8,7 @@ import Message from "./Message";
 const Fiado = ({ clients, setClients }) => {
   const [newClient, setNewClient] = useState("");
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
+  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +25,7 @@ const Fiado = ({ clients, setClients }) => {
 
   const handleAddClient = () => {
     if (newClient.trim() !== "") {
+      setIsLoading(true); // Ativa o estado de carregamento
       axios
         .post("https://api-start-pira.vercel.app/api/clients", { name: newClient, totalDebt: 0 })
         .then((response) => {
@@ -31,6 +34,9 @@ const Fiado = ({ clients, setClients }) => {
         })
         .catch((error) => {
           console.error("Erro ao adicionar cliente:", error);
+        })
+        .finally(() => {
+          setIsLoading(false); // Desativa o estado de carregamento
         });
     }
   };
@@ -59,10 +65,17 @@ const Fiado = ({ clients, setClients }) => {
   return (
     <div className="fiado-container">
       <h2>Cadastro de Clientes</h2>
-      <div className="input-group">
+      <div
+        className="input-group"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddClient(); // Aciona a função ao pressionar Enter
+          }
+        }}
+      >
         <input type="text" value={newClient} onChange={(e) => setNewClient(e.target.value)} placeholder="Nome do cliente" />
-        <button className="button-add-cli" onClick={handleAddClient}>
-          Adicionar Cliente
+        <button className="button-add-cli" onClick={handleAddClient} disabled={isLoading}>
+          {isLoading ? <FaSpinner className="loading-iconnn" /> : "Adicionar Cliente"}
         </button>
       </div>
       <ul>

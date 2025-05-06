@@ -1,7 +1,9 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { FaSpinner } from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import "./ClientDetails.css";
+import Message from "./Message";
 
 const ClientDetails = ({ clients, setClients }) => {
   const { id } = useParams();
@@ -15,6 +17,9 @@ const ClientDetails = ({ clients, setClients }) => {
   const [editingPayment, setEditingPayment] = useState(null);
   const [editingPurchaseData, setEditingPurchaseData] = useState({});
   const [editingPaymentData, setEditingPaymentData] = useState({});
+  const [message, setMessage] = useState(null);
+  const [loadingAddPurchase, setLoadingAddPurchase] = useState(false); // Estado de carregamento para adicionar compra
+  const [loadingPaidAmount, setLoadingPaidAmount] = useState(false); // Estado de carregamento para registrar pagamento
 
   const fetchClientDetails = () => {
     axios
@@ -47,6 +52,7 @@ const ClientDetails = ({ clients, setClients }) => {
 
   const handleAddPurchase = () => {
     if (selectedProduct && quantity) {
+      setLoadingAddPurchase(true); // Ativa o estado de carregamento
       const product = products.find((p) => p.name === selectedProduct);
       const total = product.value * parseInt(quantity, 10); // Converter quantity para inteiro
       axios
@@ -60,19 +66,35 @@ const ClientDetails = ({ clients, setClients }) => {
               setSelectedProduct("");
               setQuantity("");
               setPurchaseDate(new Date().toISOString().substr(0, 10));
+              setMessage({ type: "success", text: "Compra adicionada com sucesso!" });
+              setTimeout(() => {
+                setMessage(null); // Limpar a mensagem após 3 segundos
+              }, 3000);
             })
             .catch((error) => {
               console.error("Erro ao atualizar totalDebt do cliente:", error);
+              setMessage({ type: "error", text: "Erro ao atualizar totalDebt do cliente." });
+              setTimeout(() => {
+                setMessage(null); // Limpar a mensagem após 3 segundos
+              }, 3000);
             });
         })
         .catch((error) => {
           console.error("Erro ao adicionar compra:", error.response.data);
+          setMessage({ type: "error", text: "Erro ao adicionar compra." });
+          setTimeout(() => {
+            setMessage(null); // Limpar a mensagem após 3 segundos
+          }, 3000);
+        })
+        .finally(() => {
+          setLoadingAddPurchase(false); // Desativa o estado de carregamento
         });
     }
   };
 
   const handlePaidAmount = () => {
     if (paidAmount) {
+      setLoadingPaidAmount(true); // Ativa o estado de carregamento
       const amount = parseFloat(paidAmount);
       axios
         .post("https://api-start-pira.vercel.app/api/payments", { amount, date: new Date().toISOString().substr(0, 10), clientId: client.id })
@@ -83,13 +105,28 @@ const ClientDetails = ({ clients, setClients }) => {
             .then(() => {
               fetchClientDetails(); // Recarregar os detalhes do cliente após registrar o pagamento
               setPaidAmount("");
+              setMessage({ type: "success", text: "Pagamento registrado com sucesso!" });
+              setTimeout(() => {
+                setMessage(null); // Limpar a mensagem após 3 segundos
+              }, 3000);
             })
             .catch((error) => {
               console.error("Erro ao atualizar totalDebt do cliente:", error);
+              setMessage({ type: "error", text: "Erro ao atualizar totalDebt do cliente." });
+              setTimeout(() => {
+                setMessage(null); // Limpar a mensagem após 3 segundos
+              }, 3000);
             });
         })
         .catch((error) => {
           console.error("Erro ao registrar pagamento:", error);
+          setMessage({ type: "error", text: "Erro ao registrar pagamento." });
+          setTimeout(() => {
+            setMessage(null); // Limpar a mensagem após 3 segundos
+          }, 3000);
+        })
+        .finally(() => {
+          setLoadingPaidAmount(false); // Desativa o estado de carregamento
         });
     }
   };
@@ -202,7 +239,14 @@ const ClientDetails = ({ clients, setClients }) => {
     <div className="client-details-container">
       <h2>Detalhes do Cliente: {client.name}</h2>
 
-      <div className="input-group-client">
+      <div
+        className="input-group-client"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddPurchase(); // Aciona a função ao pressionar Enter
+          }
+        }}
+      >
         <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}>
           <option value="">Selecione um produto</option>
           {products.map((product) => (
@@ -213,12 +257,26 @@ const ClientDetails = ({ clients, setClients }) => {
         </select>
         <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" />
         <input className="date-style" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
-        <button onClick={handleAddPurchase}>Adicionar Compra</button>
+        <button onClick={handleAddPurchase} disabled={loadingAddPurchase}>
+          {loadingAddPurchase ? <FaSpinner className="loading-iconnn" /> : "Adicionar Compra"}
+        </button>
       </div>
 
       <div className="input-group-client">
-        <input type="number" value={paidAmount} onChange={(e) => setPaidAmount(e.target.value)} placeholder="Valor Pago" />
-        <button onClick={handlePaidAmount}>Registrar Pagamento</button>
+        <input
+          type="number"
+          value={paidAmount}
+          onChange={(e) => setPaidAmount(e.target.value)}
+          placeholder="Valor Pago"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handlePaidAmount(); // Chama a função ao pressionar Enter
+            }
+          }}
+        />{" "}
+        <button onClick={handlePaidAmount} disabled={loadingPaidAmount}>
+          {loadingPaidAmount ? <FaSpinner className="loading-iconnn" /> : "Registrar Pagamento"}
+        </button>{" "}
       </div>
 
       {/* Seção de Compras */}
@@ -293,6 +351,7 @@ const ClientDetails = ({ clients, setClients }) => {
       </div>
 
       <h3 className="section-title">Valor Devedor: {formatCurrency(client.totalDebt)}</h3>
+      {message && <Message message={message.text} type={message.type} onClose={() => setMessage(null)} />}
     </div>
   );
 };
