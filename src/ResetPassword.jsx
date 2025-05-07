@@ -12,15 +12,17 @@ const ResetPassword = () => {
   const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const token = searchParams.get("token");
+  const token = searchParams.get("token") || localStorage.getItem("authToken");
 
   useEffect(() => {
     const validateToken = async () => {
       try {
         await axios.post("https://api-start-pira.vercel.app/api/validate-token", { token });
+        localStorage.setItem("authToken", token); // Armazena o token no localStorage
       } catch (error) {
         console.error("Token inválido ou expirado:", error);
-        navigate("/"); // Redireciona para a página inicial se o token for inválido
+        localStorage.removeItem("authToken"); // Remove o token inválido
+        navigate("/"); // Redireciona para a página inicial
       }
     };
 

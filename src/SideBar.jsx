@@ -3,7 +3,7 @@ import { FaBox, FaCashRegister, FaClock, FaCogs, FaMoneyBillWave, FaUserFriends,
 import { Link } from "react-router-dom";
 import "./SideBar.css";
 
-const Sidebar = ({ permissions }) => {
+const Sidebar = ({ permissions = {} }) => {
   const modules = [
     { name: "Caixa", path: "/cash-register", key: "caixa", icon: <FaCashRegister className="icon" /> },
     { name: "Produtos", path: "/products", key: "produtos", icon: <FaBox className="icon" /> },
@@ -28,7 +28,7 @@ const Sidebar = ({ permissions }) => {
         <ul className="sidebar-menu">
           {modules.map(
             (module) =>
-              permissions[module.key] && (
+              permissions[module.key] && ( // Verifica se o usuário tem permissão para o módulo
                 <li key={module.key}>
                   <Link to={module.path}>
                     {module.icon}

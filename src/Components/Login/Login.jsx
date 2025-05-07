@@ -1,29 +1,31 @@
 import axios from "axios";
-import React, { useState } from "react";
-import { FaLock, FaSpinner, FaUser } from "react-icons/fa"; // Importar ícone de carregamento
+import React, { useContext, useState } from "react";
+import { FaLock, FaSpinner, FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../AuthContext"; // Importa o contexto de autenticação
 import "./Login.css";
 
-const Login = ({ setIsAuthenticated, setPermissions }) => {
+const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Estado para carregar animação
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext); // Obtém a função de login do contexto
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true); // Ativa o estado de carregamento
+    setIsLoading(true);
 
     try {
       const response = await axios.post("https://api-start-pira.vercel.app/api/login", { username, password });
-      localStorage.setItem("token", response.data.token);
-      setIsAuthenticated(true);
-      setPermissions(response.data.permissions); // Armazena as permissões no estado pai
+      const { token, permissions } = response.data;
+
+      login(token, permissions); // Chama a função de login do contexto
       navigate("/dashboard");
     } catch (error) {
       alert("Credenciais inválidas");
     } finally {
-      setIsLoading(false); // Desativa o estado de carregamento ao finalizar a requisição
+      setIsLoading(false);
     }
   };
 
@@ -48,7 +50,6 @@ const Login = ({ setIsAuthenticated, setPermissions }) => {
           </label>
         </div>
 
-        {/* Botão com efeito de carregamento */}
         <button type="submit" className="btn-primary-btn-block" disabled={isLoading}>
           {isLoading ? <FaSpinner className="loading-icon" /> : "Entrar"}
         </button>

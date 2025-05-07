@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 
-const Dashboard = ({ permissions }) => {
+const Dashboard = ({ permissions = {} }) => {
   const navigate = useNavigate();
 
   const modules = [

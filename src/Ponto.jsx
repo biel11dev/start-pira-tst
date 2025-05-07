@@ -49,6 +49,7 @@ const Ponto = () => {
     } catch (error) {
       console.error("Erro ao buscar funcionários ou pontos diários:", error);
       setMessage("Erro ao carregar dados.");
+      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     } finally {
       setLoading(false);
     }
@@ -102,9 +103,11 @@ const Ponto = () => {
       });
 
       setMessage("Horários atualizados com sucesso!");
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Erro ao atualizar horários:", error);
       setMessage("Erro ao atualizar horários.");
+      setTimeout(() => setMessage(""), 3000);
     } finally {
       setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     }
@@ -157,9 +160,11 @@ const Ponto = () => {
       setEmployees([...employees, response.data]);
       setNewEmployeeName("");
       setMessage("Funcionário adicionado com sucesso!");
+      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     } catch (error) {
       console.error("Erro ao adicionar funcionário:", error);
       setMessage("Erro ao adicionar funcionário.");
+      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     } finally {
       setTimeout(() => setMessage(""), 3000);
     }
@@ -180,9 +185,11 @@ const Ponto = () => {
           // Atualiza o estado local
           setEmployees((prevEmployees) => prevEmployees.filter((employee) => employee.id !== id));
           setMessage({ text: "Funcionário removido com sucesso!", type: "success" });
+          setTimeout(() => setMessage(""), 3000);
         } catch (error) {
           console.error("Erro ao remover funcionário:", error);
           setMessage({ text: "Erro ao remover funcionário.", type: "error" });
+          setTimeout(() => setMessage(""), 3000);
         }
       },
       onClose: () => setMessage(null), // Fecha o modal de confirmação
