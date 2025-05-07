@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error("Token inválido ou expirado:", error);
           localStorage.removeItem("authToken");
+          localStorage.removeItem("permissions");
           setAuth({ isAuthenticated: false, user: null, token: null });
           navigate("/");
         }
