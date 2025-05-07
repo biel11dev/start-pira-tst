@@ -40,11 +40,13 @@ function App() {
   const isLoginRegisterDashboard = ["/", "/dashboard"].includes(location.pathname);
   const isLoginRoute = location.pathname === "/";
   const isResetRoute = location.pathname.includes("/reset-password");
+  const isForgotRoute = location.pathname.includes("/forgot-password");
 
   return (
     <div className={`App ${isLoginRegisterDashboard ? "background-login-register-dashboard" : "background-other"}`}>
       {isLoginRegisterDashboard && <h1 className="app-title">Start Pira</h1>} {/* Exibe o título apenas nas rotas especificadas */}
-      {!isLoginRoute && !isResetRoute && auth.isAuthenticated && <Sidebar permissions={auth.permissions} />} {/* Renderiza a Sidebar apenas se o usuário estiver autenticado */}
+      {!isLoginRoute && !isResetRoute && !isForgotRoute && auth.isAuthenticated && <Sidebar permissions={auth.permissions} />}{" "}
+      {/* Renderiza a Sidebar apenas se o usuário estiver autenticado */}
       <div className="content">
         <Routes>
           <Route path="/" element={<Login permissions={auth.permissions} />} />
