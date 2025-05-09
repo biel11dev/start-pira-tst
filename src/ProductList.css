@@ -309,6 +309,30 @@ ul li span:not(:nth-last-child(-n + 2))::after {
   color: white;
 }
 
+.search-bar {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.search-bar input {
+  width: 300px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s ease;
+  text-shadow: none;
+}
+
+.search-bar input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
 .loading-iconn {
   animation: spin 1s linear infinite !important; /* Animação de rotação */
   font-size: 20px;

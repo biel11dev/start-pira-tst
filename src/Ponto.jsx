@@ -5,6 +5,9 @@ import "./Ponto.css";
 
 const Ponto = () => {
   const [employees, setEmployees] = useState([]);
+  const [weeklyData, setWeeklyData] = useState([]); // Dados semanais
+  const [monthlyData, setMonthlyData] = useState([]); // Dados mensais
+  const [selectedTab, setSelectedTab] = useState("daily"); // Aba selecionada: "daily", "weekly" ou "monthly"
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newCargo, setNewCargo] = useState("");
   const [message, setMessage] = useState("");
@@ -55,10 +58,95 @@ const Ponto = () => {
     }
   };
 
-  // Carregar os dados ao montar o componente
+  const getWeekRange = (date) => {
+    const currentDate = new Date(date);
+    const dayOfWeek = currentDate.getDay();
+    const startOffset = dayOfWeek === 0 ? -6 : 2 - dayOfWeek; // Ajusta para terça-feira
+    const startDate = new Date(currentDate);
+    startDate.setDate(currentDate.getDate() + startOffset);
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 5); // Domingo
+
+    return { startDate, endDate };
+  };
+
+  const fetchWeeklyData = async () => {
+    setLoading(true);
+    const { startDate, endDate } = getWeekRange(new Date());
+    const startDateStr = startDate.toISOString().split("T")[0];
+    const endDateStr = endDate.toISOString().split("T")[0];
+
+    try {
+      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
+      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?startDate=${startDateStr}&endDate=${endDateStr}`);
+
+      const dailyPointsData = dailyPointsResponse.data;
+
+      const updatedWeeklyData = employeesResponse.data.map((employee) => {
+        const points = dailyPointsData.filter((point) => point.employeeId === employee.id);
+        return {
+          ...employee,
+          points,
+        };
+      });
+
+      setWeeklyData(updatedWeeklyData);
+    } catch (error) {
+      console.error("Erro ao buscar dados semanais:", error);
+      setMessage("Erro ao carregar dados semanais.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMonthlyData = async () => {
+    setLoading(true);
+    const currentMonth = new Date().toISOString().slice(0, 7); // Formato YYYY-MM
+    try {
+      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
+      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?month=${currentMonth}`);
+
+      const dailyPointsData = dailyPointsResponse.data;
+
+      const updatedMonthlyData = employeesResponse.data.map((employee) => {
+        const points = dailyPointsData.filter((point) => point.employeeId === employee.id);
+
+        // Calcula as horas extras/faltantes
+        const totalExtraOrMissingHours = points.reduce((total, point) => {
+          const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+          const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
+          const extraOrMissing = calculateExtraOrMissingHours(entry, exit, employee.carga || 8);
+          const [hours, minutes] = extraOrMissing
+            .replace(/[^\d\-+]/g, "")
+            .split("h")
+            .map(Number);
+          return total + (hours * 60 + (minutes || 0)) * (extraOrMissing.startsWith("-") ? -1 : 1);
+        }, 0);
+
+        return {
+          ...employee,
+          totalExtraOrMissingHours,
+        };
+      });
+
+      setMonthlyData(updatedMonthlyData);
+    } catch (error) {
+      console.error("Erro ao buscar dados mensais:", error);
+      setMessage("Erro ao carregar dados mensais.");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    fetchEmployees(selectedDate); // Busca os registros sempre que a data for alterada
-  }, [selectedDate]);
+    if (selectedTab === "weekly") {
+      fetchWeeklyData();
+    } else if (selectedTab === "monthly") {
+      fetchMonthlyData();
+    } else {
+      fetchEmployees(selectedDate); // Mantém a lógica diária
+    }
+  }, [selectedTab, selectedDate]);
 
   const handleRegisterTime = async (id) => {
     try {
@@ -283,6 +371,18 @@ const Ponto = () => {
         <button onClick={handleNextMonth}>&gt;&gt; Mês</button>
       </div>
 
+      <div className="tabs">
+        <button onClick={() => setSelectedTab("daily")} className={selectedTab === "daily" ? "active" : ""}>
+          Visualização Diária
+        </button>
+        <button onClick={() => setSelectedTab("weekly")} className={selectedTab === "weekly" ? "active" : ""}>
+          Visualização Semanal
+        </button>
+        <button onClick={() => setSelectedTab("monthly")} className={selectedTab === "monthly" ? "active" : ""}>
+          Visualização Mensal
+        </button>
+      </div>
+
       <div className="add-employee">
         <input type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Nome do Empregado" />
         <input type="text" value={newCargo} onChange={(e) => setNewCargo(e.target.value)} placeholder="Cargo" />
@@ -292,7 +392,9 @@ const Ponto = () => {
       <table className="ponto-table">
         <thead>
           <tr>
+            <th>Data</th>
             <th>Empregado</th>
+            <th>Cargo</th>
             <th>Entrada</th>
             <th>Saída</th>
             <th>Portão Aberto</th>
@@ -306,7 +408,15 @@ const Ponto = () => {
         <tbody>
           {employees.map((employee) => (
             <tr key={employee.id}>
+              <td className="td-funcionario">
+                {new Date(selectedDate).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </td>
               <td className="td-funcionario">{employee.name}</td>
+              <td className="td-funcionario">{employee.position || "N/A"}</td>
               <td>
                 <input
                   className="input-funcionario"

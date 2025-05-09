@@ -20,6 +20,8 @@ const ProductList = () => {
   const [newUnit, setNewUnit] = useState(""); // Campo para adicionar nova unidade
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false); // Controle do pop-up
   const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
+  const [searchTerm, setSearchTerm] = useState(""); // Estado para o termo de pesquisa
+  const [filteredProducts, setFilteredProducts] = useState([]); // Estado para os produtos filtrados
 
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
@@ -27,12 +29,21 @@ const ProductList = () => {
       .get("https://api-start-pira.vercel.app/api/products")
       .then((response) => {
         setProducts(response.data);
+        setFilteredProducts(response.data); // Inicializa os produtos filtrados com todos os produtos
         console.log("Produtos carregados:", response.data);
       })
       .catch((error) => {
         console.error("Erro ao buscar produtos:", error);
       });
   }, []);
+
+  // Atualiza os produtos filtrados sempre que o termo de pesquisa ou a lista de produtos mudar
+  useEffect(() => {
+    const filtered = products.filter(
+      (product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()) // Filtra os produtos pelo nome
+    );
+    setFilteredProducts(filtered);
+  }, [searchTerm, products]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -180,6 +191,16 @@ const ProductList = () => {
     <div className="product-list-container">
       <h2 className="fixed-title">Lista de Produtos</h2>
       {/* Pop-up para adicionar nova unidade */}
+
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Pesquisar produtos..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)} // Atualiza o termo de pesquisa
+        />
+      </div>
+
       {isUnitModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -232,7 +253,7 @@ const ProductList = () => {
 
       {/* Lista de produtos */}
       <ul>
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <li className="lista-produtos" key={product.id}>
             {editingProduct === product.id ? (
               <>

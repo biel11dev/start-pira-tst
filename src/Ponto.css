@@ -6,6 +6,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: #0a0303;
+  background-position: center;
 }
 
 .ponto-container h2 {
@@ -23,8 +24,10 @@
 }
 
 .ponto-table {
-  width: 100%;
+  width: 100vh;
   border-collapse: collapse;
+  margin: 0 auto; /* <-- essa linha centraliza */
+  margin-left: -120px !important;
 }
 
 .ponto-table th,
