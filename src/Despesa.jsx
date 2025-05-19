@@ -2,7 +2,7 @@ import axios from "axios";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { addDays, addMonths, endOfYear, format, parseISO, startOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { FaSpinner } from "react-icons/fa";
 import * as XLSX from "xlsx";
@@ -26,6 +26,12 @@ const Despesa = () => {
   const [expandedGroups, setExpandedGroups] = useState({});
   const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
   const [isLoadingSave, setIsLoadingSave] = useState(false); // Estado de carregamento
+  const [expenseOptions, setExpenseOptions] = useState([]);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+  const [isExpenseModalAdd, setIsExpenseModalAdd] = useState(false);
+  const [newExpenseOption, setNewExpenseOption] = useState("");
+  const [confirmAddOption, setConfirmAddOption] = useState(false);
+  const [confirmDeleteOption, setConfirmDeleteOption] = useState({ show: false, id: null });
 
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
@@ -38,6 +44,13 @@ const Despesa = () => {
       .catch((error) => {
         console.error("Erro ao buscar despesas:", error);
       });
+  }, []);
+
+  useEffect(() => {
+    axios
+      .get("https://api-start-pira.vercel.app/api/cadastrodesp")
+      .then((response) => setExpenseOptions(response.data))
+      .catch((error) => console.error("Erro ao buscar tipos de despesas:", error));
   }, []);
 
   const formatCurrency = (value) => {
@@ -118,6 +131,29 @@ const Despesa = () => {
         setMessage(null);
       }, 3000);
     }
+  };
+
+  const handleAddExpenseOption = () => {
+    if (newExpenseOption.trim() !== "" && !expenseOptions.some((opt) => opt.nomeDespesa === newExpenseOption)) {
+      axios.post("https://api-start-pira.vercel.app/api/cadastrodesp", { nomeDespesa: newExpenseOption }).then((response) => {
+        setExpenseOptions([...expenseOptions, response.data]);
+        setNewExpenseOption("");
+        setIsExpenseModalAdd(false);
+        setMessage({ show: true, text: "Nova Despesa cadastrada com sucesso!", type: "success" });
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
+      });
+    }
+  };
+
+  const handleDeleteExpenseOption = (id) => {
+    axios.delete(`https://api-start-pira.vercel.app/api/cadastrodesp/${id}`).then(() => {
+      setExpenseOptions(expenseOptions.filter((opt) => opt.id !== id));
+      if (newExpense && expenseOptions.find((opt) => opt.id === id)?.nomeDespesa === newExpense) {
+        setNewExpense("");
+      }
+    });
   };
 
   const handleEditExpense = (expense) => {
@@ -312,19 +348,46 @@ const Despesa = () => {
           }
         }}
       >
-        <input type="text" value={newExpense} onChange={(e) => setNewExpense(e.target.value)} placeholder="Nome da Despesa" />
+        {isExpenseModalAdd && (
+          <div className="modal">
+            <div className="modal-content">
+              <h3 className="texto-add-unidade">Adicionar Nova Despesa</h3>
+              <input className="texto-unidade" type="text" value={newExpenseOption} onChange={(e) => setNewExpenseOption(e.target.value)} placeholder="Digite a nova despesa" />
+              <div className="modal-buttons">
+                <button onClick={handleAddExpenseOption}>Confirmar</button>
+                <button onClick={() => setIsExpenseModalAdd(false)}>Cancelar</button>
+              </div>
+            </div>
+          </div>
+        )}
 
+        <div className="custom-selectt" onMouseEnter={() => setIsExpenseModalOpen(true)} onMouseLeave={() => setIsExpenseModalOpen(false)}>
+          <div className="selected-unitt">{newExpense || "Selecione a despesa"}</div>
+          {isExpenseModalOpen && (
+            <ul className="unit-dropdown">
+              {expenseOptions.map((option) => (
+                <li key={option.id} className="unit-item">
+                  <span className="unit-name" onClick={() => setNewExpense(option.nomeDespesa)}>
+                    {option.nomeDespesa}
+                  </span>
+                  <button className="delete-unit-button" onClick={() => setConfirmDeleteOption({ show: true, id: option.id })} title="Excluir despesa" disabled={isLoading}>
+                    🗑️
+                  </button>
+                </li>
+              ))}
+              <li className="add-unit-option" onClick={() => setIsExpenseModalAdd(true)}>
+                + Adicionar nova unidade
+              </li>
+            </ul>
+          )}
+        </div>
         <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Valor (R$)" />
-
         <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" />
-
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-
         <select value={isFixed} onChange={(e) => setIsFixed(e.target.value === "true")}>
           <option value="false">Variável</option>
           <option value="true">Fixa</option>
         </select>
-
         <button className="save-buttonn" onClick={handleAddExpense} disabled={isLoading}>
           {isLoading ? <FaSpinner className="loading-iconnn" /> : "Adicionar Despesa"}
         </button>
@@ -422,6 +485,30 @@ const Despesa = () => {
       {confirmDelete.show && <Message message="Tem certeza que deseja excluir esta despesa?" type="warning" onClose={cancelDeleteExpense} onConfirm={confirmDeleteExpense} />}
 
       {message && <Message message={message.text} type={message.type} onClose={() => setMessage(null)} />}
+
+      {confirmAddOption && (
+        <Message
+          message="Deseja realmente adicionar esta despesa?"
+          type="warning"
+          onClose={() => setConfirmAddOption(false)}
+          onConfirm={() => {
+            handleAddExpenseOption();
+            setConfirmAddOption(false);
+          }}
+        />
+      )}
+
+      {confirmDeleteOption.show && (
+        <Message
+          message="Deseja realmente excluir esta despesa?"
+          type="warning"
+          onClose={() => setConfirmDeleteOption({ show: false, id: null })}
+          onConfirm={() => {
+            handleDeleteExpenseOption(confirmDeleteOption.id);
+            setConfirmDeleteOption({ show: false, id: null });
+          }}
+        />
+      )}
     </div>
   );
 };

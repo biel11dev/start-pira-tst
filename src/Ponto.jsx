@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Message from "./Message";
 import "./Ponto.css";
 
@@ -153,16 +153,25 @@ const Ponto = () => {
       const updatedData = tempValues[id]; // Obtém os valores temporários para o funcionário
       if (!updatedData) return; // Se não houver valores temporários, não faz nada
 
-      const currentDate = new Date().toISOString().split("T")[0]; // Data atual no formato YYYY-MM-DD
+      const currentDate = selectedDate; // Usa a data selecionada na tela
+
+      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?employeeId=${id}&date=${currentDate}`);
+      const dailyPoints = dailyPointsResponse.data;
+      const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
 
       const dataToUpdate = {
         ...updatedData, // Inclui os valores de entrada, saída e portão aberto
         date: currentDate, // Inclui a data para garantir que o ponto seja atualizado corretamente
+        id, // Inclui o ID do funcionário
       };
 
-      // Atualiza o ponto no banco de dados
-      await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${id}`, dataToUpdate);
-
+      if (dailyPoint && dailyPoint.id) {
+        // Atualiza o registro existente
+        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${dailyPoint.id}`, dataToUpdate);
+      } else {
+        // Cria um novo registro para a data selecionada
+        await axios.post(`https://api-start-pira.vercel.app/api/daily-points`, dataToUpdate);
+      }
       // Atualiza o estado local
       setEmployees((prev) =>
         prev.map((employee) => {
@@ -189,12 +198,11 @@ const Ponto = () => {
         const { [id]: _, ...rest } = prev;
         return rest;
       });
-
-      setMessage("Horários atualizados com sucesso!");
-      setTimeout(() => setMessage(""), 3000);
+      setMessage({ show: true, text: "Registro de ponto atualizado com sucesso!", type: "success" });
+      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     } catch (error) {
       console.error("Erro ao atualizar horários:", error);
-      setMessage("Erro ao atualizar horários.");
+      setMessage({ show: true, text: "Falha ao atualizar registro de ponto!", type: "error" });
       setTimeout(() => setMessage(""), 3000);
     } finally {
       setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
@@ -357,6 +365,13 @@ const Ponto = () => {
     return `${diffMinutes}m`;
   };
 
+  // Função utilitária para parsear a data ISO corretamente (ignora timezone)
+  const parseISODate = (isoString) => {
+    // Força a data como local, sem considerar o fuso horário UTC
+    const [year, month, day] = isoString.split("T")[0].split("-");
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  };
+
   return (
     <div className="ponto-container">
       <h2 className="nome-ponto">Gerenciamento de Ponto</h2>
@@ -409,7 +424,7 @@ const Ponto = () => {
           {employees.map((employee) => (
             <tr key={employee.id}>
               <td className="td-funcionario">
-                {new Date(selectedDate).toLocaleDateString("pt-BR", {
+                {parseISODate(selectedDate).toLocaleDateString("pt-BR", {
                   day: "2-digit",
                   month: "2-digit",
                   year: "numeric",

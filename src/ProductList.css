@@ -167,6 +167,7 @@ ul li span:not(:nth-last-child(-n + 2))::after {
   background-color: #fff;
   cursor: pointer;
   margin-top: -7px;
+  height: 40px;
 }
 
 .selected-unit {
@@ -174,6 +175,8 @@ ul li span:not(:nth-last-child(-n + 2))::after {
   font-size: 14px;
   color: #333;
   text-shadow: none;
+  height: 40px;
+  margin-top: -2px;
 }
 
 .unit-select {
