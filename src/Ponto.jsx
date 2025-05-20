@@ -71,11 +71,13 @@ const Ponto = () => {
     return { startDate, endDate };
   };
 
-  const fetchWeeklyData = async () => {
+  const fetchWeeklyData = async (dateRef) => {
     setLoading(true);
-    const { startDate, endDate } = getWeekRange(new Date());
-    const startDateStr = startDate.toISOString().split("T")[0];
-    const endDateStr = endDate.toISOString().split("T")[0];
+    const { startDate, endDate } = getWeekRange(dateRef || new Date());
+    // Corrige o fuso horário para evitar adiantar um dia
+    const pad = (n) => n.toString().padStart(2, "0");
+    const startDateStr = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`;
+    const endDateStr = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
 
     try {
       const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
@@ -84,7 +86,10 @@ const Ponto = () => {
       const dailyPointsData = dailyPointsResponse.data;
 
       const updatedWeeklyData = employeesResponse.data.map((employee) => {
-        const points = dailyPointsData.filter((point) => point.employeeId === employee.id);
+        // Filtra pontos do funcionário E dentro do range da semana
+        const points = dailyPointsData.filter((point) => {
+          return point.employeeId === employee.id && point.date >= startDateStr && point.date <= endDateStr;
+        });
         return {
           ...employee,
           points,
@@ -100,9 +105,9 @@ const Ponto = () => {
     }
   };
 
-  const fetchMonthlyData = async () => {
+  const fetchMonthlyData = async (dateRef) => {
     setLoading(true);
-    const currentMonth = new Date().toISOString().slice(0, 7); // Formato YYYY-MM
+    const currentMonth = (dateRef || new Date()).toISOString().slice(0, 7); // Formato YYYY-MM
     try {
       const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
       const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?month=${currentMonth}`);
@@ -110,7 +115,8 @@ const Ponto = () => {
       const dailyPointsData = dailyPointsResponse.data;
 
       const updatedMonthlyData = employeesResponse.data.map((employee) => {
-        const points = dailyPointsData.filter((point) => point.employeeId === employee.id);
+        // Filtra pontos do funcionário E do mês selecionado
+        const points = dailyPointsData.filter((point) => point.employeeId === employee.id && point.date.startsWith(currentMonth));
 
         // Calcula as horas extras/faltantes
         const totalExtraOrMissingHours = points.reduce((total, point) => {
@@ -126,6 +132,7 @@ const Ponto = () => {
 
         return {
           ...employee,
+          points,
           totalExtraOrMissingHours,
         };
       });
@@ -140,9 +147,9 @@ const Ponto = () => {
   };
   useEffect(() => {
     if (selectedTab === "weekly") {
-      fetchWeeklyData();
+      fetchWeeklyData(new Date(selectedDate));
     } else if (selectedTab === "monthly") {
-      fetchMonthlyData();
+      fetchMonthlyData(new Date(selectedDate));
     } else {
       fetchEmployees(selectedDate); // Mantém a lógica diária
     }
@@ -155,14 +162,15 @@ const Ponto = () => {
 
       const currentDate = selectedDate; // Usa a data selecionada na tela
 
-      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?employeeId=${id}&date=${currentDate}`);
+      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points/${id}?date=${currentDate}`);
+
       const dailyPoints = dailyPointsResponse.data;
       const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
 
       const dataToUpdate = {
         ...updatedData, // Inclui os valores de entrada, saída e portão aberto
         date: currentDate, // Inclui a data para garantir que o ponto seja atualizado corretamente
-        id, // Inclui o ID do funcionário
+        employeeId: id, // Inclui o ID do funcionário
       };
 
       if (dailyPoint && dailyPoint.id) {
@@ -203,7 +211,6 @@ const Ponto = () => {
     } catch (error) {
       console.error("Erro ao atualizar horários:", error);
       setMessage({ show: true, text: "Falha ao atualizar registro de ponto!", type: "error" });
-      setTimeout(() => setMessage(""), 3000);
     } finally {
       setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     }
@@ -255,7 +262,7 @@ const Ponto = () => {
       // Atualiza o estado local
       setEmployees([...employees, response.data]);
       setNewEmployeeName("");
-      setMessage("Funcionário adicionado com sucesso!");
+      setMessage({ show: true, text: "Funcionário adicioado com sucesso", type: "success" });
       setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
     } catch (error) {
       console.error("Erro ao adicionar funcionário:", error);
@@ -290,6 +297,37 @@ const Ponto = () => {
       },
       onClose: () => setMessage(null), // Fecha o modal de confirmação
     });
+  };
+
+  const handleDeleteDailyPoint = async (employeeId, date) => {
+    try {
+      const currentDate = new Date(date);
+      // Busca o registro de daily-point para o funcionário e data informados
+      const response = await axios.get(`https://api-start-pira.vercel.app/api/daily-points/${employeeId}?employeeId=${employeeId}&date=${currentDate.toISOString().split("T")[0]}`);
+      const dailyPoints = response.data;
+      const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
+
+      if (dailyPoint && dailyPoint.id) {
+        await axios.delete(`https://api-start-pira.vercel.app/api/daily-points/${dailyPoint.id}`);
+        setMessage({ text: "Registro de ponto removido com sucesso!", type: "success" });
+        // Atualiza os dados após remoção
+        if (selectedTab === "weekly") {
+          fetchWeeklyData();
+        } else if (selectedTab === "monthly") {
+          fetchMonthlyData();
+        } else {
+          fetchEmployees(selectedDate);
+        }
+      } else {
+        setMessage({ text: "Registro de ponto não encontrado.", type: "error" });
+      }
+    } catch (error) {
+      console.error("Erro ao remover registro de ponto:", error);
+      console.error("Dados enviados:", { employeeId, date });
+      setMessage({ text: "Erro ao remover registro de ponto.", type: "error" });
+    } finally {
+      setTimeout(() => setMessage(""), 3000);
+    }
   };
 
   const handleUpdateEmployee = async (id, updatedData) => {
@@ -372,6 +410,16 @@ const Ponto = () => {
     return new Date(Number(year), Number(month) - 1, Number(day));
   };
 
+  const parseHourStringToMinutes = (str) => {
+    if (!str) return 0;
+    const match = str.match(/([+-]?)(\d+)h\s*(\d+)m/);
+    if (!match) return 0;
+    const sign = match[1] === "-" ? -1 : 1;
+    const hours = parseInt(match[2], 10);
+    const minutes = parseInt(match[3], 10);
+    return sign * (hours * 60 + minutes);
+  };
+
   return (
     <div className="ponto-container">
       <h2 className="nome-ponto">Gerenciamento de Ponto</h2>
@@ -397,6 +445,63 @@ const Ponto = () => {
           Visualização Mensal
         </button>
       </div>
+      {selectedTab === "weekly" && (
+        <div className="week-tabs" style={{ margin: "16px 0", display: "flex", gap: 8 }}>
+          {(() => {
+            // Calcula as semanas do mês selecionado, começando sempre na terça-feira
+            const date = new Date(selectedDate);
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const lastDay = new Date(year, month + 1, 0);
+            const weeks = [];
+            let current = new Date(year, month, 1);
+
+            // Avança até a primeira terça-feira do mês
+            while (current.getDay() !== 2) {
+              current.setDate(current.getDate() + 1);
+              if (current > lastDay) break;
+            }
+
+            // Monta as semanas a partir de cada terça-feira
+            while (current <= lastDay) {
+              const start = new Date(current);
+              const end = new Date(start);
+              end.setDate(start.getDate() + 5); // terça a domingo
+              if (end > lastDay) end.setDate(lastDay.getDate());
+              weeks.push({ start: new Date(start), end: new Date(end) });
+              current.setDate(current.getDate() + 7);
+            }
+
+            return weeks.map((week, idx) => {
+              const label = `${week.start.toLocaleDateString("pt-BR")} - ${week.end.toLocaleDateString("pt-BR")}`;
+              // Corrigido: ativo se selectedDate está entre start e end da semana
+              const selected = new Date(selectedDate);
+              selected.setHours(0, 0, 0, 0);
+              const isActive = selected >= week.start && selected <= week.end;
+              return (
+                <button
+                  key={idx}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 4,
+                    border: "none",
+                    background: isActive ? "#003f7f" : "#0056b3",
+                    color: "#fff",
+                    fontWeight: isActive ? "bold" : "normal",
+                    cursor: "pointer",
+                    opacity: 1,
+                    outline: isActive ? "2px solid #fff" : "none",
+                    transition: "opacity 0.2s",
+                  }}
+                  onClick={() => setSelectedDate(week.start.toISOString().split("T")[0])}
+                >
+                  {label}
+                </button>
+              );
+            });
+          })()}
+        </div>
+      )}
 
       <div className="add-employee">
         <input type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Nome do Empregado" />
@@ -404,6 +509,7 @@ const Ponto = () => {
 
         <button onClick={handleAddEmployee}>Adicionar Empregado</button>
       </div>
+
       <table className="ponto-table">
         <thead>
           <tr>
@@ -421,83 +527,342 @@ const Ponto = () => {
           </tr>
         </thead>
         <tbody>
-          {employees.map((employee) => (
-            <tr key={employee.id}>
-              <td className="td-funcionario">
-                {parseISODate(selectedDate).toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </td>
-              <td className="td-funcionario">{employee.name}</td>
-              <td className="td-funcionario">{employee.position || "N/A"}</td>
-              <td>
-                <input
-                  className="input-funcionario"
-                  type="time"
-                  value={tempValues[employee.id]?.entry || employee.entry}
-                  onChange={(e) =>
-                    setTempValues((prev) => ({
-                      ...prev,
-                      [employee.id]: { ...prev[employee.id], entry: e.target.value },
-                    }))
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  className="input-funcionario"
-                  type="time"
-                  value={tempValues[employee.id]?.exit || employee.exit}
-                  onChange={(e) =>
-                    setTempValues((prev) => ({
-                      ...prev,
-                      [employee.id]: { ...prev[employee.id], exit: e.target.value },
-                    }))
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  className="input-funcionario"
-                  type="time"
-                  value={tempValues[employee.id]?.gateOpen || employee.gateOpen}
-                  onChange={(e) =>
-                    setTempValues((prev) => ({
-                      ...prev,
-                      [employee.id]: { ...prev[employee.id], gateOpen: e.target.value },
-                    }))
-                  }
-                />
-              </td>
-              <td>
-                <input
-                  className="input-funcionario"
-                  type="number"
-                  value={employee.carga || 8}
-                  onChange={(e) =>
-                    handleUpdateEmployee(employee.id, {
-                      carga: parseInt(e.target.value),
-                    })
-                  }
-                  min="1"
-                  max="24"
-                />
-              </td>
-              <td className="td-funcionario">{calculateWorkedHours(employee.entry, employee.exit)}</td>
-              <td className="td-funcionario">{calculateExtraOrMissingHours(employee.entry, employee.exit, employee.carga)}</td>
-              <td className="td-funcionario">{calculateGateOpenTime(employee.entry, employee.gateOpen)}</td>
-              <td>
-                <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
-                  Atualizar
-                </button>
-                <button className="td-funcionario" onClick={() => handleRemoveEmployee(employee.id)}>
-                  Excluir
-                </button>
-              </td>
-            </tr>
-          ))}
+          {selectedTab === "daily" &&
+            employees.map((employee) => (
+              <tr key={employee.id}>
+                <td className="td-funcionario">
+                  {parseISODate(selectedDate).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </td>
+                <td className="td-funcionario">{employee.name}</td>
+                <td className="td-funcionario">{employee.position || "N/A"}</td>
+                <td>
+                  <input
+                    className="input-funcionario"
+                    type="time"
+                    value={tempValues[employee.id]?.entry || employee.entry}
+                    onChange={(e) =>
+                      setTempValues((prev) => ({
+                        ...prev,
+                        [employee.id]: { ...prev[employee.id], entry: e.target.value },
+                      }))
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input-funcionario"
+                    type="time"
+                    value={tempValues[employee.id]?.exit || employee.exit}
+                    onChange={(e) =>
+                      setTempValues((prev) => ({
+                        ...prev,
+                        [employee.id]: { ...prev[employee.id], exit: e.target.value },
+                      }))
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input-funcionario"
+                    type="time"
+                    value={tempValues[employee.id]?.gateOpen || employee.gateOpen}
+                    onChange={(e) =>
+                      setTempValues((prev) => ({
+                        ...prev,
+                        [employee.id]: { ...prev[employee.id], gateOpen: e.target.value },
+                      }))
+                    }
+                  />
+                </td>
+                <td>
+                  <input
+                    className="input-funcionario"
+                    type="number"
+                    value={employee.carga || 8}
+                    onChange={(e) =>
+                      handleUpdateEmployee(employee.id, {
+                        carga: parseInt(e.target.value),
+                      })
+                    }
+                    min="1"
+                    max="24"
+                  />
+                </td>
+                <td className="td-funcionario">{calculateWorkedHours(employee.entry, employee.exit)}</td>
+                <td className="td-funcionario">{calculateExtraOrMissingHours(employee.entry, employee.exit, employee.carga)}</td>
+                <td className="td-funcionario">{calculateGateOpenTime(employee.entry, employee.gateOpen)}</td>
+                <td>
+                  <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
+                    Atualizar
+                  </button>
+                  <button className="td-funcionario" onClick={() => handleDeleteDailyPoint(employee.id, selectedDate)}>
+                    Excluir
+                  </button>
+                </td>
+              </tr>
+            ))}
+          {selectedTab === "weekly" &&
+            weeklyData.flatMap((employee) => {
+              const pointsSorted = [...employee.points].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+              // Totais
+              const totalCarga = pointsSorted.reduce((acc) => acc + (employee.carga || 8), 0);
+              const totalWorked = pointsSorted.reduce((acc, point) => {
+                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+                const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
+                const [h, m] = calculateWorkedHours(entry, exit).split(/[hm ]/).map(Number);
+                return acc + (h * 60 + (m || 0));
+              }, 0);
+              const totalExtras = pointsSorted.reduce((acc, point) => {
+                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+                const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
+                const str = calculateExtraOrMissingHours(entry, exit, employee.carga);
+                return acc + parseHourStringToMinutes(str);
+              }, 0);
+              const totalGate = pointsSorted.reduce((acc, point) => {
+                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+                const gate = point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "";
+                const min = Number(calculateGateOpenTime(entry, gate).replace("m", "")) || 0;
+                return acc + min;
+              }, 0);
+
+              // Formatação
+              const formatHM = (min) => `${Math.floor(Math.abs(min) / 60)}h ${Math.abs(min) % 60}m`;
+              const formatExtra = (min) => (min === 0 ? "0h 0m" : (min > 0 ? "+" : "-") + formatHM(min));
+
+              return [
+                ...pointsSorted.map((point) => (
+                  <tr key={employee.id + point.date}>
+                    <td className="td-funcionario">
+                      {new Date(point.date).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="td-funcionario">{employee.name}</td>
+                    <td className="td-funcionario">{employee.position || "N/A"}</td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="time"
+                        value={tempValues[employee.id]?.entry || (point.entry ? point.entry.split("T")[1].slice(0, 5) : "")}
+                        onChange={(e) =>
+                          setTempValues((prev) => ({
+                            ...prev,
+                            [employee.id]: { ...prev[employee.id], entry: e.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="time"
+                        value={tempValues[employee.id]?.exit || (point.exit ? point.exit.split("T")[1].slice(0, 5) : "")}
+                        onChange={(e) =>
+                          setTempValues((prev) => ({
+                            ...prev,
+                            [employee.id]: { ...prev[employee.id], exit: e.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="time"
+                        value={tempValues[employee.id]?.gateOpen || (point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
+                        onChange={(e) =>
+                          setTempValues((prev) => ({
+                            ...prev,
+                            [employee.id]: { ...prev[employee.id], gateOpen: e.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="number"
+                        value={employee.carga || 8}
+                        onChange={(e) =>
+                          handleUpdateEmployee(employee.id, {
+                            carga: parseInt(e.target.value),
+                          })
+                        }
+                        min="1"
+                        max="24"
+                      />
+                    </td>
+                    <td className="td-funcionario">
+                      {calculateWorkedHours(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.exit ? point.exit.split("T")[1].slice(0, 5) : "")}
+                    </td>
+                    <td className="td-funcionario">
+                      {calculateExtraOrMissingHours(
+                        point.entry ? point.entry.split("T")[1].slice(0, 5) : "",
+                        point.exit ? point.exit.split("T")[1].slice(0, 5) : "",
+                        employee.carga
+                      )}
+                    </td>
+                    <td className="td-funcionario">
+                      {calculateGateOpenTime(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
+                    </td>
+                    <td>
+                      <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
+                        Atualizar
+                      </button>
+                      <button className="td-funcionario" onClick={() => handleDeleteDailyPoint(employee.id, point.date)}>
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                )),
+                <tr key={employee.id + "-resumo"}>
+                  <td colSpan={6} style={{ textAlign: "center", fontWeight: "bold", background: "black", color: "#fff" }}>
+                    Resumo horas:
+                  </td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalCarga}</td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatHM(totalWorked)}</td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatExtra(totalExtras)}</td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td>
+                  <td style={{ background: "black" }}></td>
+                </tr>,
+              ];
+            })}
+          {selectedTab === "monthly" &&
+            monthlyData.flatMap((employee) => {
+              const pointsSorted = (employee.points || []).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+              // Totais
+              const totalCarga = pointsSorted.reduce((acc) => acc + (employee.carga || 8), 0);
+              const totalWorked = pointsSorted.reduce((acc, point) => {
+                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+                const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
+                const [h, m] = calculateWorkedHours(entry, exit).split(/[hm ]/).map(Number);
+                return acc + (h * 60 + (m || 0));
+              }, 0);
+              const totalExtras = pointsSorted.reduce((acc, point) => {
+                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+                const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
+                const str = calculateExtraOrMissingHours(entry, exit, employee.carga);
+                return acc + parseHourStringToMinutes(str);
+              }, 0);
+              const totalGate = pointsSorted.reduce((acc, point) => {
+                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+                const gate = point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "";
+                const min = Number(calculateGateOpenTime(entry, gate).replace("m", "")) || 0;
+                return acc + min;
+              }, 0);
+
+              // Formatação
+              const formatHM = (min) => `${Math.floor(Math.abs(min) / 60)}h ${Math.abs(min) % 60}m`;
+              const formatExtra = (min) => (min === 0 ? "0h 0m" : (min > 0 ? "+" : "-") + formatHM(min));
+
+              return [
+                ...pointsSorted.map((point) => (
+                  <tr key={employee.id + point.date}>
+                    <td className="td-funcionario">
+                      {new Date(point.date).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="td-funcionario">{employee.name}</td>
+                    <td className="td-funcionario">{employee.position || "N/A"}</td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="time"
+                        value={tempValues[employee.id]?.entry || (point.entry ? point.entry.split("T")[1].slice(0, 5) : "")}
+                        onChange={(e) =>
+                          setTempValues((prev) => ({
+                            ...prev,
+                            [employee.id]: { ...prev[employee.id], entry: e.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="time"
+                        value={tempValues[employee.id]?.exit || (point.exit ? point.exit.split("T")[1].slice(0, 5) : "")}
+                        onChange={(e) =>
+                          setTempValues((prev) => ({
+                            ...prev,
+                            [employee.id]: { ...prev[employee.id], exit: e.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="time"
+                        value={tempValues[employee.id]?.gateOpen || (point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
+                        onChange={(e) =>
+                          setTempValues((prev) => ({
+                            ...prev,
+                            [employee.id]: { ...prev[employee.id], gateOpen: e.target.value },
+                          }))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-funcionario"
+                        type="number"
+                        value={employee.carga || 8}
+                        onChange={(e) =>
+                          handleUpdateEmployee(employee.id, {
+                            carga: parseInt(e.target.value),
+                          })
+                        }
+                        min="1"
+                        max="24"
+                      />
+                    </td>
+                    <td className="td-funcionario">
+                      {calculateWorkedHours(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.exit ? point.exit.split("T")[1].slice(0, 5) : "")}
+                    </td>
+                    <td className="td-funcionario">
+                      {calculateExtraOrMissingHours(
+                        point.entry ? point.entry.split("T")[1].slice(0, 5) : "",
+                        point.exit ? point.exit.split("T")[1].slice(0, 5) : "",
+                        employee.carga
+                      )}
+                    </td>
+                    <td className="td-funcionario">
+                      {calculateGateOpenTime(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
+                    </td>
+                    <td>
+                      <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
+                        Atualizar
+                      </button>
+                      <button className="td-funcionario" onClick={() => handleDeleteDailyPoint(employee.id, point.date)}>
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                )),
+                <tr key={employee.id + "-resumo"}>
+                  <td colSpan={6} style={{ textAlign: "center", fontWeight: "bold", background: "black", color: "#fff" }}>
+                    Resumo horas:
+                  </td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalCarga}</td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatHM(totalWorked)}</td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatExtra(totalExtras)}</td>
+                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td>
+                  <td style={{ background: "black" }}></td>
+                </tr>,
+              ];
+            })}
         </tbody>
       </table>
     </div>
