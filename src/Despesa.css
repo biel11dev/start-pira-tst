@@ -262,17 +262,19 @@
 .custom-selectt {
   position: relative;
   display: inline-block;
-  width: 100px;
+  width: 150px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background-color: #fff;
   cursor: pointer;
   height: 45px;
-  margin-right: 10px;
+  margin-right: 10.5px;
+  text-align: center;
 }
 
 .custom-selectt:hover .unit-dropdown {
   display: block;
+  width: 200%;
 }
 
 .selected-unitt {
@@ -280,7 +282,8 @@
   font-size: 14px;
   color: #333;
   text-shadow: none;
-  margin-top: -2px;
+  margin-top: 3px;
+  height: 150px !important;
 }
 
 .teste-conf {

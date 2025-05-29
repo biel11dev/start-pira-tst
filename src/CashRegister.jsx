@@ -3,7 +3,7 @@ import "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { addMonths, eachWeekOfInterval, endOfMonth, format, parseISO, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import "./CashRegister.css";
 import Message from "./Message";
@@ -22,6 +22,7 @@ const CashRegister = () => {
   const [selectedWeek, setSelectedWeek] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState({ show: false, index: null });
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [valorMaquinaSemana, setValorMaquinaSemana] = useState({});
 
   useEffect(() => {
     // Buscar saldos da API quando o componente for montado
@@ -43,6 +44,38 @@ const CashRegister = () => {
         console.error("Erro ao buscar saldos:", error);
       });
   }, []);
+
+  useEffect(() => {
+    // Carrega o valor salvo da semana ao alternar semana/mês
+    const carregarValorMaquina = async () => {
+      const weeklyBalances = calculateWeeklyBalances(selectedMonth);
+      const weekInfo = weeklyBalances[selectedWeek];
+      const weekStart = weekInfo?.start || weekInfo?.balances[0]?.date;
+      if (!weekStart) return;
+
+      const dateObj = new Date(weekStart);
+      const year = dateObj.getFullYear();
+      const month = dateObj.getMonth() + 1;
+      const week = selectedWeek + 1;
+
+      try {
+        const res = await axios.get(`https://api-start-pira.vercel.app/api/machine-week-value?year=${year}&month=${month}&week=${week}`);
+        const valor = res.data[0]?.value || 0;
+        setValorMaquinaSemana((prev) => ({
+          ...prev,
+          [selectedWeek]: valor,
+        }));
+      } catch (err) {
+        // Se não houver valor, zera o campo
+        setValorMaquinaSemana((prev) => ({
+          ...prev,
+          [selectedWeek]: 0,
+        }));
+      }
+    };
+
+    carregarValorMaquina();
+  }, [selectedWeek, selectedMonth]);
 
   const handleConfirm = () => {
     const cardValue = parseFloat(card) || 0;
@@ -133,17 +166,54 @@ const CashRegister = () => {
   const calculateWeeklyBalances = (month) => {
     const start = startOfMonth(month);
     const end = endOfMonth(month);
-    const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 });
+    const weeks = [];
 
-    return weeks.map((weekStart, index) => {
-      const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
-      const weeklyBalances = balances.filter((balance) => {
-        const balanceDate = parseISO(balance.date);
-        return balanceDate >= weekStart && balanceDate < weekEnd;
-      });
+    // Primeira semana: do dia 1 até o primeiro domingo OU fim do mês
+    let firstWeekEnd = new Date(start);
+    while (firstWeekEnd.getDay() !== 0 && firstWeekEnd < end) {
+      // 0 = domingo
+      firstWeekEnd.setDate(firstWeekEnd.getDate() + 1);
+    }
+    if (firstWeekEnd > end) firstWeekEnd = new Date(end);
+
+    weeks.push({ start: new Date(start), end: new Date(firstWeekEnd) });
+
+    // Próximas semanas: sempre de terça a domingo
+    let nextStart = new Date(firstWeekEnd);
+    nextStart.setDate(nextStart.getDate() + 1);
+
+    while (nextStart <= end) {
+      let weekStart = new Date(nextStart);
+      // Garante que o início é terça-feira
+      while (weekStart.getDay() !== 2 && weekStart <= end) {
+        // 2 = terça-feira
+        weekStart.setDate(weekStart.getDate() + 1);
+      }
+      if (weekStart > end) break;
+
+      let weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + ((0 - weekStart.getDay() + 7) % 7)); // até domingo
+      if (weekEnd > end) weekEnd = new Date(end);
+
+      weeks.push({ start: new Date(weekStart), end: new Date(weekEnd) });
+      nextStart = new Date(weekEnd);
+      nextStart.setDate(nextStart.getDate() + 1);
+    }
+
+    return weeks.map((range, index) => {
+      // Filtra e ordena os saldos da semana por data
+      const weeklyBalances = balances
+        .filter((balance) => {
+          const balanceDate = parseISO(balance.date);
+          return balanceDate >= range.start && balanceDate <= range.end && balanceDate.getMonth() === month.getMonth();
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date)); // <-- Ordena por data
+
       return {
-        week: `Semana ${index + 1} (${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM", { locale: ptBR })})`,
+        week: `Semana ${index + 1} (${format(range.start, "dd/MM", { locale: ptBR })} - ${format(range.end, "dd/MM", { locale: ptBR })})`,
         balances: weeklyBalances,
+        start: range.start,
+        end: range.end,
       };
     });
   };
@@ -151,7 +221,7 @@ const CashRegister = () => {
   const calculateMonthlyBalances = (month) => {
     const start = startOfMonth(month);
     const end = endOfMonth(month);
-    const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 0 });
+    const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 2 });
 
     return weeks.map((weekStart, index) => {
       const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
@@ -176,7 +246,7 @@ const CashRegister = () => {
 
   const semanaData = {
     labels: weeklyBalances[selectedWeek].balances.map((balance) => {
-      const localDate = parseISO(balance.date); // Remover a adição de um dia à data
+      const localDate = parseISO(balance.date);
       return format(localDate, "eee - dd/MM", { locale: ptBR });
     }),
     datasets: [
@@ -189,7 +259,7 @@ const CashRegister = () => {
       },
       {
         label: "Lucro",
-        data: weeklyBalances[selectedWeek].balances.map((balance) => balance.lucro || 0),
+        data: weeklyBalances[selectedWeek].balances.map((balance, idx, arr) => (balance.lucro || 0) + (idx === 0 ? valorMaquinaSemana[selectedWeek] || 0 : 0)),
         backgroundColor: "rgba(255, 206, 86, 0.2)",
         borderColor: "rgba(255, 206, 86, 1)",
         borderWidth: 1,
@@ -284,6 +354,12 @@ const CashRegister = () => {
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+  // Calcular o valor total da máquina na semana selecionada
+  const totalValorMaquinaSemana = valorMaquinaSemana[selectedWeek] || 0;
+
+  // Calcular o valor total da máquina no mês (soma de todos os valores das semanas do mês)
+  const totalValorMaquinaMes = Object.values(valorMaquinaSemana).reduce((acc, val) => acc + (parseFloat(val) || 0), 0);
+
   return (
     <div className="cash-register-container">
       <h2>Registro de Caixa</h2>
@@ -374,15 +450,63 @@ const CashRegister = () => {
               </button>
             ))}
           </div>
+          <div style={{ margin: "12px 0", display: "flex", alignItems: "center", gap: 8, justifyContent: "center" }}>
+            <label style={{ color: "#fff", marginRight: 8 }}>Valor Máquina Semana:</label>
+            <input
+              type="number"
+              value={valorMaquinaSemana[selectedWeek] || ""}
+              onChange={(e) =>
+                setValorMaquinaSemana((prev) => ({
+                  ...prev,
+                  [selectedWeek]: parseFloat(e.target.value) || 0,
+                }))
+              }
+              style={{ width: 120, padding: 4 }}
+              placeholder="R$"
+            />
+            <button
+              style={{ background: "#0078d4", color: "#fff", border: "none", padding: "6px 12px", borderRadius: 4, cursor: "pointer" }}
+              onClick={async () => {
+                // Calcule o ano, mês e semana do selectedWeek
+                const weekInfo = weeklyBalances[selectedWeek];
+                // Exemplo: extraia o primeiro dia da semana
+                const weekStart = weekInfo.balances[0]?.date;
+                if (!weekStart) return alert("Semana inválida");
+                const dateObj = new Date(weekStart);
+                const year = dateObj.getFullYear();
+                const month = dateObj.getMonth() + 1;
+                const week = selectedWeek + 1;
+                const value = valorMaquinaSemana[selectedWeek] || 0;
+                try {
+                  await axios.post("https://api-start-pira.vercel.app/api/machine-week-value", { year, month, week, value });
+                  setShowMessage(true);
+
+                  setTimeout(() => {
+                    setShowMessage(false);
+                  }, 3000);
+                } catch (err) {
+                  alert("Erro ao salvar valor!");
+                }
+              }}
+            >
+              Salvar
+            </button>
+          </div>
+          <div style={{ margin: "8px 0", color: "#fff", textAlign: "center" }}>
+            <strong>Valor Total Máquina Semana:</strong> {formatCurrency(totalValorMaquinaSemana)}
+          </div>
           <div className="chart-container">
             <Bar data={semanaData} options={chartOptions} plugins={[ChartDataLabels]} />
-            <span className="total-lucro-semana">Lucro Total da Semana: {formatCurrency(totalLucroSemana)}</span>
+            <span className="total-lucro-semana">Lucro Total da Semana: {formatCurrency(totalLucroSemana + totalValorMaquinaSemana)}</span>
           </div>
         </div>
       )}
       {activeTab === "monthly" && (
         <div className="tab-content">
           <h3>Saldo Mensal</h3>
+          <div style={{ margin: "8px 0", color: "#fff", textAlign: "center" }}>
+            <strong>Valor Total Máquina Mês:</strong> {formatCurrency(totalValorMaquinaMes)}
+          </div>
           <div className="grafico-mes">
             <Bar data={mesData} options={chartOptions} plugins={[ChartDataLabels]} />
             <span className="total-lucro-semana">Lucro Total do Mês: {formatCurrency(totalLucroMes)}</span>

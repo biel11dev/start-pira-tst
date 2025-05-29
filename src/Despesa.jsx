@@ -57,6 +57,17 @@ const Despesa = () => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
+  useEffect(() => {
+    if (!isExpenseModalOpen) return;
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".custom-selectt")) {
+        setIsExpenseModalOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isExpenseModalOpen]);
+
   const handleAddExpense = () => {
     if (newExpense.trim() !== "" && amount.trim() !== "") {
       setIsLoading(true); // Ativa o estado de carregamento
@@ -361,13 +372,21 @@ const Despesa = () => {
           </div>
         )}
 
-        <div className="custom-selectt" onMouseEnter={() => setIsExpenseModalOpen(true)} onMouseLeave={() => setIsExpenseModalOpen(false)}>
-          <div className="selected-unitt">{newExpense || "Selecione a despesa"}</div>
+        <div className="custom-selectt">
+          <div className="selected-unitt" onClick={() => setIsExpenseModalOpen((prev) => !prev)} tabIndex={0} style={{ cursor: "pointer" }}>
+            {newExpense || <span style={{ marginTop: "-6px", display: "inline-block", textShadow: "none" }}>Selecione a despesa</span>}{" "}
+          </div>
           {isExpenseModalOpen && (
             <ul className="unit-dropdown">
               {expenseOptions.map((option) => (
                 <li key={option.id} className="unit-item">
-                  <span className="unit-name" onClick={() => setNewExpense(option.nomeDespesa)}>
+                  <span
+                    className="unit-name"
+                    onClick={() => {
+                      setNewExpense(option.nomeDespesa);
+                      setIsExpenseModalOpen(false);
+                    }}
+                  >
                     {option.nomeDespesa}
                   </span>
                   <button className="delete-unit-button" onClick={() => setConfirmDeleteOption({ show: true, id: option.id })} title="Excluir despesa" disabled={isLoading}>

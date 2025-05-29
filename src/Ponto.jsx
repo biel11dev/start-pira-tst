@@ -14,6 +14,10 @@ const Ponto = () => {
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]); // Data atual no formato YYYY-MM-DD
   const [tempValues, setTempValues] = useState({});
+  const [showFaltaModal, setShowFaltaModal] = useState(false);
+  const [faltaEmployee, setFaltaEmployee] = useState(null);
+  const [faltaPoint, setFaltaPoint] = useState(null);
+  const [faltaHoras, setFaltaHoras] = useState(1);
 
   const fetchEmployees = async (date) => {
     setLoading(true);
@@ -420,6 +424,61 @@ const Ponto = () => {
     return sign * (hours * 60 + minutes);
   };
 
+  const handleOpenFaltaModal = (employee, point) => {
+    setFaltaEmployee(employee);
+    setFaltaPoint(point);
+    setFaltaHoras(1);
+    setShowFaltaModal(true);
+  };
+
+  const handleCloseFaltaModal = () => {
+    setShowFaltaModal(false);
+    setFaltaEmployee(null);
+    setFaltaPoint(null);
+    setFaltaHoras(1);
+  };
+
+  const handleConfirmFalta = async (tipo) => {
+    if (!faltaEmployee || !faltaPoint) return;
+    try {
+      let entry = faltaPoint.entry ? faltaPoint.entry.split("T")[1].slice(0, 5) : "08:00";
+      let exit = faltaPoint.exit ? faltaPoint.exit.split("T")[1].slice(0, 5) : "17:00";
+      let carga = faltaEmployee.carga || 8;
+
+      if (tipo === "removerHoras") {
+        // Remove horas: diminui o tempo de saída
+        const entryDate = new Date(`1970-01-01T${entry}:00`);
+        let exitDate = new Date(`1970-01-01T${exit}:00`);
+        exitDate.setHours(exitDate.getHours() - faltaHoras);
+        exit = exitDate.toTimeString().slice(0, 5);
+      }
+
+      const dataToUpdate = {
+        entry,
+        exit,
+        date: faltaPoint.date,
+        employeeId: faltaEmployee.id,
+      };
+
+      if (faltaPoint && faltaPoint.id && tipo === "falta") {
+        await axios.delete(`https://api-start-pira.vercel.app/api/daily-points/${faltaPoint.id}`);
+      } else {
+        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${faltaEmployee.id}`, dataToUpdate);
+      }
+
+      setShowFaltaModal(false);
+      setFaltaEmployee(null);
+      setFaltaPoint(null);
+      setFaltaHoras(1);
+      setMessage({ show: true, text: "Falta/ajuste registrado com sucesso!", type: "success" });
+      fetchWeeklyData(selectedDate);
+    } catch (error) {
+      setMessage({ show: true, text: "Erro ao registrar falta/ajuste!", type: "error" });
+    } finally {
+      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+    }
+  };
+
   return (
     <div className="ponto-container">
       <h2 className="nome-ponto">Gerenciamento de Ponto</h2>
@@ -638,7 +697,7 @@ const Ponto = () => {
                 ...pointsSorted.map((point) => (
                   <tr key={employee.id + point.date}>
                     <td className="td-funcionario">
-                      {new Date(point.date).toLocaleDateString("pt-BR", {
+                      {parseISODate(point.date).toLocaleDateString("pt-BR", {
                         day: "2-digit",
                         month: "2-digit",
                         year: "numeric",
@@ -713,11 +772,8 @@ const Ponto = () => {
                       {calculateGateOpenTime(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
                     </td>
                     <td>
-                      <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
-                        Atualizar
-                      </button>
-                      <button className="td-funcionario" onClick={() => handleDeleteDailyPoint(employee.id, point.date)}>
-                        Excluir
+                      <button className="td-funcionario" style={{ background: "#d40000", color: "#fff", marginLeft: 4 }} onClick={() => handleOpenFaltaModal(employee, point)}>
+                        Falta
                       </button>
                     </td>
                   </tr>
@@ -767,7 +823,7 @@ const Ponto = () => {
                 ...pointsSorted.map((point) => (
                   <tr key={employee.id + point.date}>
                     <td className="td-funcionario">
-                      {new Date(point.date).toLocaleDateString("pt-BR", {
+                      {parseISODate(point.date).toLocaleDateString("pt-BR", {
                         day: "2-digit",
                         month: "2-digit",
                         year: "numeric",
@@ -842,11 +898,8 @@ const Ponto = () => {
                       {calculateGateOpenTime(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
                     </td>
                     <td>
-                      <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
-                        Atualizar
-                      </button>
-                      <button className="td-funcionario" onClick={() => handleDeleteDailyPoint(employee.id, point.date)}>
-                        Excluir
+                      <button className="td-funcionario" onClick={() => handleOpenFaltaModal(employee, point)}>
+                        Falta
                       </button>
                     </td>
                   </tr>
@@ -865,6 +918,46 @@ const Ponto = () => {
             })}
         </tbody>
       </table>
+      {showFaltaModal && (
+        <div
+          className="modal-falta"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "white",
+            backdropFilter: "blur(5px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ background: "#fff", padding: 24, borderRadius: 8, minWidth: 320 }}>
+            <h3 style={{ marginBottom: 16 }}>Registrar Falta/Atraso</h3>
+            <button
+              style={{ background: "#d40000", color: "#fff", padding: "8px 16px", border: "none", borderRadius: 4, marginBottom: 12, width: "100%" }}
+              onClick={() => handleConfirmFalta("falta")}
+            >
+              Marcar Falta (remover 8h)
+            </button>
+            <div style={{ margin: "16px 0" }}>
+              <label className="label-falta" style={{ marginRight: 8 }}>
+                Remover horas do ponto:
+              </label>
+              <input type="number" min={1} max={8} value={faltaHoras} onChange={(e) => setFaltaHoras(Number(e.target.value))} style={{ width: 60, marginRight: 8 }} />
+              <button style={{ background: "#1976d2", color: "#fff", padding: "6px 12px", border: "none", borderRadius: 4 }} onClick={() => handleConfirmFalta("removerHoras")}>
+                Remover Horas
+              </button>
+            </div>
+            <button style={{ marginTop: 8, background: "#888", color: "#fff", border: "none", borderRadius: 4, padding: "6px 12px" }} onClick={handleCloseFaltaModal}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
