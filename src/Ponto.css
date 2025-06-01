@@ -248,3 +248,8 @@
   align-items: center;
   text-shadow: none;
 }
+
+.linha-falta {
+  background-color: #8b0000 !important; /* vermelho escuro */
+  color: #fff !important;
+}

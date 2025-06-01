@@ -49,6 +49,7 @@ const Ponto = () => {
           workedHours: calculateWorkedHours(entry, exit), // Inicializa as horas trabalhadas
           extraOrMissingHours: calculateExtraOrMissingHours(entry, exit, employee.carga), // Inicializa as horas extras ou faltantes
           carga: employee.carga || 8, // Define um valor padrão para dailyHours
+          falta: dailyPoint?.falta || false, // <-- Adicione esta linha
         };
       });
 
@@ -407,6 +408,15 @@ const Ponto = () => {
     return `${diffMinutes}m`;
   };
 
+  function formatDateWithWeekday(dateString) {
+    const dias = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+    const d = parseISODate(dateString);
+    const dia = d.getDate().toString().padStart(2, "0");
+    const mes = (d.getMonth() + 1).toString().padStart(2, "0");
+    const ano = d.getFullYear().toString().slice(-2);
+    const semana = dias[d.getDay()];
+    return `${dia}/${mes}/${ano} - ${semana}`;
+  }
   // Função utilitária para parsear a data ISO corretamente (ignora timezone)
   const parseISODate = (isoString) => {
     // Força a data como local, sem considerar o fuso horário UTC
@@ -461,7 +471,7 @@ const Ponto = () => {
       };
 
       if (faltaPoint && faltaPoint.id && tipo === "falta") {
-        await axios.delete(`https://api-start-pira.vercel.app/api/daily-points/${faltaPoint.id}`);
+        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/falta/${faltaEmployee.id}`, dataToUpdate);
       } else {
         await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${faltaEmployee.id}`, dataToUpdate);
       }
@@ -508,7 +518,7 @@ const Ponto = () => {
         <div className="week-tabs" style={{ margin: "16px 0", display: "flex", gap: 8 }}>
           {(() => {
             // Calcula as semanas do mês selecionado, começando sempre na terça-feira
-            const date = new Date(selectedDate);
+            const date = parseISODate(selectedDate);
             const year = date.getFullYear();
             const month = date.getMonth();
             const lastDay = new Date(year, month + 1, 0);
@@ -534,7 +544,7 @@ const Ponto = () => {
             return weeks.map((week, idx) => {
               const label = `${week.start.toLocaleDateString("pt-BR")} - ${week.end.toLocaleDateString("pt-BR")}`;
               // Corrigido: ativo se selectedDate está entre start e end da semana
-              const selected = new Date(selectedDate);
+              const selected = parseISODate(selectedDate);
               selected.setHours(0, 0, 0, 0);
               const isActive = selected >= week.start && selected <= week.end;
               return (
@@ -588,14 +598,8 @@ const Ponto = () => {
         <tbody>
           {selectedTab === "daily" &&
             employees.map((employee) => (
-              <tr key={employee.id}>
-                <td className="td-funcionario">
-                  {parseISODate(selectedDate).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </td>
+              <tr key={employee.id} className={employee.falta ? "linha-falta" : ""}>
+                <td className="td-funcionario">{formatDateWithWeekday(selectedDate)}</td>
                 <td className="td-funcionario">{employee.name}</td>
                 <td className="td-funcionario">{employee.position || "N/A"}</td>
                 <td>
@@ -673,8 +677,10 @@ const Ponto = () => {
               const totalWorked = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
                 const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
-                const [h, m] = calculateWorkedHours(entry, exit).split(/[hm ]/).map(Number);
-                return acc + (h * 60 + (m || 0));
+                const match = calculateWorkedHours(entry, exit).match(/(\d+)h\s+(\d+)m/);
+                const h = match ? parseInt(match[1], 10) : 0;
+                const m = match ? parseInt(match[2], 10) : 0;
+                return acc + (h * 60 + m);
               }, 0);
               const totalExtras = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
@@ -695,14 +701,8 @@ const Ponto = () => {
 
               return [
                 ...pointsSorted.map((point) => (
-                  <tr key={employee.id + point.date}>
-                    <td className="td-funcionario">
-                      {parseISODate(point.date).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </td>
+                  <tr key={employee.id + point.date} className={point.falta ? "linha-falta" : ""}>
+                    <td className="td-funcionario">{formatDateWithWeekday(point.date)}</td>
                     <td className="td-funcionario">{employee.name}</td>
                     <td className="td-funcionario">{employee.position || "N/A"}</td>
                     <td>
@@ -799,8 +799,10 @@ const Ponto = () => {
               const totalWorked = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
                 const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
-                const [h, m] = calculateWorkedHours(entry, exit).split(/[hm ]/).map(Number);
-                return acc + (h * 60 + (m || 0));
+                const match = calculateWorkedHours(entry, exit).match(/(\d+)h\s+(\d+)m/);
+                const h = match ? parseInt(match[1], 10) : 0;
+                const m = match ? parseInt(match[2], 10) : 0;
+                return acc + (h * 60 + m);
               }, 0);
               const totalExtras = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
@@ -821,14 +823,8 @@ const Ponto = () => {
 
               return [
                 ...pointsSorted.map((point) => (
-                  <tr key={employee.id + point.date}>
-                    <td className="td-funcionario">
-                      {parseISODate(point.date).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </td>
+                  <tr key={employee.id + point.date} className={point.falta ? "linha-falta" : ""}>
+                    <td className="td-funcionario">{formatDateWithWeekday(point.date)}</td>
                     <td className="td-funcionario">{employee.name}</td>
                     <td className="td-funcionario">{employee.position || "N/A"}</td>
                     <td>
