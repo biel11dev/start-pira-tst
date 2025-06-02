@@ -795,8 +795,8 @@ const Ponto = () => {
               const pointsSorted = (employee.points || []).sort((a, b) => new Date(b.date) - new Date(a.date));
 
               // Totais
-              const totalCarga = pointsSorted.reduce((acc) => acc + (employee.carga || 8), 0);
-              const totalWorked = pointsSorted.reduce((acc, point) => {
+              const totalCargaMin = pointsSorted.reduce((acc) => acc + (employee.carga || 8) * 60, 0);
+              const totalWorkedMin = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
                 const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
                 const match = calculateWorkedHours(entry, exit).match(/(\d+)h\s+(\d+)m/);
@@ -804,12 +804,9 @@ const Ponto = () => {
                 const m = match ? parseInt(match[2], 10) : 0;
                 return acc + (h * 60 + m);
               }, 0);
-              const totalExtras = pointsSorted.reduce((acc, point) => {
-                const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
-                const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
-                const str = calculateExtraOrMissingHours(entry, exit, employee.carga);
-                return acc + parseHourStringToMinutes(str);
-              }, 0);
+              const totalExtras = totalWorkedMin - totalCargaMin;
+              const totalCarga = totalCargaMin / 60;
+              const totalWorked = totalWorkedMin;
               const totalGate = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
                 const gate = point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "";
@@ -820,7 +817,6 @@ const Ponto = () => {
               // Formatação
               const formatHM = (min) => `${Math.floor(Math.abs(min) / 60)}h ${Math.abs(min) % 60}m`;
               const formatExtra = (min) => (min === 0 ? "0h 0m" : (min > 0 ? "+" : "-") + formatHM(min));
-
               return [
                 ...pointsSorted.map((point) => (
                   <tr key={employee.id + point.date} className={point.falta ? "linha-falta" : ""}>
