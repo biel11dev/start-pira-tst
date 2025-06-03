@@ -539,7 +539,7 @@ const Ponto = () => {
       };
 
       if (faltaPointManual && tipo === "falta") {
-        await axios.put(`http://localhost:3000/api/daily-points/falta-manual/${faltaEmployeeManual.id}`, dataToUpdate);
+        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/falta-manual/${faltaEmployeeManual.id}`, dataToUpdate);
       } else {
         await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${faltaEmployeeManual.id}`, dataToUpdate);
       }
