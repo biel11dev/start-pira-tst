@@ -32,6 +32,7 @@ const Despesa = () => {
   const [newExpenseOption, setNewExpenseOption] = useState("");
   const [confirmAddOption, setConfirmAddOption] = useState(false);
   const [confirmDeleteOption, setConfirmDeleteOption] = useState({ show: false, id: null });
+  const [expenseFilter, setExpenseFilter] = useState("");
 
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
@@ -374,26 +375,39 @@ const Despesa = () => {
 
         <div className="custom-selectt">
           <div className="selected-unitt" onClick={() => setIsExpenseModalOpen((prev) => !prev)} tabIndex={0} style={{ cursor: "pointer" }}>
-            {newExpense || <span style={{ marginTop: "-6px", display: "inline-block", textShadow: "none" }}>Selecione a despesa</span>}{" "}
+            {newExpense || <span style={{ marginTop: "-6px", display: "inline-block", textShadow: "none" }}>Selecione a despesa</span>}
           </div>
           {isExpenseModalOpen && (
             <ul className="unit-dropdown">
-              {expenseOptions.map((option) => (
-                <li key={option.id} className="unit-item">
-                  <span
-                    className="unit-name"
-                    onClick={() => {
-                      setNewExpense(option.nomeDespesa);
-                      setIsExpenseModalOpen(false);
-                    }}
-                  >
-                    {option.nomeDespesa}
-                  </span>
-                  <button className="delete-unit-button" onClick={() => setConfirmDeleteOption({ show: true, id: option.id })} title="Excluir despesa" disabled={isLoading}>
-                    🗑️
-                  </button>
-                </li>
-              ))}
+              <li>
+                <input
+                  type="text"
+                  className="expense-filter-input"
+                  placeholder="Filtrar despesas..."
+                  value={expenseFilter}
+                  onChange={(e) => setExpenseFilter(e.target.value)}
+                  autoFocus
+                />
+              </li>
+              {expenseOptions
+                .filter((option) => option.nomeDespesa.toLowerCase().includes(expenseFilter.toLowerCase()))
+                .map((option) => (
+                  <li key={option.id} className="unit-item">
+                    <span
+                      className="unit-name"
+                      onClick={() => {
+                        setNewExpense(option.nomeDespesa);
+                        setIsExpenseModalOpen(false);
+                        setExpenseFilter(""); // Limpa filtro ao selecionar
+                      }}
+                    >
+                      {option.nomeDespesa}
+                    </span>
+                    <button className="delete-unit-button" onClick={() => setConfirmDeleteOption({ show: true, id: option.id })} title="Excluir despesa" disabled={isLoading}>
+                      🗑️
+                    </button>
+                  </li>
+                ))}
               <li className="add-unit-option" onClick={() => setIsExpenseModalAdd(true)}>
                 + Adicionar nova unidade
               </li>

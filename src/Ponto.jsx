@@ -15,9 +15,13 @@ const Ponto = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]); // Data atual no formato YYYY-MM-DD
   const [tempValues, setTempValues] = useState({});
   const [showFaltaModal, setShowFaltaModal] = useState(false);
+  const [showFaltaManualModal, setShowFaltaManualModal] = useState(false);
   const [faltaEmployee, setFaltaEmployee] = useState(null);
+  const [faltaEmployeeManual, setFaltaEmployeeManual] = useState(null);
   const [faltaPoint, setFaltaPoint] = useState(null);
+  const [faltaPointManual, setFaltaPointManual] = useState(null);
   const [faltaHoras, setFaltaHoras] = useState(1);
+  const [faltaHorasManual, setFaltaHorasManual] = useState(1);
 
   const fetchEmployees = async (date) => {
     setLoading(true);
@@ -441,11 +445,34 @@ const Ponto = () => {
     setShowFaltaModal(true);
   };
 
+  const handleOpenFaltaManualModal = (employee, point) => {
+    setFaltaEmployeeManual(employee);
+    setFaltaPointManual(point);
+    setFaltaHorasManual(1);
+    setShowFaltaManualModal(true);
+  };
+
   const handleCloseFaltaModal = () => {
     setShowFaltaModal(false);
     setFaltaEmployee(null);
     setFaltaPoint(null);
     setFaltaHoras(1);
+  };
+
+  const handleCloseFaltaManualModal = () => {
+    setShowFaltaManualModal(false);
+    setFaltaEmployeeManual(null);
+    setFaltaPointManual(null);
+    setFaltaHorasManual(1);
+  };
+
+  const getDailyPointForEmployee = (employeeId, date) => {
+    // Garante que a data esteja no formato "YYYY-MM-DD 00:00:00"
+    const dateWithTime = `${date} 00:00:00`;
+    return axios.get(`https://api-start-pira.vercel.app/api/daily-points/${employeeId}?date=${encodeURIComponent(dateWithTime)}`).then((res) => {
+      const dailyPoints = res.data;
+      return Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
+    });
   };
 
   const handleConfirmFalta = async (tipo) => {
@@ -482,6 +509,47 @@ const Ponto = () => {
       setFaltaHoras(1);
       setMessage({ show: true, text: "Falta/ajuste registrado com sucesso!", type: "success" });
       fetchWeeklyData(selectedDate);
+    } catch (error) {
+      setMessage({ show: true, text: "Erro ao registrar falta/ajuste!", type: "error" });
+    } finally {
+      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+    }
+  };
+
+  const handleConfirmFaltaManual = async (tipo) => {
+    if (!faltaEmployeeManual || !faltaPointManual) return;
+    try {
+      let entry = faltaPointManual.entry ? faltaPointManual.entry.split("T")[1].slice(0, 5) : "08:00";
+      let exit = faltaPointManual.exit ? faltaPointManual.exit.split("T")[1].slice(0, 5) : "17:00";
+      let carga = faltaEmployeeManual.carga || 8;
+
+      if (tipo === "removerHoras") {
+        // Remove horas: diminui o tempo de saída
+        const entryDate = new Date(`1970-01-01T${entry}:00`);
+        let exitDate = new Date(`1970-01-01T${exit}:00`);
+        exitDate.setHours(exitDate.getHours() - faltaHoras);
+        exit = exitDate.toTimeString().slice(0, 5);
+      }
+
+      const dataToUpdate = {
+        entry,
+        exit,
+        date: faltaPointManual.date,
+        employeeId: faltaEmployeeManual.id,
+      };
+
+      if (faltaPointManual && tipo === "falta") {
+        await axios.put(`http://localhost:3000/api/daily-points/falta-manual/${faltaEmployeeManual.id}`, dataToUpdate);
+      } else {
+        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${faltaEmployeeManual.id}`, dataToUpdate);
+      }
+
+      setShowFaltaManualModal(false);
+      setFaltaEmployeeManual(null);
+      setFaltaPointManual(null);
+      setFaltaHorasManual(1);
+      setMessage({ show: true, text: "Falta/ajuste registrado com sucesso!", type: "success" });
+      fetchEmployees(selectedDate);
     } catch (error) {
       setMessage({ show: true, text: "Erro ao registrar falta/ajuste!", type: "error" });
     } finally {
@@ -664,6 +732,16 @@ const Ponto = () => {
                   </button>
                   <button className="td-funcionario" onClick={() => handleDeleteDailyPoint(employee.id, selectedDate)}>
                     Excluir
+                  </button>
+                  <button
+                    className="td-funcionario"
+                    style={{ background: "#d40000", color: "#fff", marginLeft: 4, marginTop: 9 }}
+                    onClick={async () => {
+                      const point = await getDailyPointForEmployee(employee.id, selectedDate);
+                      handleOpenFaltaManualModal(employee, point || { date: selectedDate, entry: employee.entry, exit: employee.exit });
+                    }}
+                  >
+                    Falta
                   </button>
                 </td>
               </tr>
@@ -945,6 +1023,49 @@ const Ponto = () => {
               </button>
             </div>
             <button style={{ marginTop: 8, background: "#888", color: "#fff", border: "none", borderRadius: 4, padding: "6px 12px" }} onClick={handleCloseFaltaModal}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+      {showFaltaManualModal && (
+        <div
+          className="modal-falta"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "white",
+            backdropFilter: "blur(5px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ background: "#fff", padding: 24, borderRadius: 8, minWidth: 320 }}>
+            <h3 style={{ marginBottom: 16 }}>Registrar Falta/Atraso</h3>
+            <button
+              style={{ background: "#d40000", color: "#fff", padding: "8px 16px", border: "none", borderRadius: 4, marginBottom: 12, width: "100%" }}
+              onClick={() => handleConfirmFaltaManual("falta")}
+            >
+              Marcar Falta (remover 8h)
+            </button>
+            <div style={{ margin: "16px 0" }}>
+              <label className="label-falta" style={{ marginRight: 8 }}>
+                Remover horas do ponto:
+              </label>
+              <input type="number" min={1} max={8} value={faltaHorasManual} onChange={(e) => setFaltaHorasManual(Number(e.target.value))} style={{ width: 60, marginRight: 8 }} />
+              <button
+                style={{ background: "#1976d2", color: "#fff", padding: "6px 12px", border: "none", borderRadius: 4 }}
+                onClick={() => handleConfirmFaltaManual("removerHoras")}
+              >
+                Remover Horas
+              </button>
+            </div>
+            <button style={{ marginTop: 8, background: "#888", color: "#fff", border: "none", borderRadius: 4, padding: "6px 12px" }} onClick={handleCloseFaltaManualModal}>
               Cancelar
             </button>
           </div>

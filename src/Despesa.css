@@ -272,6 +272,17 @@
   text-align: center;
 }
 
+.expense-filter-input {
+  width: 95%;
+  padding: 6px 8px;
+  margin: 6px 0 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+  outline: none;
+  box-sizing: border-box;
+}
+
 .custom-selectt:hover .unit-dropdown {
   display: block;
   width: 200%;
