@@ -1,7 +1,7 @@
 import axios from "axios";
 import "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { addMonths, eachWeekOfInterval, endOfMonth, format, parseISO, startOfMonth, subMonths } from "date-fns";
+import { addMonths, endOfMonth, format, parseISO, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
@@ -221,19 +221,50 @@ const CashRegister = () => {
   const calculateMonthlyBalances = (month) => {
     const start = startOfMonth(month);
     const end = endOfMonth(month);
-    const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 2 });
+    const weeks = [];
 
-    return weeks.map((weekStart, index) => {
-      const weekEnd = index < weeks.length - 1 ? weeks[index + 1] : end;
+    // Primeira semana: do dia 1 até o próximo domingo ou fim do mês
+    let firstWeekEnd = new Date(start);
+    while (firstWeekEnd.getDay() !== 0 && firstWeekEnd < end) {
+      firstWeekEnd.setDate(firstWeekEnd.getDate() + 1);
+    }
+    if (firstWeekEnd > end) firstWeekEnd = new Date(end);
+
+    weeks.push({ start: new Date(start), end: new Date(firstWeekEnd) });
+
+    // Próximas semanas: sempre de terça a domingo
+    let nextStart = new Date(firstWeekEnd);
+    nextStart.setDate(nextStart.getDate() + 1);
+
+    while (nextStart <= end) {
+      let weekStart = new Date(nextStart);
+      // Garante que o início é terça-feira
+      while (weekStart.getDay() !== 2 && weekStart <= end) {
+        weekStart.setDate(weekStart.getDate() + 1);
+      }
+      if (weekStart > end) break;
+
+      let weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + ((0 - weekEnd.getDay() + 7) % 7)); // até domingo
+      if (weekEnd > end) weekEnd = new Date(end);
+
+      weeks.push({ start: new Date(weekStart), end: new Date(weekEnd) });
+      nextStart = new Date(weekEnd);
+      nextStart.setDate(nextStart.getDate() + 1);
+    }
+
+    return weeks.map((range, index) => {
       const weeklyBalances = balances.filter((balance) => {
         const balanceDate = parseISO(balance.date);
-        return balanceDate >= weekStart && balanceDate < weekEnd;
+        return balanceDate >= range.start && balanceDate <= range.end && balanceDate.getMonth() === month.getMonth() && balanceDate.getFullYear() === month.getFullYear();
       });
+
       const totalBalance = weeklyBalances.reduce((acc, balance) => acc + (balance.balance || 0), 0);
       const totalLucro = weeklyBalances.reduce((acc, balance) => acc + (balance.lucro || 0), 0);
       const totalBalancefim = weeklyBalances.reduce((acc, balance) => acc + (balance.balancefim || 0), 0);
+
       return {
-        week: `Semana ${index + 1} (${format(weekStart, "dd/MM", { locale: ptBR })} - ${format(weekEnd, "dd/MM", { locale: ptBR })})`,
+        week: `Semana ${index + 1} (${format(range.start, "dd/MM", { locale: ptBR })} - ${format(range.end, "dd/MM", { locale: ptBR })})`,
         totalBalance,
         totalLucro,
         totalBalancefim,
@@ -445,7 +476,12 @@ const CashRegister = () => {
           <h3 className="titulo-semanal">Saldo Semanal</h3>
           <div className="week-selector">
             {weeklyBalances.map((week, index) => (
-              <button key={index} onClick={() => setSelectedWeek(index)} className={selectedWeek === index ? "active" : ""}>
+              <button
+                key={index}
+                onClick={() => setSelectedWeek(index)}
+                className={selectedWeek === index ? "active" : ""}
+                style={selectedWeek === index ? { backgroundColor: "#022448" } : {}}
+              >
                 {week.week}
               </button>
             ))}

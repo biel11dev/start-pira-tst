@@ -112,7 +112,7 @@
 }
 
 .add-employee button:active {
-  background-color: #003f7f; /* Azul ainda mais escuro */
+  background-color: black; /* Azul ainda mais escuro */
   transform: scale(0.95); /* Leve redução ao clicar */
 }
 
@@ -171,7 +171,7 @@
 }
 
 .date-selector button:hover {
-  background-color: #0056b3;
+  background-color: #032952;
 }
 
 /* Modal de Falta */
@@ -252,4 +252,9 @@
 .linha-falta {
   background-color: #8b0000 !important; /* vermelho escuro */
   color: #fff !important;
+}
+
+.tabs button.active {
+  background-color: #022448;
+  color: #fff;
 }

@@ -95,9 +95,10 @@ const Ponto = () => {
       const dailyPointsData = dailyPointsResponse.data;
 
       const updatedWeeklyData = employeesResponse.data.map((employee) => {
-        // Filtra pontos do funcionário E dentro do range da semana
+        // Filtra pontos do funcionário E dentro do range da semana (comparando só a parte da data)
         const points = dailyPointsData.filter((point) => {
-          return point.employeeId === employee.id && point.date >= startDateStr && point.date <= endDateStr;
+          const pointDate = point.date.split("T")[0];
+          return point.employeeId === employee.id && pointDate >= startDateStr && pointDate <= endDateStr;
         });
         return {
           ...employee,
@@ -604,7 +605,7 @@ const Ponto = () => {
               const start = new Date(current);
               const end = new Date(start);
               end.setDate(start.getDate() + 5); // terça a domingo
-              if (end > lastDay) end.setDate(lastDay.getDate());
+              if (end > lastDay) end.setTime(lastDay.getTime()); // <-- ajuste robusto
               weeks.push({ start: new Date(start), end: new Date(end) });
               current.setDate(current.getDate() + 7);
             }
@@ -622,7 +623,7 @@ const Ponto = () => {
                     padding: "6px 12px",
                     borderRadius: 4,
                     border: "none",
-                    background: isActive ? "#003f7f" : "#0056b3",
+                    background: isActive ? "#022448" : "#0056b3",
                     color: "#fff",
                     fontWeight: isActive ? "bold" : "normal",
                     cursor: "pointer",

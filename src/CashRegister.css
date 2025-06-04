@@ -188,11 +188,11 @@
 }
 
 .month-selector .but-mes:hover {
-  background-color: #218838;
+  background-color: #022448;
 }
 
 .month-selector .but-prox-mes:hover {
-  background-color: #218838;
+  background-color: #022448;
 }
 
 .tab-content .total-lucro-semana {
@@ -212,4 +212,8 @@
   color: #fff;
   text-shadow: none;
   margin-bottom: 38px;
+}
+.week-selector button.active {
+  background-color: #022448;
+  color: #fff;
 }
