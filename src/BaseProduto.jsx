@@ -75,7 +75,7 @@ const ProductList = () => {
     ) {
       setIsLoading(true);
       axios
-        .post("http://localhost:3000/api/estoque_prod", {
+        .post("https://api-start-pira.vercel.app/api/estoque_prod", {
           name: newProduct,
           quantity,
           unit,
@@ -114,7 +114,7 @@ const ProductList = () => {
     }
     setIsCategoryLoading(true);
     axios
-      .post("http://localhost:3000/api/categories", { name: newCategory })
+      .post("https://api-start-pira.vercel.app/api/categories", { name: newCategory })
       .then(() => {
         setNewCategory("");
         setMessage({ show: true, text: "Categoria adicionada com sucesso!", type: "success" });
