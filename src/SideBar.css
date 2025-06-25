@@ -10,6 +10,23 @@
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   transition: width 0.3s ease, background-color 0.3s ease;
   cursor: pointer;
+  overflow-y: auto; /* Adiciona scroll vertical */
+  scrollbar-width: thin;           /* Firefox */
+  scrollbar-color: #888 #222;      /* Firefox */
+
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .sidebarr {

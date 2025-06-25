@@ -18,7 +18,7 @@ import ProductList from "./ProductList";
 import ProtectedRoute from "./ProtectedRoute";
 import ResetPassword from "./ResetPassword";
 import Sidebar from "./SideBar";
-
+import BaseProduto from "./BaseProduto";
 function App() {
   const { auth } = useContext(AuthContext); // Obtém o estado de autenticação do contexto
   const [machines, setMachines] = useState([]);
@@ -32,6 +32,7 @@ function App() {
     despesas: false,
     ponto: false,
     acessos: false,
+    base_produto: false,
   });
 
   const location = useLocation();
@@ -64,6 +65,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProductList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/base-produto"
+            element={
+              <ProtectedRoute>
+                <BaseProduto />
               </ProtectedRoute>
             }
           />

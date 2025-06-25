@@ -10,7 +10,7 @@ const Acessos = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get("https://api-start-pira.vercel.app/api/users");
+        const response = await axios.get("http://localhost:3000/api/users");
         setUsers(response.data);
       } catch (error) {
         console.error("Erro ao buscar usuários:", error);
@@ -23,7 +23,7 @@ const Acessos = () => {
   // Atualiza as permissões de um usuário
   const handlePermissionChange = async (userId, field, value) => {
     try {
-      const updatedUser = await axios.put(`https://api-start-pira.vercel.app/api/users/${userId}`, {
+      const updatedUser = await axios.put(`http://localhost:3000/api/users/${userId}`, {
         [field]: value,
       });
 
@@ -56,13 +56,14 @@ const Acessos = () => {
             <th>Despesas</th>
             <th>Ponto</th>
             <th>Acessos</th>
+            <th>BaseProduto</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
               <td>{user.username}</td>
-              {["caixa", "produtos", "maquinas", "fiado", "despesas", "ponto", "acessos"].map((field) => (
+              {["caixa", "produtos", "maquinas", "fiado", "despesas", "ponto", "acessos", "base_produto"].map((field) => (
                 <td key={field}>
                   <input type="checkbox" checked={user[field]} onChange={(e) => handlePermissionChange(user.id, field, e.target.checked)} />
                 </td>

@@ -13,6 +13,7 @@ const Dashboard = ({ permissions = {} }) => {
     { name: "DESPESAS", path: "/despesas", key: "despesas" },
     { name: "PONTO", path: "/ponto", key: "ponto" },
     { name: "ACESSOS", path: "/acessos", key: "acessos" },
+    { name: "ESTOQUE", path: "/base-produto", key: "base_produto" },
   ];
 
   return (

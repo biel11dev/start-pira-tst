@@ -6,7 +6,8 @@ import "./SideBar.css";
 const Sidebar = ({ permissions = {} }) => {
   const modules = [
     { name: "Caixa", path: "/cash-register", key: "caixa", icon: <FaCashRegister className="icon" /> },
-    { name: "Produtos", path: "/products", key: "produtos", icon: <FaBox className="icon" /> },
+    { name: "Lista de compras", path: "/products", key: "produtos", icon: <FaBox className="icon" /> },
+    { name: "Estoque", path: "/base-produto", key: "base_produto", icon: <FaBox className="icon" /> },
     { name: "Máquinas", path: "/machines", key: "maquinas", icon: <FaCogs className="icon" /> },
     { name: "Fiado", path: "/fiado", key: "fiado", icon: <FaUserTie className="icon" /> },
     { name: "Despesas", path: "/despesas", key: "despesas", icon: <FaMoneyBillWave className="icon" /> },
