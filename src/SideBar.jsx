@@ -1,11 +1,12 @@
 import React from "react";
-import { FaBox, FaCashRegister, FaClock, FaCogs, FaMoneyBillWave, FaUserFriends, FaUserTie } from "react-icons/fa"; // Importar ícones
+import { FaBox, FaCashRegister, FaClock, FaCogs, FaMoneyBillWave, FaShoppingCart, FaUserFriends, FaUserTie } from "react-icons/fa"; // Importar ícones
 import { Link } from "react-router-dom";
 import "./SideBar.css";
 
 const Sidebar = ({ permissions = {} }) => {
   const modules = [
     { name: "Caixa", path: "/cash-register", key: "caixa", icon: <FaCashRegister className="icon" /> },
+    { name: "PDV", path: "/pdv", key: "pdv", icon: <FaShoppingCart className="icon" /> },
     { name: "Lista de compras", path: "/products", key: "produtos", icon: <FaBox className="icon" /> },
     { name: "Estoque", path: "/base-produto", key: "base_produto", icon: <FaBox className="icon" /> },
     { name: "Máquinas", path: "/machines", key: "maquinas", icon: <FaCogs className="icon" /> },

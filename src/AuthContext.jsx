@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
     isAuthenticated: false,
     token: null,
-    permissions: { caixa: false, produtos: false, maquinas: false, fiado: false, despesas: false, ponto: false, acessos: false, base_produto: false },
+    permissions: { caixa: false, produtos: false, maquinas: false, fiado: false, despesas: false, ponto: false, acessos: false, base_produto: false, pdv: false },
   });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
         ponto: false,
         acessos: false,
         base_produto: false,
+        pdv: false
       };
       if (token) {
         try {
@@ -66,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         ponto: false,
         acessos: false,
         base_produto: false,
+        pdv: false
       },
     });
     navigate("/");

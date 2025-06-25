@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from "react-router-dom";
 import Acessos from "./Acessos";
 import "./App.css";
 import { AuthContext } from "./AuthContext"; // Importa o contexto de autenticação
+import BaseProduto from "./BaseProduto";
 import CashRegister from "./CashRegister";
 import ClientDetails from "./ClientDetails";
 import Login from "./Components/Login/Login";
@@ -13,12 +14,12 @@ import Fiado from "./Fiado";
 import ForgotPassword from "./ForgotPassword";
 import Machines from "./Machine";
 import MachineDetails from "./MachineDetails";
+import PDV from "./PDV";
 import Ponto from "./Ponto";
 import ProductList from "./ProductList";
 import ProtectedRoute from "./ProtectedRoute";
 import ResetPassword from "./ResetPassword";
 import Sidebar from "./SideBar";
-import BaseProduto from "./BaseProduto";
 function App() {
   const { auth } = useContext(AuthContext); // Obtém o estado de autenticação do contexto
   const [machines, setMachines] = useState([]);
@@ -26,6 +27,7 @@ function App() {
   const [products, setProducts] = useState([]);
   const [permissions, setPermissions] = useState({
     caixa: false,
+    pdv: false,
     produtos: false,
     maquinas: false,
     fiado: false,
@@ -81,6 +83,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CashRegister />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pdv"
+            element={
+              <ProtectedRoute>
+                <PDV />
               </ProtectedRoute>
             }
           />
