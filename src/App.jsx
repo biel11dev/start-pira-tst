@@ -20,22 +20,12 @@ import ProductList from "./ProductList";
 import ProtectedRoute from "./ProtectedRoute";
 import ResetPassword from "./ResetPassword";
 import Sidebar from "./SideBar";
+import Pessoal from "./Pessoal";
 function App() {
   const { auth } = useContext(AuthContext); // Obtém o estado de autenticação do contexto
   const [machines, setMachines] = useState([]);
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
-  const [permissions, setPermissions] = useState({
-    caixa: false,
-    pdv: false,
-    produtos: false,
-    maquinas: false,
-    fiado: false,
-    despesas: false,
-    ponto: false,
-    acessos: false,
-    base_produto: false,
-  });
 
   const location = useLocation();
 
@@ -91,6 +81,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PDV />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pessoal"
+            element={
+              <ProtectedRoute>
+                <Pessoal  />
               </ProtectedRoute>
             }
           />

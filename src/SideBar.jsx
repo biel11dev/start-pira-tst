@@ -1,5 +1,5 @@
 import React from "react";
-import { FaBox, FaCashRegister, FaClock, FaCogs, FaMoneyBillWave, FaShoppingCart, FaUserFriends, FaUserTie } from "react-icons/fa"; // Importar ícones
+import { FaBox, FaCashRegister, FaClock, FaCogs, FaMoneyBillWave, FaShoppingCart, FaUserFriends, FaUserTie, FaUserCircle } from "react-icons/fa"; // Importar ícones
 import { Link } from "react-router-dom";
 import "./SideBar.css";
 
@@ -14,6 +14,7 @@ const Sidebar = ({ permissions = {} }) => {
     { name: "Despesas", path: "/despesas", key: "despesas", icon: <FaMoneyBillWave className="icon" /> },
     { name: "Ponto", path: "/ponto", key: "ponto", icon: <FaClock className="icon" /> },
     { name: "Acessos", path: "/acessos", key: "acessos", icon: <FaUserFriends className="icon" /> },
+    { name: "Pessoal", path: "/pessoal", key: "pessoal", icon: <FaUserCircle className="icon" /> },
   ];
 
   const handleRedirect = () => {

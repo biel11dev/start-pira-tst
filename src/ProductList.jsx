@@ -16,7 +16,6 @@ const ProductList = () => {
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingProductData, setEditingProductData] = useState({});
-  const [units, setUnits] = useState(["Maço", "Fardo", "Unidade", "Pacote"]); // Lista dinâmica de unidades
   const [newUnit, setNewUnit] = useState(""); // Campo para adicionar nova unidade
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false); // Controle do pop-up
   const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
@@ -37,11 +36,7 @@ const ProductList = () => {
   const [isUnitEquivalenceModalOpen, setIsUnitEquivalenceModalOpen] = useState(false);
   const [selectedUnitForEquivalence, setSelectedUnitForEquivalence] = useState("");
   const [unitEquivalence, setUnitEquivalence] = useState("");
-  const [unitEquivalences, setUnitEquivalences] = useState({
-    "Maço": 20,
-    "Fardo": 10,
-    "Pacote": 12
-  }); // Armazena quantas unidades cada medida representa
+  const [unitEquivalences, setUnitEquivalences] = useState({}); // Agora será carregado da API
 
   useEffect(() => {
     // Buscar produtos da API quando o componente for montado
@@ -54,6 +49,33 @@ const ProductList = () => {
       })
       .catch((error) => {
         console.error("Erro ao buscar produtos:", error);
+      });
+  }, []);
+
+  useEffect(() => {
+    // Buscar equivalências de unidades da API
+    axios
+      .get("https://api-start-pira.vercel.app/api/unit-equivalences")
+      .then((response) => {
+        // Converte array para objeto para facilitar acesso
+        const equivalencesObj = response.data.reduce((acc, equiv) => {
+          acc[equiv.unitName] = equiv.value;
+          return acc;
+        }, {});
+        // Sempre garantir que "Unidade" existe
+        equivalencesObj["Unidade"] = 1;
+        setUnitEquivalences(equivalencesObj);
+        console.log("Equivalências carregadas:", equivalencesObj);
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar equivalências:", error);
+        // Em caso de erro, usar valores padrão
+        setUnitEquivalences({
+          "Unidade": 1,
+          "Maço": 20,
+          "Fardo": 10,
+          "Pacote": 12
+        });
       });
   }, []);
 
@@ -131,24 +153,109 @@ const ProductList = () => {
     }
   };
 
+  // Função para adicionar nova unidade
   const handleAddUnit = () => {
-    if (newUnit.trim() !== "" && !units.includes(newUnit)) {
-      setUnits([...units, newUnit]);
-      setNewUnit("");
-      setIsUnitModalOpen(false); // Fecha o modal ao confirmar
+    if (newUnit.trim() !== "" && !Object.keys(unitEquivalences).includes(newUnit)) {
+      // Se a nova unidade não é "Unidade", abre o modal de equivalência
+      if (newUnit !== "Unidade") {
+        setSelectedUnitForEquivalence(newUnit);
+        setIsUnitModalOpen(false);
+        setNewUnit("");
+        setIsUnitEquivalenceModalOpen(true);
+      } else {
+        // Se for "Unidade", apenas adiciona
+        setUnitEquivalences({
+          ...unitEquivalences,
+          [newUnit]: 1 // "Unidade" sempre vale 1
+        });
+        setIsUnitModalOpen(false);
+        setNewUnit("");
+        setMessage({ show: true, text: `Unidade "${newUnit}" adicionada com sucesso!`, type: "success" });
+        setTimeout(() => setMessage(null), 3000);
+      }
+    } else if (Object.keys(unitEquivalences).includes(newUnit)) {
+      setMessage({ show: true, text: "Esta unidade já existe!", type: "error" });
+      setTimeout(() => setMessage(null), 3000);
+    } else {
+      setMessage({ show: true, text: "Digite o nome da unidade!", type: "error" });
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
-  const handleDeleteUnit = (unitToDelete) => {
-    setUnits(units.filter((u) => u !== unitToDelete));
-    // Remove também a equivalência se existir
-    const newEquivalences = { ...unitEquivalences };
-    delete newEquivalences[unitToDelete];
-    setUnitEquivalences(newEquivalences);
+  const handleSaveUnitEquivalence = () => {
+    if (unitEquivalence.trim() !== "" && !isNaN(unitEquivalence) && parseFloat(unitEquivalence) > 0) {
+      const isEditing = unitEquivalences[selectedUnitForEquivalence];
+      const equivalenceValue = parseFloat(unitEquivalence);
+      
+      const apiCall = isEditing 
+        ? axios.put(`http://localhost:3000/api/unit-equivalences/${selectedUnitForEquivalence}`, {
+            value: equivalenceValue
+          })
+        : axios.post("http://localhost:3000/api/unit-equivalences", {
+            unitName: selectedUnitForEquivalence,
+            value: equivalenceValue
+          });
+
+      apiCall
+        .then(() => {
+          // Atualiza o estado local
+          setUnitEquivalences({
+            ...unitEquivalences,
+            [selectedUnitForEquivalence]: equivalenceValue
+          });
+          
+          // Só seleciona a unidade se não estiver editando uma equivalência existente
+          if (!isEditing) {
+            setUnit(selectedUnitForEquivalence);
+          }
+          
+          setIsUnitEquivalenceModalOpen(false);
+          setSelectedUnitForEquivalence("");
+          setUnitEquivalence("");
+          setMessage({ 
+            show: true, 
+            text: `Equivalência ${isEditing ? 'atualizada' : 'definida'}: 1 ${selectedUnitForEquivalence} = ${equivalenceValue} Unidades`, 
+            type: "success" 
+          });
+          setTimeout(() => setMessage(null), 3000);
+        })
+        .catch((error) => {
+          console.error("Erro ao salvar equivalência:", error);
+          if (error.response?.status === 409) {
+            setMessage({ show: true, text: "Esta unidade já possui equivalência definida!", type: "error" });
+          } else {
+            setMessage({ show: true, text: "Erro ao salvar equivalência!", type: "error" });
+          }
+          setTimeout(() => setMessage(null), 3000);
+        });
+    } else {
+      setMessage({ show: true, text: "Digite um número válido maior que zero!", type: "error" });
+      setTimeout(() => setMessage(null), 3000);
+    }
   };
 
-  const handleEditUnit = (oldUnit, newUnitValue) => {
-    setUnits(units.map((u) => (u === oldUnit ? newUnitValue : u)));
+  // Atualizar a função handleDeleteUnit para usar a API
+  const handleDeleteUnit = (unitToDelete) => {
+    // Remove também a equivalência do banco de dados se existir
+    if (unitEquivalences[unitToDelete]) {
+      axios
+        .delete(`http://localhost:3000/api/unit-equivalences/${unitToDelete}`)
+        .then(() => {
+          const newEquivalences = { ...unitEquivalences };
+          delete newEquivalences[unitToDelete];
+          setUnitEquivalences(newEquivalences);
+          setMessage({ show: true, text: `Unidade "${unitToDelete}" excluída com sucesso!`, type: "success" });
+          setTimeout(() => setMessage(null), 3000);
+        })
+        .catch((error) => {
+          console.error("Erro ao excluir equivalência:", error);
+          setMessage({ show: true, text: "Erro ao excluir equivalência da unidade!", type: "error" });
+          setTimeout(() => setMessage(null), 3000);
+        });
+    } else {
+      setMessage({ show: true, text: `Unidade "${unitToDelete}" excluída com sucesso!`, type: "success" });
+      setTimeout(() => setMessage(null), 3000);
+    }
   };
 
   // Função para lidar com a seleção de unidade
@@ -168,35 +275,6 @@ const ProductList = () => {
     setSelectedUnitForEquivalence(unitName);
     setUnitEquivalence(unitEquivalences[unitName].toString());
     setIsUnitEquivalenceModalOpen(true);
-  };
-
-  // Função para salvar a equivalência de unidade
-  const handleSaveUnitEquivalence = () => {
-    if (unitEquivalence.trim() !== "" && !isNaN(unitEquivalence) && parseFloat(unitEquivalence) > 0) {
-      const isEditing = unitEquivalences[selectedUnitForEquivalence];
-      setUnitEquivalences({
-        ...unitEquivalences,
-        [selectedUnitForEquivalence]: parseFloat(unitEquivalence)
-      });
-      
-      // Só seleciona a unidade se não estiver editando uma equivalência existente
-      if (!isEditing) {
-        setUnit(selectedUnitForEquivalence);
-      }
-      
-      setIsUnitEquivalenceModalOpen(false);
-      setSelectedUnitForEquivalence("");
-      setUnitEquivalence("");
-      setMessage({ 
-        show: true, 
-        text: `Equivalência ${isEditing ? 'atualizada' : 'definida'}: 1 ${selectedUnitForEquivalence} = ${unitEquivalence} Unidades`, 
-        type: "success" 
-      });
-      setTimeout(() => setMessage(null), 3000);
-    } else {
-      setMessage({ show: true, text: "Digite um número válido maior que zero!", type: "error" });
-      setTimeout(() => setMessage(null), 3000);
-    }
   };
 
   // Funções para gerenciar categorias
@@ -350,14 +428,13 @@ const ProductList = () => {
   return (
     <div className="product-list-container">
       <h2 className="fixed-title">Lista de Produtos</h2>
-      {/* Pop-up para adicionar nova unidade */}
 
       <div className="search-bar">
         <input
           type="text"
           placeholder="Pesquisar produtos..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)} // Atualiza o termo de pesquisa
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
@@ -365,10 +442,19 @@ const ProductList = () => {
         <div className="modal">
           <div className="modal-content">
             <h3 className="texto-add-unidade">Adicionar Nova Unidade</h3>
-            <input className="texto-unidade" type="text" value={newUnit} onChange={(e) => setNewUnit(e.target.value)} placeholder="Digite a nova unidade" />
+            <input 
+              className="texto-unidade" 
+              type="text" 
+              value={newUnit} 
+              onChange={(e) => setNewUnit(e.target.value)} 
+              placeholder="Digite a nova unidade" 
+            />
             <div className="modal-buttons">
               <button onClick={handleAddUnit}>Confirmar</button>
-              <button onClick={() => setIsUnitModalOpen(false)}>Cancelar</button>
+              <button onClick={() => {
+                setIsUnitModalOpen(false);
+                setNewUnit("");
+              }}>Cancelar</button>
             </div>
           </div>
         </div>
@@ -442,29 +528,37 @@ const ProductList = () => {
         <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" disabled={isLoading} />
         <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor (R$)" disabled={isLoading} />
         <input type="number" value={valuecusto} onChange={(e) => setPrecoCusto(e.target.value)} placeholder="Custo (R$)" disabled={isLoading} />
+        
         {/* Campo de seleção de unidades com exclusão */}
         <div className="custom-select">
           <div className="selected-unit">
             {unit || "Selecione uma unidade"}
             {unit && unit !== "Unidade" && unitEquivalences[unit] && (
-              <span style={{ fontSize: '11px', color: '#666', marginLeft: '5px' }}>
+              <span style={{ fontSize: '11px', color: '#666', marginLeft: '5px', textShadow: 'none' }}>
                 (1 = {unitEquivalences[unit]} un.)
               </span>
             )}
           </div>
           <ul className="unit-dropdown">
-            {units.map((u, index) => (
+            {/* Sempre mostrar "Unidade" primeiro */}
+            <li className="unit-item">
+              <span className="unit-name" onClick={() => setUnit("Unidade")}>
+                Unidade
+              </span>
+            </li>
+            {/* Mostrar outras unidades */}
+            {Object.keys(unitEquivalences).filter(u => u !== "Unidade").map((u, index) => (
               <li key={index} className="unit-item">
                 <span className="unit-name" onClick={() => handleUnitSelection(u)}>
                   {u}
-                  {u !== "Unidade" && unitEquivalences[u] && (
+                  {unitEquivalences[u] && (
                     <span style={{ fontSize: '10px', color: '#888', marginLeft: '5px', textShadow: 'none' }}>
                       (1 = {unitEquivalences[u]} un.)
                     </span>
                   )}
                 </span>
                 <div className="unit-buttons">
-                  {u !== "Unidade" && unitEquivalences[u] && (
+                  {unitEquivalences[u] && (
                     <button 
                       className="edit-unit-button" 
                       onClick={(e) => {
@@ -499,7 +593,7 @@ const ProductList = () => {
         
         {/* Campo de seleção de categorias */}
         <div style={{ 
-          height: selectedCategory ? "auto" : "60px", 
+          height: selectedCategory ? "auto" : "57px", 
           minHeight: "40px",
           marginLeft: "15px" 
         }} className="custom-select">
@@ -508,7 +602,9 @@ const ProductList = () => {
             padding: "10px",
             display: "flex",
             alignItems: "center",
-            minHeight: "20px"
+            minHeight: "20px",
+            textShadow: "none",
+            marginTop: "-18px",
           }}>
             {selectedCategory ? (
               <span style={{ 
@@ -619,7 +715,7 @@ const ProductList = () => {
                         <div className="product-info">
                           <label className="product-label">Unidade</label>
                           <select className="unidade-text" value={editingProductData.unit} onChange={(e) => setEditingProductData({ ...editingProductData, unit: e.target.value })}>
-                            {units.map((u, index) => (
+                            {Object.keys(unitEquivalences).map((u, index) => (
                               <option key={index} value={u}>
                                 {u}
                               </option>

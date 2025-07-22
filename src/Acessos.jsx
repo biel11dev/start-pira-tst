@@ -58,13 +58,14 @@ const Acessos = () => {
             <th>Acessos</th>
             <th>Estoque</th>
             <th>PDV</th>
+            <th>Pessoal</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
               <td>{user.username}</td>
-              {["caixa", "produtos", "maquinas", "fiado", "despesas", "ponto", "acessos", "base_produto", "pdv"].map((field) => (
+              {["caixa", "produtos", "maquinas", "fiado", "despesas", "ponto", "acessos", "base_produto", "pdv", "pessoal"].map((field) => (
                 <td key={field}>
                   <input type="checkbox" checked={user[field]} onChange={(e) => handlePermissionChange(user.id, field, e.target.checked)} />
                 </td>
