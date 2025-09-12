@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { FaSpinner } from "react-icons/fa";
 import * as XLSX from "xlsx";
-import "./Despesa.css";
+import "./Pessoal.css";
 import Message from "./Message";
 
 const Pessoal = () => {
@@ -39,6 +39,21 @@ const Pessoal = () => {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
 
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  };
+
+  const groupExpensesByDescription = (expenses) => {
+    return expenses.reduce((groups, expense) => {
+      const key = expense.nomeDespesa || "Sem Descrição";
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(expense);
+      return groups;
+    }, {});
+  };
+
   useEffect(() => {
     // Buscar despesas pessoais da API
     axios
@@ -46,6 +61,13 @@ const Pessoal = () => {
       .then((response) => {
         setExpenses(response.data);
         console.log("Despesas pessoais carregadas:", response.data);
+        // Expandir todos os grupos por padrão
+        const groupedData = groupExpensesByDescription(response.data);
+        const initialExpandedState = {};
+        Object.keys(groupedData).forEach(key => {
+          initialExpandedState[key] = true;
+        });
+        setExpandedGroups(initialExpandedState);
       })
       .catch((error) => {
         console.error("Erro ao buscar despesas pessoais:", error);
@@ -65,15 +87,13 @@ const Pessoal = () => {
       });
   }, []);
 
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-  };
-
   useEffect(() => {
     if (!isCategoryModalOpen) return;
     const handleClickOutside = (e) => {
-      if (!e.target.closest(".custom-selectt")) {
+      // Verificar se o clique foi fora da área do dropdown
+      if (!e.target.closest(".pessoal-category-select") && !e.target.closest(".pessoal-modal")) {
         setIsCategoryModalOpen(false);
+        setCategoryFilter("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -101,7 +121,16 @@ const Pessoal = () => {
       axios
         .post("https://api-start-pira.vercel.app/api/desp-pessoal", newExpenseData)
         .then((response) => {
-          setExpenses([...expenses, response.data]);
+          const updatedExpenses = [...expenses, response.data];
+          setExpenses(updatedExpenses);
+          
+          // Expandir o grupo da nova despesa
+          const groupName = response.data.nomeDespesa || "Sem Descrição";
+          setExpandedGroups(prev => ({
+            ...prev,
+            [groupName]: true
+          }));
+          
           setNewExpense("");
           setAmount("");
           setDescription("");
@@ -194,6 +223,10 @@ const Pessoal = () => {
   };
 
   const handleEditExpense = (expense) => {
+    // Fechar dropdown se estiver aberto
+    setIsCategoryModalOpen(false);
+    setCategoryFilter("");
+    
     setEditDespesa(expense.nomeDespesa);
     setEditExpenseId(expense.id);
     setEditAmount(expense.valorDespesa);
@@ -204,20 +237,29 @@ const Pessoal = () => {
 
   const handleUpdateExpense = (id) => {
     setIsLoadingSave(true);
-    const updateNome = editDespesa.trim() !== "" && editDespesa !== expenses.find((expense) => expense.id === id)?.nomeDespesa ? editDespesa : null;
+    const updatedNome = editDespesa.trim() !== "" ? editDespesa : null;
     const updatedAmount = parseFloat(editAmount) || 0;
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null;
     const categoryId = editCategoryId ? parseInt(editCategoryId) : null;
 
+    console.log("Dados para atualização:", {
+      nomeDespesa: updatedNome,
+      valorDespesa: updatedAmount,
+      descDespesa: updatedDescription,
+      tipoMovimento: editTipoMovimento,
+      categoriaId: categoryId,
+    });
+
     axios
       .put(`https://api-start-pira.vercel.app/api/desp-pessoal/${id}`, {
-        nomeDespesa: updateNome,
+        nomeDespesa: updatedNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
         tipoMovimento: editTipoMovimento,
         categoriaId: categoryId,
       })
       .then((response) => {
+        console.log("Resposta da API:", response.data);
         const updatedExpenses = expenses.map((expense) => (expense.id === id ? response.data : expense));
         setExpenses(updatedExpenses);
         setMessage({ show: true, text: "Despesa pessoal atualizada com sucesso!", type: "success" });
@@ -230,9 +272,19 @@ const Pessoal = () => {
         setTimeout(() => setMessage(null), 3000);
       })
       .catch((error) => {
-        setMessage({ show: true, text: "Erro ao atualizar despesa pessoal!", type: "error" });
-        console.error("Erro ao atualizar despesa pessoal:", error);
-        setTimeout(() => setMessage(null), 3000);
+        console.error("Erro detalhado ao atualizar despesa pessoal:", error);
+        console.error("Response data:", error.response?.data);
+        console.error("Response status:", error.response?.status);
+        
+        let errorMessage = "Erro ao atualizar despesa pessoal!";
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = `Erro: ${error.message}`;
+        }
+        
+        setMessage({ show: true, text: errorMessage, type: "error" });
+        setTimeout(() => setMessage(null), 5000);
       })
       .finally(() => {
         setIsLoadingSave(false);
@@ -240,6 +292,10 @@ const Pessoal = () => {
   };
 
   const handleDeleteExpense = (expenseId) => {
+    // Fechar dropdown se estiver aberto
+    setIsCategoryModalOpen(false);
+    setCategoryFilter("");
+    
     setConfirmDelete({ show: true, id: expenseId });
   };
 
@@ -270,7 +326,10 @@ const Pessoal = () => {
   };
 
   const filteredExpenses = expenses.filter(
-    (expense) => new Date(expense.date).getMonth() === selectedMonth.getMonth() && new Date(expense.date).getFullYear() === selectedMonth.getFullYear()
+    (expense) => {
+      const expenseDate = addDays(parseISO(expense.date), 1);
+      return expenseDate.getMonth() === selectedMonth.getMonth() && expenseDate.getFullYear() === selectedMonth.getFullYear();
+    }
   );
 
   const handleExportToExcel = () => {
@@ -282,24 +341,13 @@ const Pessoal = () => {
         Descrição: expense.descDespesa || "",
         Categoria: expense.categoria?.nomeCategoria || "Sem categoria",
         Tipo: expense.tipoMovimento === "GASTO" ? "Gasto" : "Ganho",
-        Data: new Date(expense.date).toLocaleDateString("pt-BR"),
+        Data: format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR }),
         Fixa: expense.DespesaFixa ? "Sim" : "Não",
       }))
     );
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Despesas Pessoais");
     XLSX.writeFile(workbook, "despesas-pessoais.xlsx");
-  };
-
-  const groupExpensesByDescription = (expenses) => {
-    return expenses.reduce((groups, expense) => {
-      const key = expense.nomeDespesa || "Sem Descrição";
-      if (!groups[key]) {
-        groups[key] = [];
-      }
-      groups[key].push(expense);
-      return groups;
-    }, {});
   };
 
   const toggleGroup = (description) => {
@@ -376,21 +424,21 @@ const Pessoal = () => {
   const saldoMensal = totalGanhos - totalGastos;
 
   return (
-    <div className="expense-list-container">
-      <h2 className="desp">Controle Pessoal</h2>
+    <div className="pessoal-container">
+      <h2 className="pessoal-title">Controle Pessoal</h2>
 
-      <div className="month-selector">
-        <button className="but-mes" onClick={() => handleMonthChange("prev")}>
+      <div className="pessoal-month-selector">
+        <button className="pessoal-btn-prev" onClick={() => handleMonthChange("prev")}>
           Mês Anterior
         </button>
-        <span>{format(selectedMonth, "MMMM yyyy", { locale: ptBR })}</span>
-        <button className="but-prox-mes" onClick={() => handleMonthChange("next")}>
+        <span className="pessoal-month-text">{format(selectedMonth, "MMMM yyyy", { locale: ptBR })}</span>
+        <button className="pessoal-btn-next" onClick={() => handleMonthChange("next")}>
           Próximo Mês
         </button>
       </div>
 
       <div
-        className="input-group-desp"
+        className="pessoal-form-container"
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             handleAddExpense();
@@ -398,17 +446,17 @@ const Pessoal = () => {
         }}
       >
         {isCategoryModalAdd && (
-          <div className="modal">
-            <div className="modal-content">
-              <h3 className="texto-add-unidade">Adicionar Nova Categoria</h3>
+          <div className="pessoal-modal">
+            <div className="pessoal-modal-content">
+              <h3 className="pessoal-modal-title">Adicionar Nova Categoria</h3>
               <input 
-                className="texto-unidade" 
+                className="pessoal-modal-input" 
                 type="text" 
                 value={newCategory} 
                 onChange={(e) => setNewCategory(e.target.value)} 
                 placeholder="Digite a nova categoria" 
               />
-              <div className="modal-buttons">
+              <div className="pessoal-modal-buttons">
                 <button onClick={handleAddCategory}>Confirmar</button>
                 <button onClick={() => setIsCategoryModalAdd(false)}>Cancelar</button>
               </div>
@@ -417,6 +465,7 @@ const Pessoal = () => {
         )}
 
         <input 
+          className="pessoal-input-field"
           type="text" 
           value={newExpense} 
           onChange={(e) => setNewExpense(e.target.value)} 
@@ -424,7 +473,7 @@ const Pessoal = () => {
         />
         
         <input 
-          className="input-valor"
+          className="pessoal-input-field pessoal-input-value"
           type="number" 
           value={amount} 
           onChange={(e) => setAmount(e.target.value)} 
@@ -432,6 +481,7 @@ const Pessoal = () => {
         />
         
         <input 
+          className="pessoal-input-field"
           type="text" 
           value={description} 
           onChange={(e) => setDescription(e.target.value)} 
@@ -439,38 +489,50 @@ const Pessoal = () => {
         />
         
         <input 
+          className="pessoal-input-field"
           type="date" 
           value={date} 
           onChange={(e) => setDate(e.target.value)} 
         />
 
         {/* Campo de seleção de categorias */}
-        <div className="custom-selectt">
-          <div className="selected-unitt" onClick={() => setIsCategoryModalOpen((prev) => !prev)} tabIndex={0} style={{ cursor: "pointer" }}>
+        <div className="pessoal-category-select">
+          <div 
+            className="pessoal-category-display" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCategoryModalOpen(prev => !prev);
+              setCategoryFilter("");
+            }} 
+            tabIndex={0} 
+            style={{ cursor: "pointer" }}
+          >
             {selectedCategory ? 
               categories.find(cat => cat.id === parseInt(selectedCategory))?.nomeCategoria :
-              <span style={{ marginTop: "-6px", display: "inline-block", textShadow: "none" }}>Selecione a categoria</span>
+              <span className="pessoal-category-placeholder">Selecione a categoria</span>
             }
           </div>
           {isCategoryModalOpen && (
-            <ul className="unit-dropdown">
+            <ul className="pessoal-category-dropdown">
               <li>
                 <input
                   type="text"
-                  className="expense-filter-input"
+                  className="pessoal-category-filter"
                   placeholder="Filtrar categorias..."
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   autoFocus
+                  onClick={(e) => e.stopPropagation()}
                 />
               </li>
               {categories
                 .filter((category) => category.nomeCategoria.toLowerCase().includes(categoryFilter.toLowerCase()))
                 .map((category) => (
-                  <li key={category.id} className="unit-item">
+                  <li key={category.id} className="pessoal-category-item">
                     <span
-                      className="unit-name"
-                      onClick={() => {
+                      className="pessoal-category-name"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedCategory(category.id.toString());
                         setIsCategoryModalOpen(false);
                         setCategoryFilter("");
@@ -479,8 +541,11 @@ const Pessoal = () => {
                       {category.nomeCategoria}
                     </span>
                     <button 
-                      className="delete-unit-button" 
-                      onClick={() => setConfirmDeleteCategory({ show: true, id: category.id })} 
+                      className="pessoal-category-delete" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmDeleteCategory({ show: true, id: category.id });
+                      }}
                       title="Excluir categoria" 
                       disabled={isLoading}
                     >
@@ -488,149 +553,169 @@ const Pessoal = () => {
                     </button>
                   </li>
                 ))}
-              <li className="add-unit-option" onClick={() => setIsCategoryModalAdd(true)}>
+              <li 
+                className="pessoal-category-add" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCategoryModalAdd(true);
+                  setIsCategoryModalOpen(false);
+                }}
+              >
                 + Adicionar nova categoria
               </li>
             </ul>
           )}
         </div>
 
-        <select value={tipoMovimento} onChange={(e) => setTipoMovimento(e.target.value)}>
+        <select className="pessoal-input-field" value={tipoMovimento} onChange={(e) => setTipoMovimento(e.target.value)}>
           <option value="GASTO">Gasto</option>
           <option value="GANHO">Ganho</option>
         </select>
         
-        <select value={isFixed} onChange={(e) => setIsFixed(e.target.value === "true")}>
+        <select className="pessoal-input-field" value={isFixed} onChange={(e) => setIsFixed(e.target.value === "true")}>
           <option value="false">Variável</option>
           <option value="true">Fixa</option>
         </select>
         
-        <button className="save-buttonn" onClick={handleAddExpense} disabled={isLoading}>
-          {isLoading ? <FaSpinner className="loading-iconnn" /> : "Adicionar"}
+        <button className="pessoal-save-btn" onClick={handleAddExpense} disabled={isLoading}>
+          {isLoading ? <FaSpinner className="pessoal-loading-icon" /> : "Adicionar"}
         </button>
       </div>
 
-      <ul className="expense-list">
-        {Object.entries(groupedExpenses).map(([description, group]) => (
-          <li key={description} className="expense-group">
-            <div className="group-header" onClick={() => toggleGroup(description)}>
-              <span>{description}</span>
-              <span>Total: {formatCurrency(group.reduce((sum, expense) => sum + expense.valorDespesa, 0))}</span>
-              <button className="botao-expend">{expandedGroups[description] ? "Ocultar" : "Expandir"}</button>
-            </div>
-            {expandedGroups[description] && (
-              <ul className="group-details">
-                {group.map((expense) => (
-                  <li key={expense.id} className="expense-item">
-                    {editExpenseId === expense.id ? (
-                      <div className="edit-expense">
-                        <div className="input-group-desc">
-                          <label>Nome</label>
-                          <input
-                            type="text"
-                            value={editDespesa}
-                            onChange={(e) => setEditDespesa(e.target.value)}
-                            placeholder="Novo nome"
-                            className="edit-input-nome"
-                          />
+      <ul className="pessoal-expense-list">
+        {Object.entries(groupedExpenses).length > 0 ? (
+          Object.entries(groupedExpenses).map(([description, group]) => (
+            <li key={description} className="pessoal-expense-group">
+              <div className="pessoal-group-header" onClick={() => toggleGroup(description)}>
+                <span>{description}</span>
+                <span>Total: {formatCurrency(group.reduce((sum, expense) => sum + expense.valorDespesa, 0))}</span>
+                <button className="pessoal-expand-btn">{expandedGroups[description] ? "Ocultar" : "Expandir"}</button>
+              </div>
+              {expandedGroups[description] && (
+                <ul className="pessoal-group-details">
+                  {group.map((expense) => (
+                    <li key={expense.id} className="pessoal-expense-item">
+                      {editExpenseId === expense.id ? (
+                        <div className="pessoal-edit-form">
+                          <div className="pessoal-edit-field">
+                            <label className="pessoal-edit-label">Nome</label>
+                            <input
+                              type="text"
+                              value={editDespesa}
+                              onChange={(e) => setEditDespesa(e.target.value)}
+                              placeholder="Novo nome"
+                              className="pessoal-edit-input"
+                            />
+                          </div>
+                          <div className="pessoal-edit-field">
+                            <label className="pessoal-edit-label">Valor</label>
+                            <input
+                              type="number"
+                              value={editAmount}
+                              onChange={(e) => setEditAmount(e.target.value)}
+                              placeholder="Novo valor"
+                              className="pessoal-edit-input"
+                            />
+                          </div>
+                          <div className="pessoal-edit-field">
+                            <label className="pessoal-edit-label">Descrição</label>
+                            <input
+                              type="text"
+                              value={editDescription}
+                              onChange={(e) => setEditDescription(e.target.value)}
+                              placeholder="Nova descrição"
+                              className="pessoal-edit-input"
+                            />
+                          </div>
+                          <div className="pessoal-edit-field">
+                            <label className="pessoal-edit-label">Categoria</label>
+                            <select 
+                              value={editCategoryId || ""} 
+                              onChange={(e) => setEditCategoryId(e.target.value)}
+                              className="pessoal-edit-input"
+                            >
+                              <option value="">Sem categoria</option>
+                              {categories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                  {cat.nomeCategoria}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="pessoal-edit-field">
+                            <label className="pessoal-edit-label">Tipo</label>
+                            <select 
+                              value={editTipoMovimento} 
+                              onChange={(e) => setEditTipoMovimento(e.target.value)}
+                              className="pessoal-edit-input"
+                            >
+                              <option value="GASTO">Gasto</option>
+                              <option value="GANHO">Ganho</option>
+                            </select>
+                          </div>
+                          <div className="pessoal-edit-buttons">
+                            <button 
+                              onClick={() => handleUpdateExpense(expense.id)} 
+                              className="pessoal-update-btn"
+                              disabled={isLoadingSave}
+                            >
+                              {isLoadingSave ? <FaSpinner className="pessoal-loading-icon" /> : "Salvar"}
+                            </button>
+                            <button 
+                              onClick={() => setEditExpenseId(null)} 
+                              className="pessoal-cancel-btn"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
                         </div>
-                        <div className="input-group-desc">
-                          <label>Valor</label>
-                          <input
-                            type="number"
-                            value={editAmount}
-                            onChange={(e) => setEditAmount(e.target.value)}
-                            placeholder="Novo valor"
-                            className="edit-input-val"
-                          />
+                      ) : (
+                        <div className="pessoal-expense-info">
+                          <span className="pessoal-expense-name">{expense.nomeDespesa}</span>
+                          <span className="pessoal-expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
+                          <span className="pessoal-expense-category">{expense.categoria?.nomeCategoria || "Sem categoria"}</span>
+                          <span className="pessoal-expense-amount" 
+                                style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
+                            {expense.tipoMovimento === "GANHO" ? "+" : "-"}{formatCurrency(expense.valorDespesa)}
+                          </span>
+                          <span className="pessoal-expense-type" style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
+                            {expense.tipoMovimento === "GANHO" ? "Ganho" : "Gasto"}
+                          </span>
+                          <button onClick={() => handleEditExpense(expense)} className="pessoal-edit-btn">
+                            Editar
+                          </button>
+                          <button onClick={() => handleDeleteExpense(expense.id)} className="pessoal-delete-btn">
+                            Excluir
+                          </button>
                         </div>
-                        <div className="input-group-desc">
-                          <label>Descrição</label>
-                          <input
-                            type="text"
-                            value={editDescription}
-                            onChange={(e) => setEditDescription(e.target.value)}
-                            placeholder="Nova descrição"
-                            className="edit-input-desc"
-                          />
-                        </div>
-                        <div className="input-group-desc">
-                          <label>Categoria</label>
-                          <select 
-                            value={editCategoryId || ""} 
-                            onChange={(e) => setEditCategoryId(e.target.value)}
-                            className="edit-input-desc"
-                          >
-                            <option value="">Sem categoria</option>
-                            {categories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.nomeCategoria}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="input-group-desc">
-                          <label>Tipo</label>
-                          <select 
-                            value={editTipoMovimento} 
-                            onChange={(e) => setEditTipoMovimento(e.target.value)}
-                            className="edit-input-desc"
-                          >
-                            <option value="GASTO">Gasto</option>
-                            <option value="GANHO">Ganho</option>
-                          </select>
-                        </div>
-                        <button onClick={() => handleUpdateExpense(expense.id)} className="update-button">
-                          Salvar
-                        </button>
-                        <button onClick={() => setEditExpenseId(null)} className="cancel-button">
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="expense-info">
-                        <span className="expense-name">{expense.nomeDespesa}</span>
-                        <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
-                        <span className="expense-category">{expense.categoria?.nomeCategoria || "Sem categoria"}</span>
-                        <span className={expense.tipoMovimento === "GANHO" ? "expense-amount" : "expense-amount"} 
-                              style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
-                          {expense.tipoMovimento === "GANHO" ? "+" : "-"}{formatCurrency(expense.valorDespesa)}
-                        </span>
-                        <span style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
-                          {expense.tipoMovimento === "GANHO" ? "Ganho" : "Gasto"}
-                        </span>
-                        <button onClick={() => handleEditExpense(expense)} className="edit-button">
-                          Editar
-                        </button>
-                        <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
-                          Excluir
-                        </button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))
+        ) : (
+          <li className="pessoal-no-expenses">Nenhuma despesa encontrada para este mês</li>
+        )}
       </ul>
 
-      <button onClick={handleExportToExcel} className="export-button">
+      <button onClick={handleExportToExcel} className="pessoal-export-btn">
         Exportar para Excel
       </button>
 
-      <div className="container-desp">
+      <div className="pessoal-chart-container">
         <Bar data={chartData} options={chartOptions} plugins={[ChartDataLabels]} />
       </div>
 
-      <div className="total-expenses">
-        <div style={{ marginBottom: "10px" }}>
+      <div className="pessoal-total-summary">
+        <div className="pessoal-total-item">
           <span style={{ color: "#dc3545" }}>Total de Gastos: {formatCurrency(totalGastos)}</span>
         </div>
-        <div style={{ marginBottom: "10px" }}>
+        <div className="pessoal-total-item">
           <span style={{ color: "#28a745" }}>Total de Ganhos: {formatCurrency(totalGanhos)}</span>
         </div>
-        <div style={{ fontWeight: "bold", fontSize: "18px" }}>
+        <div className="pessoal-total-balance" style={{ fontWeight: "bold", fontSize: "18px" }}>
           <span style={{ color: saldoMensal >= 0 ? "#28a745" : "#dc3545" }}>
             Saldo do Mês: {formatCurrency(saldoMensal)}
           </span>
