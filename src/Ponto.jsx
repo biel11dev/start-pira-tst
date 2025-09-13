@@ -86,30 +86,31 @@ const Ponto = () => {
       const pageHeight = pdf.internal.pageSize.getHeight();
 
       // Função para adicionar marca d'água
-      const addWatermark = () => {
-        return new Promise((resolve) => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          const img = new Image();
-          
-          img.onload = () => {
-            canvas.width = 200;
-            canvas.height = 200;
-            ctx.globalAlpha = 0.1;
-            ctx.drawImage(img, 0, 0, 200, 200);
-            const watermarkData = canvas.toDataURL('image/png');
-            pdf.addImage(watermarkData, 'PNG', pageWidth/2 - 50, pageHeight/2 - 50, 100, 100);
-            resolve();
-          };
-          
-          img.onerror = () => {
-            console.warn('Não foi possível carregar a marca d\'água');
-            resolve();
-          };
-          
-          img.src = startokLogo;
-        });
-      };
+const addWatermark = () => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      canvas.width = 200;
+      canvas.height = 200;
+      ctx.globalAlpha = 0.1;
+      ctx.drawImage(img, 0, 0, 200, 200);
+      const watermarkData = canvas.toDataURL('image/png');
+      pdf.addImage(watermarkData, 'PNG', pageWidth/2 - 50, pageHeight/2 - 50, 100, 100);
+      resolve();
+    };
+    
+    img.onerror = () => {
+      console.warn('Marca d\'água não encontrada, continuando sem ela');
+      resolve();
+    };
+    
+    // Tenta carregar da pasta public
+    img.src = '/Marca_Dagua.PNG';
+  });
+};
 
       await addWatermark();
 
