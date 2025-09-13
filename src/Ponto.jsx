@@ -2,17 +2,21 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import Message from "./Message";
 import "./Ponto.css";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import startokLogo from './assets/Marca_Dágua.png'; // Importe a imagem
 
 const Ponto = () => {
   const [employees, setEmployees] = useState([]);
-  const [weeklyData, setWeeklyData] = useState([]); // Dados semanais
-  const [monthlyData, setMonthlyData] = useState([]); // Dados mensais
-  const [selectedTab, setSelectedTab] = useState("daily"); // Aba selecionada: "daily", "weekly" ou "monthly"
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [selectedTab, setSelectedTab] = useState("daily");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState(null); // Novo estado para funcionário selecionado
   const [newEmployeeName, setNewEmployeeName] = useState("");
   const [newCargo, setNewCargo] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]); // Data atual no formato YYYY-MM-DD
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [tempValues, setTempValues] = useState({});
   const [showFaltaModal, setShowFaltaModal] = useState(false);
   const [showFaltaManualModal, setShowFaltaManualModal] = useState(false);
@@ -26,20 +30,22 @@ const Ponto = () => {
   const fetchEmployees = async (date) => {
     setLoading(true);
     try {
-      // Busca os funcionários
       const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
       const employeesData = employeesResponse.data;
 
-      // Busca os pontos diários
+      // Se não há funcionário selecionado, seleciona o primeiro
+      if (!selectedEmployeeId && employeesData.length > 0) {
+        setSelectedEmployeeId(employeesData[0].id);
+      }
+
       const dailyPointsResponse = await axios.get("https://api-start-pira.vercel.app/api/daily-points");
       const dailyPointsData = dailyPointsResponse.data;
 
-      // Filtrar os pontos diários pela data selecionada
-      const filteredDate = date || new Date().toISOString().split("T")[0]; // Use a data fornecida ou a data atual
+      const filteredDate = date || new Date().toISOString().split("T")[0];
 
       const updatedEmployees = employeesData.map((employee) => {
         const dailyPoint = dailyPointsData.find(
-          (point) => point.employeeId === employee.id && point.date.startsWith(filteredDate) // Verifica se o ponto é da data selecionada
+          (point) => point.employeeId === employee.id && point.date.startsWith(filteredDate)
         );
 
         const entry = dailyPoint?.entry ? dailyPoint.entry.split("T")[1].slice(0, 5) : "";
@@ -50,10 +56,10 @@ const Ponto = () => {
           entry,
           exit,
           gateOpen: dailyPoint?.gateOpen ? dailyPoint.gateOpen.split("T")[1].slice(0, 5) : "",
-          workedHours: calculateWorkedHours(entry, exit), // Inicializa as horas trabalhadas
-          extraOrMissingHours: calculateExtraOrMissingHours(entry, exit, employee.carga), // Inicializa as horas extras ou faltantes
-          carga: employee.carga || 8, // Define um valor padrão para dailyHours
-          falta: dailyPoint?.falta || false, // <-- Adicione esta linha
+          workedHours: calculateWorkedHours(entry, exit),
+          extraOrMissingHours: calculateExtraOrMissingHours(entry, exit, employee.carga),
+          carga: employee.carga || 8,
+          falta: dailyPoint?.falta || false,
         };
       });
 
@@ -61,21 +67,285 @@ const Ponto = () => {
     } catch (error) {
       console.error("Erro ao buscar funcionários ou pontos diários:", error);
       setMessage("Erro ao carregar dados.");
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setTimeout(() => setMessage(""), 3000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para gerar PDF
+  const generatePDF = async () => {
+    if (!selectedEmployeeId) {
+      setMessage({ show: true, text: "Selecione um funcionário primeiro!", type: "error" });
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Função para adicionar marca d'água
+      const addWatermark = () => {
+        return new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const img = new Image();
+          
+          img.onload = () => {
+            canvas.width = 200;
+            canvas.height = 200;
+            ctx.globalAlpha = 0.1;
+            ctx.drawImage(img, 0, 0, 200, 200);
+            const watermarkData = canvas.toDataURL('image/png');
+            pdf.addImage(watermarkData, 'PNG', pageWidth/2 - 50, pageHeight/2 - 50, 100, 100);
+            resolve();
+          };
+          
+          img.onerror = () => {
+            console.warn('Não foi possível carregar a marca d\'água');
+            resolve();
+          };
+          
+          img.src = startokLogo;
+        });
+      };
+
+      await addWatermark();
+
+      // Buscar dados do funcionário selecionado
+      const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+      if (!selectedEmployee) {
+        setMessage({ show: true, text: "Funcionário não encontrado!", type: "error" });
+        return;
+      }
+
+      // Cabeçalho
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      
+      let title = '';
+      if (selectedTab === 'daily') {
+        title = 'FOLHA DE PONTO DIÁRIA';
+      } else if (selectedTab === 'weekly') {
+        title = 'RELATÓRIO SEMANAL';
+      } else if (selectedTab === 'monthly') {
+        title = 'RELATÓRIO MENSAL';
+      }
+      
+      pdf.text(title, pageWidth/2, 30, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      
+      // Informações do funcionário
+      pdf.text(`Funcionário: ${selectedEmployee.name}`, 20, 50);
+      pdf.text(`Cargo: ${selectedEmployee.position || 'N/A'}`, 20, 60);
+      pdf.text(`Carga Horária Exigida: ${selectedEmployee.carga || 8}h/dia`, 20, 70);
+      
+      let yPosition = 90;
+
+      if (selectedTab === 'daily') {
+        // Relatório Diário
+        pdf.text(`Data: ${formatDateWithWeekday(selectedDate)}`, 20, 80);
+        yPosition = 100;
+        
+        pdf.text(`Entrada: ${selectedEmployee.entry || '--:--'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Saída: ${selectedEmployee.exit || '--:--'}`, 20, yPosition);
+        yPosition += 20;
+        
+        pdf.text(`Horas Trabalhadas: ${selectedEmployee.workedHours || '0h 0m'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Horas Extras/Faltantes: ${selectedEmployee.extraOrMissingHours || '0h 0m'}`, 20, yPosition);
+        
+      } else if (selectedTab === 'weekly') {
+        // Relatório Semanal
+        const weeklyEmployee = weeklyData.find(emp => emp.id === selectedEmployeeId);
+        if (weeklyEmployee && weeklyEmployee.points) {
+          const { startDate, endDate } = getWeekRange(new Date(selectedDate));
+          pdf.text(`Período: ${startDate.toLocaleDateString("pt-BR")} - ${endDate.toLocaleDateString("pt-BR")}`, 20, 80);
+          
+          yPosition = 100;
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('DETALHAMENTO DIÁRIO:', 20, yPosition);
+          pdf.setFont('helvetica', 'normal');
+          yPosition += 15;
+          
+          const pointsSorted = [...weeklyEmployee.points].sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          let totalWorkedMin = 0;
+          let totalExtraMin = 0;
+          
+          // Substituir forEach por for...of para evitar problemas com async/await
+          for (const point of pointsSorted) {
+            const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "--:--";
+            const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "--:--";
+            
+            const workedHours = calculateWorkedHours(entry, exit);
+            const extraHours = calculateExtraOrMissingHours(entry, exit, selectedEmployee.carga);
+            
+            // Calcular totais
+            const workedMatch = workedHours.match(/(\d+)h\s+(\d+)m/);
+            if (workedMatch) {
+              totalWorkedMin += parseInt(workedMatch[1]) * 60 + parseInt(workedMatch[2]);
+            }
+            
+            const extraMatch = extraHours.match(/([+-]?)(\d+)h\s+(\d+)m/);
+            if (extraMatch) {
+              const sign = extraMatch[1] === '-' ? -1 : 1;
+              totalExtraMin += sign * (parseInt(extraMatch[2]) * 60 + parseInt(extraMatch[3]));
+            }
+            
+            pdf.text(`${formatDateWithWeekday(point.date)}:`, 20, yPosition);
+            yPosition += 8;
+            pdf.text(`  Entrada: ${entry} | Saída: ${exit} | Trabalhadas: ${workedHours}`, 25, yPosition);
+            yPosition += 8;
+            pdf.text(`  Extras/Faltantes: ${extraHours}`, 25, yPosition);
+            yPosition += 12;
+            
+            if (yPosition > 250) {
+              pdf.addPage();
+              await addWatermark();
+              yPosition = 30;
+            }
+          }
+          
+          // Resumo da semana
+          yPosition += 10;
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('RESUMO DA SEMANA:', 20, yPosition);
+          pdf.setFont('helvetica', 'normal');
+          yPosition += 10;
+          
+          const totalWorkedHours = Math.floor(totalWorkedMin / 60);
+          const totalWorkedMinutes = totalWorkedMin % 60;
+          pdf.text(`Total Trabalhado: ${totalWorkedHours}h ${totalWorkedMinutes}m`, 20, yPosition);
+          yPosition += 8;
+          
+          const totalExtraHours = Math.floor(Math.abs(totalExtraMin) / 60);
+          const totalExtraMinutes = Math.abs(totalExtraMin) % 60;
+          const extraSign = totalExtraMin >= 0 ? '+' : '-';
+          pdf.text(`Total Extras/Faltantes: ${extraSign}${totalExtraHours}h ${totalExtraMinutes}m`, 20, yPosition);
+        }
+        
+      } else if (selectedTab === 'monthly') {
+        // Relatório Mensal
+        const monthlyEmployee = monthlyData.find(emp => emp.id === selectedEmployeeId);
+        if (monthlyEmployee && monthlyEmployee.points) {
+          const currentMonth = new Date(selectedDate);
+          pdf.text(`Mês/Ano: ${currentMonth.toLocaleDateString("pt-BR", { month: 'long', year: 'numeric' })}`, 20, 80);
+          
+          yPosition = 100;
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('RESUMO MENSAL:', 20, yPosition);
+          pdf.setFont('helvetica', 'normal');
+          yPosition += 15;
+          
+          const pointsSorted = [...monthlyEmployee.points].sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          let totalWorkedMin = 0;
+          let totalExtraMin = 0;
+          let totalDays = pointsSorted.length;
+          
+          // Substituir forEach por for...of
+          for (const point of pointsSorted) {
+            const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
+            const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
+            
+            const workedHours = calculateWorkedHours(entry, exit);
+            const extraHours = calculateExtraOrMissingHours(entry, exit, selectedEmployee.carga);
+            
+            // Calcular totais
+            const workedMatch = workedHours.match(/(\d+)h\s+(\d+)m/);
+            if (workedMatch) {
+              totalWorkedMin += parseInt(workedMatch[1]) * 60 + parseInt(workedMatch[2]);
+            }
+            
+            const extraMatch = extraHours.match(/([+-]?)(\d+)h\s+(\d+)m/);
+            if (extraMatch) {
+              const sign = extraMatch[1] === '-' ? -1 : 1;
+              totalExtraMin += sign * (parseInt(extraMatch[2]) * 60 + parseInt(extraMatch[3]));
+            }
+          }
+          
+          // Estatísticas mensais
+          pdf.text(`Total de Dias Trabalhados: ${totalDays}`, 20, yPosition);
+          yPosition += 10;
+          
+          const totalWorkedHours = Math.floor(totalWorkedMin / 60);
+          const totalWorkedMinutes = totalWorkedMin % 60;
+          pdf.text(`Total de Horas Trabalhadas: ${totalWorkedHours}h ${totalWorkedMinutes}m`, 20, yPosition);
+          yPosition += 10;
+          
+          const totalExtraHours = Math.floor(Math.abs(totalExtraMin) / 60);
+          const totalExtraMinutes = Math.abs(totalExtraMin) % 60;
+          const extraSign = totalExtraMin >= 0 ? '+' : '-';
+          pdf.text(`Saldo Horas Extras/Faltantes: ${extraSign}${totalExtraHours}h ${totalExtraMinutes}m`, 20, yPosition);
+          yPosition += 15;
+          
+          // Detalhamento por dia (resumido)
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('DETALHAMENTO POR DIA:', 20, yPosition);
+          pdf.setFont('helvetica', 'normal');
+          yPosition += 10;
+          
+          // Substituir forEach por for...of
+          for (const point of pointsSorted) {
+            const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "--:--";
+            const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "--:--";
+            const workedHours = calculateWorkedHours(entry, exit);
+            
+            pdf.text(`${formatDateWithWeekday(point.date)}: ${entry}-${exit} (${workedHours})`, 20, yPosition);
+            yPosition += 8;
+            
+            if (yPosition > 250) {
+              pdf.addPage();
+              await addWatermark();
+              yPosition = 30;
+            }
+          }
+        }
+      }
+      
+      // Rodapé
+      pdf.setFontSize(10);
+      pdf.text('START PIRA - Sistema de Controle de Ponto', pageWidth/2, pageHeight - 20, { align: 'center' });
+      pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth/2, pageHeight - 10, { align: 'center' });
+      
+
+    let filePrefix = '';
+    if (selectedTab === 'daily') {
+      filePrefix = 'diario';
+    } else if (selectedTab === 'weekly') {
+      filePrefix = 'semana';
+    } else if (selectedTab === 'monthly') {
+      filePrefix = 'mes';
+    }
+    
+    // Salvar PDF com nome traduzido
+    const fileName = `${filePrefix}-${selectedEmployee.name.replace(/\s+/g, '-')}-${selectedDate}.pdf`;
+    pdf.save(fileName);
+
+      setMessage({ show: true, text: "PDF gerado com sucesso!", type: "success" });
+      
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      setMessage({ show: true, text: "Erro ao gerar PDF!", type: "error" });
+    } finally {
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
   const getWeekRange = (date) => {
     const currentDate = new Date(date);
     const dayOfWeek = currentDate.getDay();
-    const startOffset = dayOfWeek === 0 ? -6 : 2 - dayOfWeek; // Ajusta para terça-feira
+    const startOffset = dayOfWeek === 0 ? -6 : 2 - dayOfWeek;
     const startDate = new Date(currentDate);
     startDate.setDate(currentDate.getDate() + startOffset);
 
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 5); // Domingo
+    endDate.setDate(startDate.getDate() + 5);
 
     return { startDate, endDate };
   };
@@ -83,7 +353,6 @@ const Ponto = () => {
   const fetchWeeklyData = async (dateRef) => {
     setLoading(true);
     const { startDate, endDate } = getWeekRange(dateRef || new Date());
-    // Corrige o fuso horário para evitar adiantar um dia
     const pad = (n) => n.toString().padStart(2, "0");
     const startDateStr = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`;
     const endDateStr = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
@@ -95,7 +364,6 @@ const Ponto = () => {
       const dailyPointsData = dailyPointsResponse.data;
 
       const updatedWeeklyData = employeesResponse.data.map((employee) => {
-        // Filtra pontos do funcionário E dentro do range da semana (comparando só a parte da data)
         const points = dailyPointsData.filter((point) => {
           const pointDate = point.date.split("T")[0];
           return point.employeeId === employee.id && pointDate >= startDateStr && pointDate <= endDateStr;
@@ -117,7 +385,7 @@ const Ponto = () => {
 
   const fetchMonthlyData = async (dateRef) => {
     setLoading(true);
-    const currentMonth = (dateRef || new Date()).toISOString().slice(0, 7); // Formato YYYY-MM
+    const currentMonth = (dateRef || new Date()).toISOString().slice(0, 7);
     try {
       const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
       const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?month=${currentMonth}`);
@@ -125,10 +393,8 @@ const Ponto = () => {
       const dailyPointsData = dailyPointsResponse.data;
 
       const updatedMonthlyData = employeesResponse.data.map((employee) => {
-        // Filtra pontos do funcionário E do mês selecionado
         const points = dailyPointsData.filter((point) => point.employeeId === employee.id && point.date.startsWith(currentMonth));
 
-        // Calcula as horas extras/faltantes
         const totalExtraOrMissingHours = points.reduce((total, point) => {
           const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
           const exit = point.exit ? point.exit.split("T")[1].slice(0, 5) : "";
@@ -155,22 +421,52 @@ const Ponto = () => {
       setLoading(false);
     }
   };
+
+  const [editValues, setEditValues] = useState({
+  name: "",
+  position: "",
+  carga: 8,
+});
+
+// Atualiza os campos quando o funcionário selecionado mudar
+useEffect(() => {
+  const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+  setEditValues({
+    name: selectedEmployee?.name || "",
+    position: selectedEmployee?.position || "",
+    carga: selectedEmployee?.carga || 8,
+  });
+}, [selectedEmployeeId, employees]);
+
+const handleEditChange = (field, value) => {
+  setEditValues(prev => ({ ...prev, [field]: value }));
+};
+
+const handleSaveEdit = () => {
+  if (!selectedEmployeeId) return;
+  handleUpdateEmployee(selectedEmployeeId, {
+    name: editValues.name,
+    position: editValues.position,
+    carga: parseInt(editValues.carga) || 8,
+  });
+};
+
   useEffect(() => {
     if (selectedTab === "weekly") {
       fetchWeeklyData(new Date(selectedDate));
     } else if (selectedTab === "monthly") {
       fetchMonthlyData(new Date(selectedDate));
     } else {
-      fetchEmployees(selectedDate); // Mantém a lógica diária
+      fetchEmployees(selectedDate);
     }
   }, [selectedTab, selectedDate]);
 
   const handleRegisterTime = async (id) => {
     try {
-      const updatedData = tempValues[id]; // Obtém os valores temporários para o funcionário
-      if (!updatedData) return; // Se não houver valores temporários, não faz nada
+      const updatedData = tempValues[id];
+      if (!updatedData) return;
 
-      const currentDate = selectedDate; // Usa a data selecionada na tela
+      const currentDate = selectedDate;
 
       const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points/${id}?date=${currentDate}`);
 
@@ -178,19 +474,17 @@ const Ponto = () => {
       const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
 
       const dataToUpdate = {
-        ...updatedData, // Inclui os valores de entrada, saída e portão aberto
-        date: currentDate, // Inclui a data para garantir que o ponto seja atualizado corretamente
-        employeeId: id, // Inclui o ID do funcionário
+        ...updatedData,
+        date: currentDate,
+        employeeId: id,
       };
 
       if (dailyPoint && dailyPoint.id) {
-        // Atualiza o registro existente
         await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${dailyPoint.id}`, dataToUpdate);
       } else {
-        // Cria um novo registro para a data selecionada
         await axios.post(`https://api-start-pira.vercel.app/api/daily-points`, dataToUpdate);
       }
-      // Atualiza o estado local
+
       setEmployees((prev) =>
         prev.map((employee) => {
           if (employee.id === id) {
@@ -203,54 +497,49 @@ const Ponto = () => {
               entry: updatedEntry,
               exit: updatedExit,
               gateOpen: updatedGateOpen,
-              workedHours: calculateWorkedHours(updatedEntry, updatedExit), // Recalcula as horas trabalhadas
-              extraOrMissingHours: calculateExtraOrMissingHours(updatedEntry, updatedExit, employee.carga), // Recalcula as horas extras ou faltantes
+              workedHours: calculateWorkedHours(updatedEntry, updatedExit),
+              extraOrMissingHours: calculateExtraOrMissingHours(updatedEntry, updatedExit, employee.carga),
             };
           }
           return employee;
         })
       );
 
-      // Limpa os valores temporários após a atualização
       setTempValues((prev) => {
         const { [id]: _, ...rest } = prev;
         return rest;
       });
       setMessage({ show: true, text: "Registro de ponto atualizado com sucesso!", type: "success" });
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Erro ao atualizar horários:", error);
       setMessage({ show: true, text: "Falha ao atualizar registro de ponto!", type: "error" });
     } finally {
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
-  // Função para retroceder um dia
   const handlePreviousDay = () => {
     const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() - 1); // Retrocede um dia
+    newDate.setDate(newDate.getDate() - 1);
     setSelectedDate(newDate.toISOString().split("T")[0]);
   };
 
-  // Função para retroceder um mês
   const handlePreviousMonth = () => {
     const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() - 1); // Retrocede um mês
+    newDate.setMonth(newDate.getMonth() - 1);
     setSelectedDate(newDate.toISOString().split("T")[0]);
   };
 
-  // Função para retroceder um dia
   const handleNextDay = () => {
     const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + 1); // Retrocede um dia
+    newDate.setDate(newDate.getDate() + 1);
     setSelectedDate(newDate.toISOString().split("T")[0]);
   };
 
-  // Função para retroceder um mês
   const handleNextMonth = () => {
     const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() + 1); // Retrocede um mês
+    newDate.setMonth(newDate.getMonth() + 1);
     setSelectedDate(newDate.toISOString().split("T")[0]);
   };
 
@@ -263,21 +552,26 @@ const Ponto = () => {
         entry: "",
         exit: "",
         gateOpen: "",
-        dailyHours: 8, // Valor padrão de carga horária
+        dailyHours: 8,
       };
 
-      // Cria o funcionário no banco de dados
       const response = await axios.post("https://api-start-pira.vercel.app/api/employees", newEmployee);
 
-      // Atualiza o estado local
       setEmployees([...employees, response.data]);
       setNewEmployeeName("");
-      setMessage({ show: true, text: "Funcionário adicioado com sucesso", type: "success" });
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setNewCargo("");
+      
+      // Se é o primeiro funcionário, seleciona automaticamente
+      if (employees.length === 0) {
+        setSelectedEmployeeId(response.data.id);
+      }
+      
+      setMessage({ show: true, text: "Funcionário adicionado com sucesso", type: "success" });
+      setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Erro ao adicionar funcionário:", error);
       setMessage("Erro ao adicionar funcionário.");
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setTimeout(() => setMessage(""), 3000);
     } finally {
       setTimeout(() => setMessage(""), 3000);
     }
@@ -289,14 +583,21 @@ const Ponto = () => {
       type: "confirm",
       onConfirm: async () => {
         try {
-          // Exclui os registros de DailyPoints associados ao funcionário
           await axios.delete(`https://api-start-pira.vercel.app/api/daily-points?employeeId=${id}`);
-
-          // Exclui o funcionário do banco de dados
           await axios.delete(`https://api-start-pira.vercel.app/api/employees/${id}`);
 
-          // Atualiza o estado local
           setEmployees((prevEmployees) => prevEmployees.filter((employee) => employee.id !== id));
+          
+          // Se o funcionário removido era o selecionado, seleciona outro
+          if (selectedEmployeeId === id) {
+            const remainingEmployees = employees.filter(emp => emp.id !== id);
+            if (remainingEmployees.length > 0) {
+              setSelectedEmployeeId(remainingEmployees[0].id);
+            } else {
+              setSelectedEmployeeId(null);
+            }
+          }
+          
           setMessage({ text: "Funcionário removido com sucesso!", type: "success" });
           setTimeout(() => setMessage(""), 3000);
         } catch (error) {
@@ -305,14 +606,13 @@ const Ponto = () => {
           setTimeout(() => setMessage(""), 3000);
         }
       },
-      onClose: () => setMessage(null), // Fecha o modal de confirmação
+      onClose: () => setMessage(null),
     });
   };
 
   const handleDeleteDailyPoint = async (employeeId, date) => {
     try {
       const currentDate = new Date(date);
-      // Busca o registro de daily-point para o funcionário e data informados
       const response = await axios.get(`https://api-start-pira.vercel.app/api/daily-points/${employeeId}?employeeId=${employeeId}&date=${currentDate.toISOString().split("T")[0]}`);
       const dailyPoints = response.data;
       const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
@@ -320,7 +620,6 @@ const Ponto = () => {
       if (dailyPoint && dailyPoint.id) {
         await axios.delete(`https://api-start-pira.vercel.app/api/daily-points/${dailyPoint.id}`);
         setMessage({ text: "Registro de ponto removido com sucesso!", type: "success" });
-        // Atualiza os dados após remoção
         if (selectedTab === "weekly") {
           fetchWeeklyData();
         } else if (selectedTab === "monthly") {
@@ -342,10 +641,8 @@ const Ponto = () => {
 
   const handleUpdateEmployee = async (id, updatedData) => {
     try {
-      // Atualiza o funcionário no banco de dados
       await axios.put(`https://api-start-pira.vercel.app/api/employees/${id}`, updatedData);
 
-      // Atualiza o estado local
       setEmployees((prev) => prev.map((employee) => (employee.id === id ? { ...employee, ...updatedData } : employee)));
       setMessage("Dados atualizados com sucesso!");
     } catch (error) {
@@ -363,7 +660,6 @@ const Ponto = () => {
     const entryTime = new Date(`1970-01-01T${entry}:00`);
     let exitTime = new Date(`1970-01-01T${exit}:00`);
 
-    // Ajusta o horário de saída se for no dia seguinte
     if (exitTime < entryTime) {
       exitTime.setDate(exitTime.getDate() + 1);
     }
@@ -381,7 +677,6 @@ const Ponto = () => {
     const entryTime = new Date(`1970-01-01T${entry}:00`);
     let exitTime = new Date(`1970-01-01T${exit}:00`);
 
-    // Ajusta o horário de saída se for no dia seguinte
     if (exitTime < entryTime) {
       exitTime.setDate(exitTime.getDate() + 1);
     }
@@ -402,7 +697,6 @@ const Ponto = () => {
     const entryTime = new Date(`1970-01-01T${entry}:00`);
     let gateOpenTime = new Date(`1970-01-01T${gateOpen}:00`);
 
-    // Ajusta o horário do portão aberto se for no dia seguinte
     if (gateOpenTime < entryTime) {
       gateOpenTime.setDate(gateOpenTime.getDate() + 1);
     }
@@ -422,9 +716,8 @@ const Ponto = () => {
     const semana = dias[d.getDay()];
     return `${dia}/${mes}/${ano} - ${semana}`;
   }
-  // Função utilitária para parsear a data ISO corretamente (ignora timezone)
+
   const parseISODate = (isoString) => {
-    // Força a data como local, sem considerar o fuso horário UTC
     const [year, month, day] = isoString.split("T")[0].split("-");
     return new Date(Number(year), Number(month) - 1, Number(day));
   };
@@ -468,7 +761,6 @@ const Ponto = () => {
   };
 
   const getDailyPointForEmployee = (employeeId, date) => {
-    // Garante que a data esteja no formato "YYYY-MM-DD 00:00:00"
     const dateWithTime = `${date} 00:00:00`;
     return axios.get(`https://api-start-pira.vercel.app/api/daily-points/${employeeId}?date=${encodeURIComponent(dateWithTime)}`).then((res) => {
       const dailyPoints = res.data;
@@ -484,7 +776,6 @@ const Ponto = () => {
       let carga = faltaEmployee.carga || 8;
 
       if (tipo === "removerHoras") {
-        // Remove horas: diminui o tempo de saída
         const entryDate = new Date(`1970-01-01T${entry}:00`);
         let exitDate = new Date(`1970-01-01T${exit}:00`);
         exitDate.setHours(exitDate.getHours() - faltaHoras);
@@ -513,7 +804,7 @@ const Ponto = () => {
     } catch (error) {
       setMessage({ show: true, text: "Erro ao registrar falta/ajuste!", type: "error" });
     } finally {
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
@@ -525,7 +816,6 @@ const Ponto = () => {
       let carga = faltaEmployeeManual.carga || 8;
 
       if (tipo === "removerHoras") {
-        // Remove horas: diminui o tempo de saída
         const entryDate = new Date(`1970-01-01T${entry}:00`);
         let exitDate = new Date(`1970-01-01T${exit}:00`);
         exitDate.setHours(exitDate.getHours() - faltaHoras);
@@ -554,15 +844,63 @@ const Ponto = () => {
     } catch (error) {
       setMessage({ show: true, text: "Erro ao registrar falta/ajuste!", type: "error" });
     } finally {
-      setTimeout(() => setMessage(""), 3000); // Remove a mensagem após 3 segundos
+      setTimeout(() => setMessage(""), 3000);
     }
   };
+
+  // Filtrar dados baseado no funcionário selecionado
+  const getFilteredData = () => {
+    if (!selectedEmployeeId) return [];
+    
+    if (selectedTab === "daily") {
+      return employees.filter(emp => emp.id === selectedEmployeeId);
+    } else if (selectedTab === "weekly") {
+      return weeklyData.filter(emp => emp.id === selectedEmployeeId);
+    } else if (selectedTab === "monthly") {
+      return monthlyData.filter(emp => emp.id === selectedEmployeeId);
+    }
+    return [];
+  };
+
+  const filteredData = getFilteredData();
 
   return (
     <div className="ponto-container">
       <h2 className="nome-ponto">Gerenciamento de Ponto</h2>
       {loading && <div className="loading">Carregando...</div>}
       {message && <Message message={message.text} type={message.type} onClose={message.onClose} onConfirm={message.onConfirm} />}
+
+      {/* Seletor de funcionário */}
+      <div className="employee-selector" style={{ margin: "20px 0", padding: "15px", background: "#f5f5f5", borderRadius: "8px" }}>
+        <label style={{ marginRight: "10px", fontWeight: "bold", textShadow: "none" }}>Selecionar Funcionário:</label>
+        <select 
+          value={selectedEmployeeId || ""} 
+          onChange={(e) => setSelectedEmployeeId(Number(e.target.value))}
+          style={{ padding: "8px", marginRight: "15px", borderRadius: "4px", border: "1px solid #ccc", textShadow: "none" }}
+        >
+          <option value="">Selecione um funcionário</option>
+          {employees.map(emp => (
+            <option key={emp.id} value={emp.id}>{emp.name} - {emp.position || 'N/A'}</option>
+          ))}
+        </select>
+        
+        {/* Botão para gerar PDF */}
+        <button 
+          onClick={generatePDF}
+          style={{ 
+            padding: "8px 15px", 
+            background: "#d32f2f", 
+            color: "white", 
+            border: "none", 
+            borderRadius: "4px", 
+            cursor: "pointer",
+            marginLeft: "10px"
+          }}
+          disabled={!selectedEmployeeId}
+        >
+          📄 Gerar PDF
+        </button>
+      </div>
 
       <div className="date-selector">
         <button onClick={handlePreviousMonth}>&lt;&lt; Mês</button>
@@ -583,10 +921,10 @@ const Ponto = () => {
           Visualização Mensal
         </button>
       </div>
+      
       {selectedTab === "weekly" && (
         <div className="week-tabs" style={{ margin: "16px 0", display: "flex", gap: 8 }}>
           {(() => {
-            // Calcula as semanas do mês selecionado, começando sempre na terça-feira
             const date = parseISODate(selectedDate);
             const year = date.getFullYear();
             const month = date.getMonth();
@@ -594,25 +932,22 @@ const Ponto = () => {
             const weeks = [];
             let current = new Date(year, month, 1);
 
-            // Avança até a primeira terça-feira do mês
             while (current.getDay() !== 2) {
               current.setDate(current.getDate() + 1);
               if (current > lastDay) break;
             }
 
-            // Monta as semanas a partir de cada terça-feira
             while (current <= lastDay) {
               const start = new Date(current);
               const end = new Date(start);
-              end.setDate(start.getDate() + 5); // terça a domingo
-              if (end > lastDay) end.setTime(lastDay.getTime()); // <-- ajuste robusto
+              end.setDate(start.getDate() + 5);
+              if (end > lastDay) end.setTime(lastDay.getTime());
               weeks.push({ start: new Date(start), end: new Date(end) });
               current.setDate(current.getDate() + 7);
             }
 
             return weeks.map((week, idx) => {
               const label = `${week.start.toLocaleDateString("pt-BR")} - ${week.end.toLocaleDateString("pt-BR")}`;
-              // Corrigido: ativo se selectedDate está entre start e end da semana
               const selected = parseISODate(selectedDate);
               selected.setHours(0, 0, 0, 0);
               const isActive = selected >= week.start && selected <= week.end;
@@ -644,9 +979,87 @@ const Ponto = () => {
       <div className="add-employee">
         <input type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Nome do Empregado" />
         <input type="text" value={newCargo} onChange={(e) => setNewCargo(e.target.value)} placeholder="Cargo" />
-
         <button onClick={handleAddEmployee}>Adicionar Empregado</button>
       </div>
+
+{selectedEmployeeId && (() => {
+  const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+  if (!selectedEmployee) return null;
+  return (
+    <div
+      style={{
+        margin: "30px auto 20px auto",
+        maxWidth: 500,
+        background: "#f8f8f8",
+        borderRadius: 10,
+        boxShadow: "0 2px 8px #0001",
+        padding: 24,
+        textAlign: "center"
+      }}
+    >
+      <h3 style={{ marginBottom: 16, textShadow: "none" }}>Gerenciamento do Empregado</h3>
+      <div style={{ marginBottom: 12  }}>
+        <label style={{ fontWeight: "bold", textShadow: "none" }}>Nome:</label>
+        <input
+          style={{ marginLeft: 8, padding: 6, borderRadius: 4, border: "1px solid #ccc", width: 200, textShadow: "none" }}
+          type="text"
+          value={editValues.name}
+          onChange={e => handleEditChange("name", e.target.value)}
+        />
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontWeight: "bold", textShadow: "none" }}>Cargo:</label>
+        <input
+          style={{ marginLeft: 8, padding: 6, borderRadius: 4, border: "1px solid #ccc", width: 200, textShadow: "none" }}
+          type="text"
+          value={editValues.position}
+          onChange={e => handleEditChange("position", e.target.value)}
+        />
+      </div>
+      <div style={{ marginBottom: 12, textShadow: "none" }}>
+        <label style={{ fontWeight: "bold", textShadow: "none" }}>Carga Horária:</label>
+        <input
+          style={{ marginLeft: 8, padding: 6, borderRadius: 4, border: "1px solid #ccc", width: 80, textShadow: "none" }}
+          type="number"
+          min={1}
+          max={24}
+          value={editValues.carga}
+          onChange={e => handleEditChange("carga", e.target.value)}
+        /> h/dia
+      </div>
+      <div>
+        <button
+          style={{
+            background: "#d32f2f",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            padding: "8px 18px",
+            marginRight: 12,
+            cursor: "pointer"
+          }}
+          onClick={() => handleRemoveEmployee(selectedEmployee.id)}
+        >
+          Excluir Empregado
+        </button>
+        <button
+          style={{
+            background: "#4caf50",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            padding: "8px 18px",
+            marginRight: 12,
+            cursor: "pointer"
+          }}
+          onClick={handleSaveEdit}
+        >
+          Salvar alterações
+        </button>
+      </div>
+    </div>
+  );
+})()}
 
       <table className="ponto-table">
         <thead>
@@ -656,17 +1069,17 @@ const Ponto = () => {
             <th>Cargo</th>
             <th>Entrada</th>
             <th>Saída</th>
-            <th>Portão Aberto</th>
+            {/* <th>Portão Aberto</th> */}
             <th>Carga Horária</th>
             <th>Horas Trabalhadas</th>
             <th>Horas Extras/Faltantes</th>
-            <th>Tempo para Abrir Portão</th>
+            {/* <th>Tempo para Abrir Portão</th> */}
             <th>Ações</th>
           </tr>
         </thead>
         <tbody>
           {selectedTab === "daily" &&
-            employees.map((employee) => (
+            filteredData.map((employee) => (
               <tr key={employee.id} className={employee.falta ? "linha-falta" : ""}>
                 <td className="td-funcionario">{formatDateWithWeekday(selectedDate)}</td>
                 <td className="td-funcionario">{employee.name}</td>
@@ -697,7 +1110,7 @@ const Ponto = () => {
                     }
                   />
                 </td>
-                <td>
+                {/* <td>
                   <input
                     className="input-funcionario"
                     type="time"
@@ -709,7 +1122,7 @@ const Ponto = () => {
                       }))
                     }
                   />
-                </td>
+                </td> */}
                 <td>
                   <input
                     className="input-funcionario"
@@ -726,7 +1139,7 @@ const Ponto = () => {
                 </td>
                 <td className="td-funcionario">{calculateWorkedHours(employee.entry, employee.exit)}</td>
                 <td className="td-funcionario">{calculateExtraOrMissingHours(employee.entry, employee.exit, employee.carga)}</td>
-                <td className="td-funcionario">{calculateGateOpenTime(employee.entry, employee.gateOpen)}</td>
+                {/* <td className="td-funcionario">{calculateGateOpenTime(employee.entry, employee.gateOpen)}</td> */}
                 <td>
                   <button className="td-funcionario-atz" onClick={() => handleRegisterTime(employee.id)}>
                     Atualizar
@@ -748,10 +1161,9 @@ const Ponto = () => {
               </tr>
             ))}
           {selectedTab === "weekly" &&
-            weeklyData.flatMap((employee) => {
+            filteredData.flatMap((employee) => {
               const pointsSorted = [...employee.points].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-              // Totais
               const totalCarga = pointsSorted.reduce((acc) => acc + (employee.carga || 8), 0);
               const totalWorked = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
@@ -774,7 +1186,6 @@ const Ponto = () => {
                 return acc + min;
               }, 0);
 
-              // Formatação
               const formatHM = (min) => `${Math.floor(Math.abs(min) / 60)}h ${Math.abs(min) % 60}m`;
               const formatExtra = (min) => (min === 0 ? "0h 0m" : (min > 0 ? "+" : "-") + formatHM(min));
 
@@ -810,7 +1221,7 @@ const Ponto = () => {
                         }
                       />
                     </td>
-                    <td>
+                    {/* <td>
                       <input
                         className="input-funcionario"
                         type="time"
@@ -822,7 +1233,7 @@ const Ponto = () => {
                           }))
                         }
                       />
-                    </td>
+                    </td> */}
                     <td>
                       <input
                         className="input-funcionario"
@@ -847,9 +1258,9 @@ const Ponto = () => {
                         employee.carga
                       )}
                     </td>
-                    <td className="td-funcionario">
+                    {/* <td className="td-funcionario">
                       {calculateGateOpenTime(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
-                    </td>
+                    </td> */}
                     <td>
                       <button className="td-funcionario" style={{ background: "#d40000", color: "#fff", marginLeft: 4 }} onClick={() => handleOpenFaltaModal(employee, point)}>
                         Falta
@@ -864,16 +1275,15 @@ const Ponto = () => {
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalCarga}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatHM(totalWorked)}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatExtra(totalExtras)}</td>
-                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td>
-                  <td style={{ background: "black" }}></td>
+                  {/* <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td>
+                  <td style={{ background: "black" }}></td> */}
                 </tr>,
               ];
             })}
           {selectedTab === "monthly" &&
-            monthlyData.flatMap((employee) => {
+            filteredData.flatMap((employee) => {
               const pointsSorted = (employee.points || []).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-              // Totais
               const totalCargaMin = pointsSorted.reduce((acc) => acc + (employee.carga || 8) * 60, 0);
               const totalWorkedMin = pointsSorted.reduce((acc, point) => {
                 const entry = point.entry ? point.entry.split("T")[1].slice(0, 5) : "";
@@ -893,7 +1303,6 @@ const Ponto = () => {
                 return acc + min;
               }, 0);
 
-              // Formatação
               const formatHM = (min) => `${Math.floor(Math.abs(min) / 60)}h ${Math.abs(min) % 60}m`;
               const formatExtra = (min) => (min === 0 ? "0h 0m" : (min > 0 ? "+" : "-") + formatHM(min));
               return [
@@ -928,7 +1337,7 @@ const Ponto = () => {
                         }
                       />
                     </td>
-                    <td>
+                    {/* <td>
                       <input
                         className="input-funcionario"
                         type="time"
@@ -940,7 +1349,7 @@ const Ponto = () => {
                           }))
                         }
                       />
-                    </td>
+                    </td> */}
                     <td>
                       <input
                         className="input-funcionario"
@@ -965,9 +1374,9 @@ const Ponto = () => {
                         employee.carga
                       )}
                     </td>
-                    <td className="td-funcionario">
+                    {/* <td className="td-funcionario">
                       {calculateGateOpenTime(point.entry ? point.entry.split("T")[1].slice(0, 5) : "", point.gateOpen ? point.gateOpen.split("T")[1].slice(0, 5) : "")}
-                    </td>
+                    </td> */}
                     <td>
                       <button className="td-funcionario" onClick={() => handleOpenFaltaModal(employee, point)}>
                         Falta
@@ -982,13 +1391,15 @@ const Ponto = () => {
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalCarga}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatHM(totalWorked)}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatExtra(totalExtras)}</td>
-                  <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td>
-                  <td style={{ background: "black" }}></td>
+                  {/* <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td> */}
+                  {/* <td style={{ background: "black" }}></td> */}
                 </tr>,
               ];
             })}
         </tbody>
       </table>
+      
+      {/* Modais de falta (mantidos inalterados) */}
       {showFaltaModal && (
         <div
           className="modal-falta"

@@ -68,6 +68,7 @@ const ProductList = () => {
       })
       .catch((error) => {
         console.error("Erro ao buscar produtos:", error);
+        console.log("Erro ao buscar produtos:", error);
       });
   };
 

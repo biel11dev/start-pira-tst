@@ -15,7 +15,7 @@
   margin-right: 100px;
 }
 
-.input-group {
+.input-group-est {
   display: flex;
   justify-content: center;
   margin-bottom: 35px;
@@ -27,8 +27,8 @@
   text-shadow: none;
 }
 
-.input-group input,
-.input-group select {
+.input-group-est input,
+.input-group-est select {
   padding: 10px;
   font-size: 16px;
   border-radius: 5px;
@@ -42,7 +42,7 @@
   text-shadow: none;
 }
 
-.input-group button {
+.input-group-est button {
   padding: 10px 20px;
   font-size: 16px;
   border-radius: 5px;
@@ -55,7 +55,7 @@
   transition: background-color 0.3s ease;
 }
 
-.input-group button:hover {
+.input-group-est button:hover {
   background-color: #022448;
 }
 

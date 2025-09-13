@@ -367,7 +367,8 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  width: 85%;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   gap: 10px;
   color: #fff;
@@ -389,9 +390,9 @@
   font-weight: 700;
   font-size: 14px;
   justify-self: end;
+  margin-right: 10px;
   white-space: nowrap;
 }
-
 .pessoal-expand-btn {
   background-color: rgba(0, 123, 255, 0.8);
   color: white;
@@ -416,7 +417,7 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  width: 85%;
+  width: 100%;
   box-sizing: border-box;
   gap: 15px;
   color: #fff;
@@ -483,13 +484,14 @@
 
 /* Informações da despesa */
 .pessoal-expense-info {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr 90px; /* Coluna fixa para botões */
   align-items: center;
   padding: 15px 20px;
   color: #fff;
   gap: 15px;
-  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
 }
 
 .pessoal-expense-info span {
@@ -502,7 +504,6 @@
 .pessoal-expense-name {
   font-weight: 600;
   text-align: left !important;
-  flex: 2;
 }
 
 .pessoal-expense-date {
@@ -522,6 +523,16 @@
 
 .pessoal-expense-type {
   font-weight: 500;
+}
+
+.pessoal-expense-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 /* Formulário de edição */
@@ -604,6 +615,24 @@
   font-weight: 500;
 }
 
+.pessoal-edit-btn,
+.pessoal-delete-btn {
+  width: 65px;
+  height: 28px;
+  padding: 4px 8px;
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
 .pessoal-edit-btn {
   background-color: #28a745;
   color: white;
@@ -659,6 +688,44 @@
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
+}
+
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .pessoal-expense-info {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto auto;
+    gap: 8px;
+    text-align: left;
+  }
+  
+  .pessoal-expense-info span {
+    text-align: left !important;
+  }
+  
+  .pessoal-expense-actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .pessoal-edit-btn,
+  .pessoal-delete-btn {
+    width: auto;
+    flex: 1;
+    max-width: 80px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .pessoal-expense-info {
+    grid-template-columns: 1.5fr 0.8fr 1.2fr 1fr 1fr 85px;
+    gap: 8px;
+  }
 }
 
 .pessoal-export-btn:hover {

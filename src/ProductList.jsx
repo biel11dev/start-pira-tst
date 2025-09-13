@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { FaSpinner } from "react-icons/fa"; // Importa o ícone de carregamento
+import { FaSpinner } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import Message from "./Message";
 import "./ProductList.css";
@@ -16,16 +16,18 @@ const ProductList = () => {
   const [confirmDelete, setConfirmDelete] = useState({ show: false, id: null });
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingProductData, setEditingProductData] = useState({});
-  const [newUnit, setNewUnit] = useState(""); // Campo para adicionar nova unidade
-  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false); // Controle do pop-up
-  const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
-  const [searchTerm, setSearchTerm] = useState(""); // Estado para o termo de pesquisa
-  const [filteredProducts, setFilteredProducts] = useState([]); // Estado para os produtos filtrados
+  const [newUnit, setNewUnit] = useState("");
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingSave, setIsLoadingSave] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredProducts, setFilteredProducts] = useState([]);
   
-  // Estados para categorias
+  // Estados para categorias e subcategorias
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [parentId, setParentId] = useState("");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isCategoryModalAdd, setIsCategoryModalAdd] = useState(false);
   const [confirmDeleteCategory, setConfirmDeleteCategory] = useState({ show: false, id: null });
@@ -36,15 +38,14 @@ const ProductList = () => {
   const [isUnitEquivalenceModalOpen, setIsUnitEquivalenceModalOpen] = useState(false);
   const [selectedUnitForEquivalence, setSelectedUnitForEquivalence] = useState("");
   const [unitEquivalence, setUnitEquivalence] = useState("");
-  const [unitEquivalences, setUnitEquivalences] = useState({}); // Agora será carregado da API
+  const [unitEquivalences, setUnitEquivalences] = useState({});
 
   useEffect(() => {
-    // Buscar produtos da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/api/products")
+      .get("http://localhost:3000/api/products")
       .then((response) => {
         setProducts(response.data);
-        setFilteredProducts(response.data); // Inicializa os produtos filtrados com todos os produtos
+        setFilteredProducts(response.data);
         console.log("Produtos carregados:", response.data);
       })
       .catch((error) => {
@@ -53,23 +54,19 @@ const ProductList = () => {
   }, []);
 
   useEffect(() => {
-    // Buscar equivalências de unidades da API
     axios
-      .get("https://api-start-pira.vercel.app/api/unit-equivalences")
+      .get("http://localhost:3000/api/unit-equivalences")
       .then((response) => {
-        // Converte array para objeto para facilitar acesso
         const equivalencesObj = response.data.reduce((acc, equiv) => {
           acc[equiv.unitName] = equiv.value;
           return acc;
         }, {});
-        // Sempre garantir que "Unidade" existe
         equivalencesObj["Unidade"] = 1;
         setUnitEquivalences(equivalencesObj);
         console.log("Equivalências carregadas:", equivalencesObj);
       })
       .catch((error) => {
         console.error("Erro ao buscar equivalências:", error);
-        // Em caso de erro, usar valores padrão
         setUnitEquivalences({
           "Unidade": 1,
           "Maço": 20,
@@ -80,9 +77,8 @@ const ProductList = () => {
   }, []);
 
   useEffect(() => {
-    // Buscar categorias da API
     axios
-      .get("https://api-start-pira.vercel.app/api/categories")
+      .get("http://localhost:3000/api/categories")
       .then((response) => {
         setCategories(response.data);
         console.log("Categorias carregadas:", response.data);
@@ -92,13 +88,24 @@ const ProductList = () => {
       });
   }, []);
 
-  // Atualiza os produtos filtrados sempre que o termo de pesquisa ou a lista de produtos mudar
   useEffect(() => {
     const filtered = products.filter(
-      (product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()) // Filtra os produtos pelo nome
+      (product) => product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredProducts(filtered);
   }, [searchTerm, products]);
+
+  useEffect(() => {
+    if (!isCategoryModalOpen) return;
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".custom-select") && !e.target.closest(".modal")) {
+        setIsCategoryModalOpen(false);
+        setCategoryFilter("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isCategoryModalOpen]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -106,10 +113,10 @@ const ProductList = () => {
 
   const handleAddProduct = () => {
     if (newProduct.trim() !== "" && quantity.trim() !== "" && value.trim() !== "" && valuecusto.trim() !== "") {
-      setIsLoading(true); // Ativa o estado de carregamento
+      setIsLoading(true);
       const categoryId = selectedCategory ? parseInt(selectedCategory) : null;
       axios
-        .post("https://api-start-pira.vercel.app/api/products", { 
+        .post("http://localhost:3000/api/products", { 
           name: newProduct, 
           quantity, 
           unit, 
@@ -126,47 +133,30 @@ const ProductList = () => {
           setPrecoCusto("");
           setSelectedCategory("");
           setMessage({ show: true, text: "Produto adicionado com sucesso!", type: "success" });
-
-          // Adicionar timeout para esconder a mensagem após 3 segundos
-          setTimeout(() => {
-            setMessage(null);
-          }, 3000);
+          setTimeout(() => setMessage(null), 3000);
         })
         .catch((error) => {
           setMessage({ show: true, text: "Erro ao adicionar produto!", type: "error" });
-
-          // Adicionar timeout para esconder a mensagem após 3 segundos
-          setTimeout(() => {
-            setMessage(null);
-          }, 3000);
+          setTimeout(() => setMessage(null), 3000);
         })
-        .finally(() => {
-          setIsLoading(false); // Desativa o estado de carregamento
-        });
+        .finally(() => setIsLoading(false));
     } else {
       setMessage({ show: true, text: "Preencha todos os campos!", type: "error" });
-
-      // Adicionar timeout para esconder a mensagem após 3 segundos
-      setTimeout(() => {
-        setMessage(null);
-      }, 3000);
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
-  // Função para adicionar nova unidade
   const handleAddUnit = () => {
     if (newUnit.trim() !== "" && !Object.keys(unitEquivalences).includes(newUnit)) {
-      // Se a nova unidade não é "Unidade", abre o modal de equivalência
       if (newUnit !== "Unidade") {
         setSelectedUnitForEquivalence(newUnit);
         setIsUnitModalOpen(false);
         setNewUnit("");
         setIsUnitEquivalenceModalOpen(true);
       } else {
-        // Se for "Unidade", apenas adiciona
         setUnitEquivalences({
           ...unitEquivalences,
-          [newUnit]: 1 // "Unidade" sempre vale 1
+          [newUnit]: 1
         });
         setIsUnitModalOpen(false);
         setNewUnit("");
@@ -198,13 +188,11 @@ const ProductList = () => {
 
       apiCall
         .then(() => {
-          // Atualiza o estado local
           setUnitEquivalences({
             ...unitEquivalences,
             [selectedUnitForEquivalence]: equivalenceValue
           });
           
-          // Só seleciona a unidade se não estiver editando uma equivalência existente
           if (!isEditing) {
             setUnit(selectedUnitForEquivalence);
           }
@@ -234,9 +222,7 @@ const ProductList = () => {
     }
   };
 
-  // Atualizar a função handleDeleteUnit para usar a API
   const handleDeleteUnit = (unitToDelete) => {
-    // Remove também a equivalência do banco de dados se existir
     if (unitEquivalences[unitToDelete]) {
       axios
         .delete(`http://localhost:3000/api/unit-equivalences/${unitToDelete}`)
@@ -258,34 +244,36 @@ const ProductList = () => {
     }
   };
 
-  // Função para lidar com a seleção de unidade
   const handleUnitSelection = (selectedUnit) => {
     if (selectedUnit !== "Unidade" && !unitEquivalences[selectedUnit]) {
-      // Se não é "Unidade" e não tem equivalência cadastrada, abre o modal
       setSelectedUnitForEquivalence(selectedUnit);
       setIsUnitEquivalenceModalOpen(true);
     } else {
-      // Se é "Unidade" ou já tem equivalência, apenas seleciona
       setUnit(selectedUnit);
     }
   };
 
-  // Função para editar equivalência de unidade existente
   const handleEditUnitEquivalence = (unitName) => {
     setSelectedUnitForEquivalence(unitName);
     setUnitEquivalence(unitEquivalences[unitName].toString());
     setIsUnitEquivalenceModalOpen(true);
   };
 
-  // Funções para gerenciar categorias
   const handleAddCategory = () => {
-    if (newCategory.trim() !== "" && !categories.some((cat) => cat.name === newCategory)) {
+    if (newCategory.trim() !== "" && !getAllCategories().some((cat) => cat.name === newCategory)) {
       setIsLoading(true);
       axios
-        .post("https://api-start-pira.vercel.app/api/categories", { name: newCategory })
+        .post("http://localhost:3000/api/categories", { 
+          name: newCategory, 
+          parentId: parentId || null 
+        })
+        .then(() => {
+          return axios.get("http://localhost:3000/api/categories");
+        })
         .then((response) => {
-          setCategories([...categories, response.data]);
+          setCategories(response.data);
           setNewCategory("");
+          setParentId("");
           setIsCategoryModalAdd(false);
           setMessage({ show: true, text: "Categoria adicionada com sucesso!", type: "success" });
           setTimeout(() => setMessage(null), 3000);
@@ -300,23 +288,45 @@ const ProductList = () => {
 
   const handleDeleteCategory = (id) => {
     axios
-      .delete(`https://api-start-pira.vercel.app/api/categories/${id}`)
+      .delete(`http://localhost:3000/api/categories/${id}`)
       .then(() => {
-        setCategories(categories.filter((cat) => cat.id !== id));
+        return axios.get("http://localhost:3000/api/categories");
+      })
+      .then((response) => {
+        setCategories(response.data);
         setConfirmDeleteCategory({ show: false, id: null });
         setMessage({ show: true, text: "Categoria excluída com sucesso!", type: "success" });
         setTimeout(() => setMessage(null), 3000);
       })
       .catch((error) => {
-        setMessage({ show: true, text: "Erro ao excluir categoria!", type: "error" });
+        const errorMessage = error.response?.data?.error || "Erro ao excluir categoria!";
+        setMessage({ show: true, text: errorMessage, type: "error" });
         setTimeout(() => setMessage(null), 3000);
       });
   };
 
-  // Função para agrupar produtos por categoria
+  const getAllCategories = () => {
+    const allCategories = [];
+    categories.forEach(category => {
+      allCategories.push(category);
+      if (category.subcategories) {
+        allCategories.push(...category.subcategories);
+      }
+    });
+    return allCategories;
+  };
+
   const groupProductsByCategory = (products) => {
     return products.reduce((groups, product) => {
-      const categoryName = product.category?.name || "Sem Categoria";
+      let categoryName = "Sem Categoria";
+      if (product.category) {
+        if (product.category.parent) {
+          categoryName = `${product.category.parent.name} > ${product.category.name}`;
+        } else {
+          categoryName = product.category.name;
+        }
+      }
+      
       if (!groups[categoryName]) {
         groups[categoryName] = [];
       }
@@ -325,7 +335,6 @@ const ProductList = () => {
     }, {});
   };
 
-  // Função para alternar expansão de grupos
   const toggleGroup = (categoryName) => {
     setExpandedGroups(prev => ({
       ...prev,
@@ -333,29 +342,76 @@ const ProductList = () => {
     }));
   };
 
+  const handleEditProduct = (product) => {
+    setIsCategoryModalOpen(false);
+    setCategoryFilter("");
+    
+    setEditingProduct(product.id);
+    setEditingProductData({
+      name: product.name,
+      quantity: product.quantity,
+      unit: product.unit,
+      value: product.value,
+      valuecusto: product.valuecusto,
+      categoryId: product.categoryId || "",
+    });
+  };
+
+  const handleUpdateProduct = (id) => {
+    setIsLoadingSave(true);
+    const { name, quantity, unit, value, valuecusto, categoryId } = editingProductData;
+    const finalCategoryId = categoryId ? parseInt(categoryId) : null;
+    
+    axios
+      .put(`http://localhost:3000/api/products/${id}`, { 
+        name, 
+        quantity, 
+        unit, 
+        value, 
+        valuecusto, 
+        categoryId: finalCategoryId 
+      })
+      .then((response) => {
+        const updatedProducts = products.map((product) => (product.id === id ? response.data : product));
+        setProducts(updatedProducts);
+        setMessage({ show: true, text: "Produto atualizado com sucesso!", type: "success" });
+        setEditingProduct(null);
+        setEditingProductData({});
+        setTimeout(() => setMessage(null), 3000);
+      })
+      .catch((error) => {
+        console.error("Erro ao atualizar produto:", error);
+        let errorMessage = "Erro ao atualizar produto!";
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+        setMessage({ show: true, text: errorMessage, type: "error" });
+        setTimeout(() => setMessage(null), 5000);
+      })
+      .finally(() => {
+        setIsLoadingSave(false);
+      });
+  };
+
   const handleDeleteProduct = (productId) => {
+    setIsCategoryModalOpen(false);
+    setCategoryFilter("");
     setConfirmDelete({ show: true, id: productId });
   };
 
   const confirmDeleteProduct = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/api/products/${id}`)
+      .delete(`http://localhost:3000/api/products/${id}`)
       .then(() => {
         setProducts(products.filter((p) => p.id !== id));
         setConfirmDelete({ show: false, id: null });
         setMessage({ show: true, text: "Produto excluído com sucesso!", type: "success" });
-        console.log(`Produto ${id} excluído com sucesso!`);
-        setTimeout(() => {
-          setMessage(null);
-        }, 3000);
+        setTimeout(() => setMessage(null), 3000);
       })
       .catch((error) => {
         setMessage({ show: true, text: "Erro ao excluir produto!", type: "error" });
-        console.error("Erro ao excluir produto:", error);
-        setTimeout(() => {
-          setMessage(null);
-        }, 3000);
+        setTimeout(() => setMessage(null), 3000);
       });
   };
 
@@ -370,7 +426,9 @@ const ProductList = () => {
         Produto: product.name,
         Quantidade: product.quantity,
         Unidade: product.unit,
-        Categoria: product.category?.name || "Sem categoria",
+        Categoria: product.category?.parent 
+          ? `${product.category.parent.name} > ${product.category.name}`
+          : product.category?.name || "Sem categoria",
         Valor: formatCurrency(product.value),
         Custo: formatCurrency(product.valuecusto),
       }))
@@ -380,54 +438,9 @@ const ProductList = () => {
     XLSX.writeFile(workbook, "produtos.xlsx");
   };
 
-  const handleUpdateProduct = (product) => {
-    setEditingProduct(product.id);
-    setEditingProductData({
-      name: product.name,
-      quantity: product.quantity,
-      unit: product.unit,
-      value: product.value,
-      valuecusto: product.valuecusto,
-      categoryId: product.categoryId || "",
-    });
-  };
-
-  const handleSaveProduct = () => {
-    if (editingProduct) {
-      const { name, quantity, unit, value, valuecusto, categoryId } = editingProductData;
-      const finalCategoryId = categoryId ? parseInt(categoryId) : null;
-      axios
-        .put(`https://api-start-pira.vercel.app/api/products/${editingProduct}`, { 
-          name, 
-          quantity, 
-          unit, 
-          value, 
-          valuecusto, 
-          categoryId: finalCategoryId 
-        })
-        .then((response) => {
-          setProducts(products.map((product) => (product.id === editingProduct ? response.data : product)));
-          setEditingProduct(null);
-          setEditingProductData({});
-          setMessage({ show: true, text: "Produto atualizado com sucesso!", type: "success" });
-          console.log("Produto atualizado:", response.data);
-          setTimeout(() => {
-            setMessage(null);
-          }, 3000);
-        })
-        .catch((error) => {
-          setMessage({ show: true, text: "Erro ao atualizar produto!", type: "error" });
-          console.error("Erro ao atualizar produto:", error);
-          setTimeout(() => {
-            setMessage(null);
-          }, 3000);
-        });
-    }
-  };
-
   return (
     <div className="product-list-container">
-      <h2 className="fixed-title">Lista de Produtos</h2>
+      <h2 className="fixed-title">Lista de Compras</h2>
 
       <div className="search-bar">
         <input
@@ -438,6 +451,7 @@ const ProductList = () => {
         />
       </div>
 
+      {/* Modais */}
       {isUnitModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -471,15 +485,29 @@ const ProductList = () => {
               onChange={(e) => setNewCategory(e.target.value)} 
               placeholder="Digite a nova categoria" 
             />
+            <select 
+              className="texto-unidade" 
+              value={parentId} 
+              onChange={(e) => setParentId(e.target.value)}
+              style={{ marginTop: "10px" }}
+            >
+              <option value="">Categoria principal</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
             <div className="modal-buttons">
               <button onClick={handleAddCategory}>Confirmar</button>
-              <button onClick={() => setIsCategoryModalAdd(false)}>Cancelar</button>
+              <button onClick={() => {
+                setIsCategoryModalAdd(false);
+                setNewCategory("");
+                setParentId("");
+              }}>Cancelar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal para equivalência de unidades */}
       {isUnitEquivalenceModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -515,21 +543,38 @@ const ProductList = () => {
         </div>
       )}
 
-      {/* Formulário para adicionar produtos */}
-      <div
-        className="input-group"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleAddProduct();
-          }
-        }}
-      >
-        <input type="text" value={newProduct} onChange={(e) => setNewProduct(e.target.value)} placeholder="Nome do Produto" disabled={isLoading} />
-        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="Quantidade" disabled={isLoading} />
-        <input type="number" value={value} onChange={(e) => setPreco(e.target.value)} placeholder="Valor (R$)" disabled={isLoading} />
-        <input type="number" value={valuecusto} onChange={(e) => setPrecoCusto(e.target.value)} placeholder="Custo (R$)" disabled={isLoading} />
+      {/* Formulário de entrada */}
+      <div className="input-group" onKeyDown={(e) => { if (e.key === "Enter") handleAddProduct(); }}>
+        <input 
+          type="text" 
+          value={newProduct} 
+          onChange={(e) => setNewProduct(e.target.value)} 
+          placeholder="Nome do Produto" 
+          disabled={isLoading} 
+        />
+        <input 
+          type="number" 
+          value={quantity} 
+          onChange={(e) => setQuantity(e.target.value)} 
+          placeholder="Quantidade" 
+          disabled={isLoading} 
+        />
+        <input 
+          type="number" 
+          value={value} 
+          onChange={(e) => setPreco(e.target.value)} 
+          placeholder="Valor (R$)" 
+          disabled={isLoading} 
+        />
+        <input 
+          type="number" 
+          value={valuecusto} 
+          onChange={(e) => setPrecoCusto(e.target.value)} 
+          placeholder="Custo (R$)" 
+          disabled={isLoading} 
+        />
         
-        {/* Campo de seleção de unidades com exclusão */}
+        {/* Seletor de unidades */}
         <div className="custom-select">
           <div className="selected-unit">
             {unit || "Selecione uma unidade"}
@@ -540,13 +585,11 @@ const ProductList = () => {
             )}
           </div>
           <ul className="unit-dropdown">
-            {/* Sempre mostrar "Unidade" primeiro */}
             <li className="unit-item">
               <span className="unit-name" onClick={() => setUnit("Unidade")}>
                 Unidade
               </span>
             </li>
-            {/* Mostrar outras unidades */}
             {Object.keys(unitEquivalences).filter(u => u !== "Unidade").map((u, index) => (
               <li key={index} className="unit-item">
                 <span className="unit-name" onClick={() => handleUnitSelection(u)}>
@@ -591,40 +634,23 @@ const ProductList = () => {
           </ul>
         </div>
         
-        {/* Campo de seleção de categorias */}
-        <div style={{ 
-          height: selectedCategory ? "auto" : "57px", 
-          minHeight: "40px",
-          marginLeft: "15px" 
-        }} className="custom-select">
-          <div className="selected-unit" onClick={() => setIsCategoryModalOpen((prev) => !prev)} tabIndex={0} style={{ 
-            cursor: "pointer",
-            padding: "10px",
-            display: "flex",
-            alignItems: "center",
-            minHeight: "20px",
-            textShadow: "none",
-            marginTop: "-18px",
-          }}>
-            {selectedCategory ? (
-              <span style={{ 
-                display: "inline-block", 
-                textShadow: "none", 
-                textAlign: "left",
-                lineHeight: "1.2"
-              }}>
-                {categories.find(cat => cat.id === parseInt(selectedCategory))?.name}
-              </span>
-            ) : (
-              <span style={{ 
-                marginTop: "18px", 
-                display: "inline-block", 
-                textShadow: "none", 
-                textAlign: "center" 
-              }}>
-                Selecione a categoria
-              </span>
-            )}
+        {/* Seletor de categorias */}
+        <div className="custom-select custom-select-category">
+          <div className="selected-unitttt" onClick={() => setIsCategoryModalOpen((prev) => !prev)} tabIndex={0}>
+            <span className="category-name-selected">
+              {selectedCategory ? (
+                (() => {
+                  const allCategories = getAllCategories();
+                  const category = allCategories.find(cat => cat.id === parseInt(selectedCategory));
+                  if (category?.parent) {
+                    return `${category.parent.name} > ${category.name}`;
+                  }
+                  return category?.name || "Categoria não encontrada";
+                })()
+              ) : (
+                "Selecione a categoria"
+              )}
+            </span>
           </div>
           {isCategoryModalOpen && (
             <ul className="unit-dropdown">
@@ -641,29 +667,59 @@ const ProductList = () => {
               {categories
                 .filter((category) => category.name.toLowerCase().includes(categoryFilter.toLowerCase()))
                 .map((category) => (
-                  <li key={category.id} className="unit-item">
-                    <span
-                      className="unit-name"
-                      onClick={() => {
-                        setSelectedCategory(category.id.toString());
-                        setIsCategoryModalOpen(false);
-                        setCategoryFilter("");
-                      }}
-                    >
-                      {category.name}
-                    </span>
-                    <button 
-                      className="delete-unit-button" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmDeleteCategory({ show: true, id: category.id });
-                      }}
-                      title="Excluir categoria" 
-                      disabled={isLoading}
-                    >
-                      🗑️
-                    </button>
-                  </li>
+                  <React.Fragment key={category.id}>
+                    <li className="unit-item">
+                      <span
+                        className="unit-name"
+                        onClick={() => {
+                          setSelectedCategory(category.id.toString());
+                          setIsCategoryModalOpen(false);
+                          setCategoryFilter("");
+                        }}
+                        style={{ fontWeight: 'bold' }}
+                      >
+                        📁 {category.name}
+                      </span>
+                      <button 
+                        className="delete-unit-button" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmDeleteCategory({ show: true, id: category.id });
+                        }}
+                        title="Excluir categoria" 
+                        disabled={isLoading}
+                      >
+                        🗑️
+                      </button>
+                    </li>
+                    {category.subcategories && category.subcategories
+                      .filter((subcategory) => subcategory.name.toLowerCase().includes(categoryFilter.toLowerCase()))
+                      .map((subcategory) => (
+                        <li key={subcategory.id} className="unit-item" style={{ paddingLeft: '20px' }}>
+                          <span
+                            className="unit-name"
+                            onClick={() => {
+                              setSelectedCategory(subcategory.id.toString());
+                              setIsCategoryModalOpen(false);
+                              setCategoryFilter("");
+                            }}
+                          >
+                            📄 {subcategory.name}
+                          </span>
+                          <button 
+                            className="delete-unit-button" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setConfirmDeleteCategory({ show: true, id: subcategory.id });
+                            }}
+                            title="Excluir subcategoria" 
+                            disabled={isLoading}
+                          >
+                            🗑️
+                          </button>
+                        </li>
+                      ))}
+                  </React.Fragment>
                 ))}
               <li className="add-unit-option" onClick={() => setIsCategoryModalAdd(true)}>
                 + Adicionar nova categoria
@@ -677,16 +733,26 @@ const ProductList = () => {
         </button>
       </div>
 
-      {/* Lista de produtos agrupados por categoria */}
-      <ul className="product-list">
-        {Object.entries(groupProductsByCategory(filteredProducts)).map(([categoryName, categoryProducts]) => (
-          <li key={categoryName} className="product-group">
-            <div className="group-header" onClick={() => toggleGroup(categoryName)}>
-              <div className="group-title">
+      {/* Lista de produtos */}
+      <div className="product-list">
+        {/* Cabeçalho da lista */}
+        <div className="product-list-header">
+          <span className="header-name">Nome do Produto</span>
+          <span className="header-quantity">Qtd</span>
+          <span className="header-unit">Unidade</span>
+          <span className="header-category">Categoria</span>
+          <span className="header-value">Valor</span>
+          <span className="header-value">Custo</span>
+          <span className="header-actions">Ações</span>
+        </div>
+
+        {/* Lista agrupada por categoria */}
+        <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+          {Object.entries(groupProductsByCategory(filteredProducts)).map(([categoryName, categoryProducts]) => (
+            <li key={categoryName} className="product-group">
+              <div className="group-header" onClick={() => toggleGroup(categoryName)}>
                 <span>{categoryName}</span>
-              </div>
-              <div className="group-info">
-                <span className="group-count">{categoryProducts.length}</span>
+                <span>{categoryProducts.length} produtos</span>
                 <button 
                   className="botao-expend"
                   onClick={(e) => {
@@ -697,118 +763,164 @@ const ProductList = () => {
                   {expandedGroups[categoryName] ? "Ocultar" : "Expandir"}
                 </button>
               </div>
-            </div>
-            {expandedGroups[categoryName] && (
-              <ul className="group-details">
-                {categoryProducts.map((product) => (
-                  <li className="lista-produtos" key={product.id}>
-                    {editingProduct === product.id ? (
-                      <>
-                        <div className="product-info">
-                          <label className="product-label">Nome</label>
-                          <input type="text" value={editingProductData.name} onChange={(e) => setEditingProductData({ ...editingProductData, name: e.target.value })} />
+              {expandedGroups[categoryName] && (
+                <ul className="group-details">
+                  {categoryProducts.map((product) => (
+                    <li key={product.id} className="lista-produtos">
+                      {editingProduct === product.id ? (
+                        // Formulário de edição
+                        <div className="product-edit-form">
+                          <div className="product-edit-field">
+                            <label className="product-edit-label">Nome</label>
+                            <input
+                              type="text"
+                              value={editingProductData.name}
+                              onChange={(e) => setEditingProductData({ ...editingProductData, name: e.target.value })}
+                              placeholder="Nome do produto"
+                              className="product-edit-input"
+                            />
+                          </div>
+                          <div className="product-edit-field">
+                            <label className="product-edit-label">Quantidade</label>
+                            <input
+                              type="number"
+                              value={editingProductData.quantity}
+                              onChange={(e) => setEditingProductData({ ...editingProductData, quantity: e.target.value })}
+                              placeholder="Quantidade"
+                              className="product-edit-input"
+                            />
+                          </div>
+                          <div className="product-edit-field">
+                            <label className="product-edit-label">Unidade</label>
+                            <select 
+                              value={editingProductData.unit} 
+                              onChange={(e) => setEditingProductData({ ...editingProductData, unit: e.target.value })}
+                              className="product-edit-input"
+                            >
+                              {Object.keys(unitEquivalences).map((u, index) => (
+                                <option key={index} value={u}>{u}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="product-edit-field">
+                            <label className="product-edit-label">Categoria</label>
+                            <select 
+                              value={editingProductData.categoryId || ""} 
+                              onChange={(e) => setEditingProductData({ ...editingProductData, categoryId: e.target.value })}
+                              className="product-edit-input"
+                            >
+                              <option value="">Sem categoria</option>
+                              {categories.map((cat) => (
+                                <React.Fragment key={cat.id}>
+                                  <option value={cat.id}>📁 {cat.name}</option>
+                                  {cat.subcategories && cat.subcategories.map((sub) => (
+                                    <option key={sub.id} value={sub.id}>
+                                      &nbsp;&nbsp;&nbsp;📄 {sub.name}
+                                    </option>
+                                  ))}
+                                </React.Fragment>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="product-edit-field">
+                            <label className="product-edit-label">Valor</label>
+                            <input
+                              type="number"
+                              value={editingProductData.value}
+                              onChange={(e) => setEditingProductData({ ...editingProductData, value: e.target.value })}
+                              placeholder="Valor de venda"
+                              className="product-edit-input"
+                            />
+                          </div>
+                          <div className="product-edit-field">
+                            <label className="product-edit-label">Custo</label>
+                            <input
+                              type="number"
+                              value={editingProductData.valuecusto}
+                              onChange={(e) => setEditingProductData({ ...editingProductData, valuecusto: e.target.value })}
+                              placeholder="Valor de custo"
+                              className="product-edit-input"
+                            />
+                          </div>
+                          <div className="product-edit-buttons">
+                            <button 
+                              onClick={() => handleUpdateProduct(product.id)} 
+                              className="save-button"
+                              disabled={isLoadingSave}
+                            >
+                              {isLoadingSave ? <FaSpinner className="loading-iconn" /> : "Salvar"}
+                            </button>
+                            <button 
+                              onClick={() => setEditingProduct(null)} 
+                              className="cancel-button"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
                         </div>
-                        <div className="product-info">
-                          <label className="product-label">Quantidade</label>
-                          <input type="number" value={editingProductData.quantity} onChange={(e) => setEditingProductData({ ...editingProductData, quantity: e.target.value })} />
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Unidade</label>
-                          <select className="unidade-text" value={editingProductData.unit} onChange={(e) => setEditingProductData({ ...editingProductData, unit: e.target.value })}>
-                            {Object.keys(unitEquivalences).map((u, index) => (
-                              <option key={index} value={u}>
-                                {u}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Categoria</label>
-                          <select 
-                            className="unidade-text" 
-                            value={editingProductData.categoryId || ""} 
-                            onChange={(e) => setEditingProductData({ ...editingProductData, categoryId: e.target.value })}
-                          >
-                            <option value="">Sem categoria</option>
-                            {categories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Valor</label>
-                          <input type="number" value={editingProductData.value} onChange={(e) => setEditingProductData({ ...editingProductData, value: e.target.value })} />
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Custo</label>
-                          <input type="number" value={editingProductData.valuecusto} onChange={(e) => setEditingProductData({ ...editingProductData, valuecusto: e.target.value })} />
-                        </div>
-                        <button className="save-button" onClick={handleSaveProduct}>
-                          Salvar
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="product-info">
-                          <label className="product-label">Nome</label>
+                      ) : (
+                        // Exibição normal do produto
+                        <div className="product-info-display">
                           <span className="product-name">{product.name}</span>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Quantidade</label>
                           <span className="product-quantity">{product.quantity}</span>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Unidade</label>
                           <span className="product-unit">{product.unit}</span>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Categoria</label>
-                          <span className="product-category">{product.category?.name || "Sem categoria"}</span>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Valor</label>
+                          <span className="product-category">
+                            {product.category?.parent 
+                              ? `${product.category.parent.name} > ${product.category.name}`
+                              : product.category?.name || "Sem categoria"
+                            }
+                          </span>
                           <span className="product-value">{formatCurrency(product.value)}</span>
-                        </div>
-                        <div className="product-info">
-                          <label className="product-label">Custo</label>
                           <span className="product-value">{formatCurrency(product.valuecusto)}</span>
+                          <div className="product-actions">
+                            <button onClick={() => handleEditProduct(product)} className="update-button">
+                              Editar
+                            </button>
+                            <button onClick={() => handleDeleteProduct(product.id)} className="delete-button">
+                              Excluir
+                            </button>
+                          </div>
                         </div>
-                        <button className="update-button" onClick={() => handleUpdateProduct(product)}>
-                          Atualizar
-                        </button>
-                        <button className="delete-button" onClick={() => handleDeleteProduct(product.id)}>
-                          Excluir
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <button onClick={handleExportToExcel} className="export-button">
         Exportar para Excel
       </button>
 
-      {confirmDelete.show && <Message message="Tem certeza que deseja excluir este produto?" type="warning" onClose={cancelDeleteProduct} onConfirm={confirmDeleteProduct} />}
+      {/* Mensagens de confirmação */}
+      {confirmDelete.show && (
+        <Message 
+          message="Tem certeza que deseja excluir este produto?" 
+          type="warning" 
+          onClose={cancelDeleteProduct} 
+          onConfirm={confirmDeleteProduct} 
+        />
+      )}
 
       {confirmDeleteCategory.show && (
         <Message
           message="Deseja realmente excluir esta categoria?"
           type="warning"
           onClose={() => setConfirmDeleteCategory({ show: false, id: null })}
-          onConfirm={() => {
-            handleDeleteCategory(confirmDeleteCategory.id);
-          }}
+          onConfirm={() => handleDeleteCategory(confirmDeleteCategory.id)}
         />
       )}
 
-      {message && <Message message={message.text} type={message.type} onClose={() => setMessage(null)} />}
+      {message && (
+        <Message 
+          message={message.text} 
+          type={message.type} 
+          onClose={() => setMessage(null)} 
+        />
+      )}
     </div>
   );
 };

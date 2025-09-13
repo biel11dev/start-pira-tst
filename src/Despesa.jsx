@@ -283,20 +283,31 @@ const Despesa = () => {
     }));
   };
 
-  const groupedExpenses = groupExpensesByDescription(filteredExpenses);
+// Substitua a parte do chartData por este código:
 
-  const chartData = {
-    labels: Object.keys(groupedExpenses),
-    datasets: [
-      {
-        label: "Despesas",
-        data: Object.values(groupedExpenses).map((group) => group.reduce((sum, expense) => sum + expense.valorDespesa, 0)),
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
+const groupedExpenses = groupExpensesByDescription(filteredExpenses);
+
+// Criar array com os dados e ordenar por valor decrescente
+const sortedExpenseData = Object.entries(groupedExpenses)
+  .map(([description, group]) => ({
+    description,
+    total: group.reduce((sum, expense) => sum + expense.valorDespesa, 0),
+    group
+  }))
+  .sort((a, b) => b.total - a.total); // Ordenação decrescente (maior para menor)
+
+const chartData = {
+  labels: sortedExpenseData.map(item => item.description),
+  datasets: [
+    {
+      label: "Despesas",
+      data: sortedExpenseData.map(item => item.total),
+      backgroundColor: "rgba(75, 192, 192, 0.2)",
+      borderColor: "rgba(75, 192, 192, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
 
   const chartOptions = {
     plugins: {

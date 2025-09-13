@@ -671,23 +671,25 @@ const Pessoal = () => {
                         </div>
                       ) : (
                         <div className="pessoal-expense-info">
-                          <span className="pessoal-expense-name">{expense.nomeDespesa}</span>
-                          <span className="pessoal-expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
-                          <span className="pessoal-expense-category">{expense.categoria?.nomeCategoria || "Sem categoria"}</span>
-                          <span className="pessoal-expense-amount" 
-                                style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
-                            {expense.tipoMovimento === "GANHO" ? "+" : "-"}{formatCurrency(expense.valorDespesa)}
-                          </span>
-                          <span className="pessoal-expense-type" style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
-                            {expense.tipoMovimento === "GANHO" ? "Ganho" : "Gasto"}
-                          </span>
-                          <button onClick={() => handleEditExpense(expense)} className="pessoal-edit-btn">
-                            Editar
-                          </button>
-                          <button onClick={() => handleDeleteExpense(expense.id)} className="pessoal-delete-btn">
-                            Excluir
-                          </button>
-                        </div>
+  <span className="pessoal-expense-name">{expense.nomeDespesa}</span>
+  <span className="pessoal-expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
+  <span className="pessoal-expense-category">{expense.categoria?.nomeCategoria || "Sem categoria"}</span>
+  <span className="pessoal-expense-amount" 
+        style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
+    {expense.tipoMovimento === "GANHO" ? "+" : "-"}{formatCurrency(expense.valorDespesa)}
+  </span>
+  <span className="pessoal-expense-type" style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
+    {expense.tipoMovimento === "GANHO" ? "Ganho" : "Gasto"}
+  </span>
+  <div className="pessoal-expense-actions">
+    <button onClick={() => handleEditExpense(expense)} className="pessoal-edit-btn">
+      Editar
+    </button>
+    <button onClick={() => handleDeleteExpense(expense.id)} className="pessoal-delete-btn">
+      Excluir
+    </button>
+  </div>
+</div>
                       )}
                     </li>
                   ))}
