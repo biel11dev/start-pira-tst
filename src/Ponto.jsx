@@ -4,7 +4,7 @@ import Message from "./Message";
 import "./Ponto.css";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import startokLogo from './assets/Marca_Dágua.png'; // Importe a imagem
+import startokLogo from './assets/Marca_Dagua.png'; // Importe a imagem
 
 const Ponto = () => {
   const [employees, setEmployees] = useState([]);
