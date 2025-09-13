@@ -108,7 +108,7 @@ const addWatermark = () => {
     };
     
     // Tenta carregar da pasta public
-    img.src = '/Marca_Dagua.PNG';
+    img.src = '/Marca_Dagua.png';
   });
 };
 
