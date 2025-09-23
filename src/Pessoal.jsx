@@ -28,6 +28,7 @@ const Pessoal = () => {
   const [expandedGroups, setExpandedGroups] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSave, setIsLoadingSave] = useState(false);
+  const [viewFilter, setViewFilter] = useState("TODOS"); // TODOS, GASTOS, GANHOS
   
   // Estados para categorias
   const [categories, setCategories] = useState([]);
@@ -328,7 +329,10 @@ const Pessoal = () => {
   const filteredExpenses = expenses.filter(
     (expense) => {
       const expenseDate = addDays(parseISO(expense.date), 1);
-      return expenseDate.getMonth() === selectedMonth.getMonth() && expenseDate.getFullYear() === selectedMonth.getFullYear();
+      const dateMatch = expenseDate.getMonth() === selectedMonth.getMonth() && expenseDate.getFullYear() === selectedMonth.getFullYear();
+      
+      if (viewFilter === "TODOS") return dateMatch;
+      return dateMatch && expense.tipoMovimento === viewFilter;
     }
   );
 
@@ -359,7 +363,21 @@ const Pessoal = () => {
 
   const groupedExpenses = groupExpensesByDescription(filteredExpenses);
 
-  // Separar gastos e ganhos para o gráfico
+  // Separar gastos e ganhos para o gráfico e contadores
+  const allGastos = expenses.filter(expense => {
+    const expenseDate = addDays(parseISO(expense.date), 1);
+    return expenseDate.getMonth() === selectedMonth.getMonth() && 
+           expenseDate.getFullYear() === selectedMonth.getFullYear() &&
+           expense.tipoMovimento === "GASTO";
+  });
+  
+  const allGanhos = expenses.filter(expense => {
+    const expenseDate = addDays(parseISO(expense.date), 1);
+    return expenseDate.getMonth() === selectedMonth.getMonth() && 
+           expenseDate.getFullYear() === selectedMonth.getFullYear() &&
+           expense.tipoMovimento === "GANHO";
+  });
+
   const gastos = filteredExpenses.filter(expense => expense.tipoMovimento === "GASTO");
   const ganhos = filteredExpenses.filter(expense => expense.tipoMovimento === "GANHO");
 
@@ -419,8 +437,8 @@ const Pessoal = () => {
     },
   };
 
-  const totalGastos = gastos.reduce((sum, expense) => sum + expense.valorDespesa, 0);
-  const totalGanhos = ganhos.reduce((sum, expense) => sum + expense.valorDespesa, 0);
+  const totalGastos = allGastos.reduce((sum, expense) => sum + expense.valorDespesa, 0);
+  const totalGanhos = allGanhos.reduce((sum, expense) => sum + expense.valorDespesa, 0);
   const saldoMensal = totalGanhos - totalGastos;
 
   return (
@@ -434,6 +452,27 @@ const Pessoal = () => {
         <span className="pessoal-month-text">{format(selectedMonth, "MMMM yyyy", { locale: ptBR })}</span>
         <button className="pessoal-btn-next" onClick={() => handleMonthChange("next")}>
           Próximo Mês
+        </button>
+      </div>
+
+      <div className="pessoal-view-filter">
+        <button 
+          className={`pessoal-filter-btn ${viewFilter === "TODOS" ? "active" : ""}`}
+          onClick={() => setViewFilter("TODOS")}
+        >
+          Todos
+        </button>
+        <button 
+          className={`pessoal-filter-btn ${viewFilter === "GASTO" ? "active" : ""}`}
+          onClick={() => setViewFilter("GASTO")}
+        >
+          Gastos ({allGastos.length})
+        </button>
+        <button 
+          className={`pessoal-filter-btn ${viewFilter === "GANHO" ? "active" : ""}`}
+          onClick={() => setViewFilter("GANHO")}
+        >
+          Ganhos ({allGanhos.length})
         </button>
       </div>
 
@@ -584,121 +623,136 @@ const Pessoal = () => {
 
       <ul className="pessoal-expense-list">
         {Object.entries(groupedExpenses).length > 0 ? (
-          Object.entries(groupedExpenses).map(([description, group]) => (
-            <li key={description} className="pessoal-expense-group">
-              <div className="pessoal-group-header" onClick={() => toggleGroup(description)}>
-                <span>{description}</span>
-                <span>Total: {formatCurrency(group.reduce((sum, expense) => sum + expense.valorDespesa, 0))}</span>
-                <button className="pessoal-expand-btn">{expandedGroups[description] ? "Ocultar" : "Expandir"}</button>
+          <>
+            {viewFilter !== "TODOS" && (
+              <div className="pessoal-filter-indicator">
+                <span>Mostrando apenas: <strong>{viewFilter === "GASTO" ? "Gastos" : "Ganhos"}</strong></span>
+                <button onClick={() => setViewFilter("TODOS")} className="pessoal-clear-filter">
+                  Mostrar Todos
+                </button>
               </div>
-              {expandedGroups[description] && (
-                <ul className="pessoal-group-details">
-                  {group.map((expense) => (
-                    <li key={expense.id} className="pessoal-expense-item">
-                      {editExpenseId === expense.id ? (
-                        <div className="pessoal-edit-form">
-                          <div className="pessoal-edit-field">
-                            <label className="pessoal-edit-label">Nome</label>
-                            <input
-                              type="text"
-                              value={editDespesa}
-                              onChange={(e) => setEditDespesa(e.target.value)}
-                              placeholder="Novo nome"
-                              className="pessoal-edit-input"
-                            />
+            )}
+            {Object.entries(groupedExpenses).map(([description, group]) => (
+              <li key={description} className="pessoal-expense-group">
+                <div className="pessoal-group-header" onClick={() => toggleGroup(description)}>
+                  <span>{description}</span>
+                  <span>Total: {formatCurrency(group.reduce((sum, expense) => sum + expense.valorDespesa, 0))}</span>
+                  <button className="pessoal-expand-btn">{expandedGroups[description] ? "Ocultar" : "Expandir"}</button>
+                </div>
+                {expandedGroups[description] && (
+                  <ul className="pessoal-group-details">
+                    {group.map((expense) => (
+                      <li key={expense.id} className="pessoal-expense-item">
+                        {editExpenseId === expense.id ? (
+                          <div className="pessoal-edit-form">
+                            <div className="pessoal-edit-field">
+                              <label className="pessoal-edit-label">Nome</label>
+                              <input
+                                type="text"
+                                value={editDespesa}
+                                onChange={(e) => setEditDespesa(e.target.value)}
+                                placeholder="Novo nome"
+                                className="pessoal-edit-input"
+                              />
+                            </div>
+                            <div className="pessoal-edit-field">
+                              <label className="pessoal-edit-label">Valor</label>
+                              <input
+                                type="number"
+                                value={editAmount}
+                                onChange={(e) => setEditAmount(e.target.value)}
+                                placeholder="Novo valor"
+                                className="pessoal-edit-input"
+                              />
+                            </div>
+                            <div className="pessoal-edit-field">
+                              <label className="pessoal-edit-label">Descrição</label>
+                              <input
+                                type="text"
+                                value={editDescription}
+                                onChange={(e) => setEditDescription(e.target.value)}
+                                placeholder="Nova descrição"
+                                className="pessoal-edit-input"
+                              />
+                            </div>
+                            <div className="pessoal-edit-field">
+                              <label className="pessoal-edit-label">Categoria</label>
+                              <select 
+                                value={editCategoryId || ""} 
+                                onChange={(e) => setEditCategoryId(e.target.value)}
+                                className="pessoal-edit-input"
+                              >
+                                <option value="">Sem categoria</option>
+                                {categories.map((cat) => (
+                                  <option key={cat.id} value={cat.id}>
+                                    {cat.nomeCategoria}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="pessoal-edit-field">
+                              <label className="pessoal-edit-label">Tipo</label>
+                              <select 
+                                value={editTipoMovimento} 
+                                onChange={(e) => setEditTipoMovimento(e.target.value)}
+                                className="pessoal-edit-input"
+                              >
+                                <option value="GASTO">Gasto</option>
+                                <option value="GANHO">Ganho</option>
+                              </select>
+                            </div>
+                            <div className="pessoal-edit-buttons">
+                              <button 
+                                onClick={() => handleUpdateExpense(expense.id)} 
+                                className="pessoal-update-btn"
+                                disabled={isLoadingSave}
+                              >
+                                {isLoadingSave ? <FaSpinner className="pessoal-loading-icon" /> : "Salvar"}
+                              </button>
+                              <button 
+                                onClick={() => setEditExpenseId(null)} 
+                                className="pessoal-cancel-btn"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
                           </div>
-                          <div className="pessoal-edit-field">
-                            <label className="pessoal-edit-label">Valor</label>
-                            <input
-                              type="number"
-                              value={editAmount}
-                              onChange={(e) => setEditAmount(e.target.value)}
-                              placeholder="Novo valor"
-                              className="pessoal-edit-input"
-                            />
+                        ) : (
+                          <div className="pessoal-expense-info">
+                            <span className="pessoal-expense-name">{expense.nomeDespesa}</span>
+                            <span className="pessoal-expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
+                            <span className="pessoal-expense-category">{expense.categoria?.nomeCategoria || "Sem categoria"}</span>
+                            <span className="pessoal-expense-amount" 
+                                  style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
+                              {expense.tipoMovimento === "GANHO" ? "+" : "-"}{formatCurrency(expense.valorDespesa)}
+                            </span>
+                            <span className="pessoal-expense-type" style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
+                              {expense.tipoMovimento === "GANHO" ? "Ganho" : "Gasto"}
+                            </span>
+                            <div className="pessoal-expense-actions">
+                              <button onClick={() => handleEditExpense(expense)} className="pessoal-edit-btn">
+                                Editar
+                              </button>
+                              <button onClick={() => handleDeleteExpense(expense.id)} className="pessoal-delete-btn">
+                                Excluir
+                              </button>
+                            </div>
                           </div>
-                          <div className="pessoal-edit-field">
-                            <label className="pessoal-edit-label">Descrição</label>
-                            <input
-                              type="text"
-                              value={editDescription}
-                              onChange={(e) => setEditDescription(e.target.value)}
-                              placeholder="Nova descrição"
-                              className="pessoal-edit-input"
-                            />
-                          </div>
-                          <div className="pessoal-edit-field">
-                            <label className="pessoal-edit-label">Categoria</label>
-                            <select 
-                              value={editCategoryId || ""} 
-                              onChange={(e) => setEditCategoryId(e.target.value)}
-                              className="pessoal-edit-input"
-                            >
-                              <option value="">Sem categoria</option>
-                              {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                  {cat.nomeCategoria}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="pessoal-edit-field">
-                            <label className="pessoal-edit-label">Tipo</label>
-                            <select 
-                              value={editTipoMovimento} 
-                              onChange={(e) => setEditTipoMovimento(e.target.value)}
-                              className="pessoal-edit-input"
-                            >
-                              <option value="GASTO">Gasto</option>
-                              <option value="GANHO">Ganho</option>
-                            </select>
-                          </div>
-                          <div className="pessoal-edit-buttons">
-                            <button 
-                              onClick={() => handleUpdateExpense(expense.id)} 
-                              className="pessoal-update-btn"
-                              disabled={isLoadingSave}
-                            >
-                              {isLoadingSave ? <FaSpinner className="pessoal-loading-icon" /> : "Salvar"}
-                            </button>
-                            <button 
-                              onClick={() => setEditExpenseId(null)} 
-                              className="pessoal-cancel-btn"
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="pessoal-expense-info">
-  <span className="pessoal-expense-name">{expense.nomeDespesa}</span>
-  <span className="pessoal-expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
-  <span className="pessoal-expense-category">{expense.categoria?.nomeCategoria || "Sem categoria"}</span>
-  <span className="pessoal-expense-amount" 
-        style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
-    {expense.tipoMovimento === "GANHO" ? "+" : "-"}{formatCurrency(expense.valorDespesa)}
-  </span>
-  <span className="pessoal-expense-type" style={{ color: expense.tipoMovimento === "GANHO" ? "#28a745" : "#dc3545" }}>
-    {expense.tipoMovimento === "GANHO" ? "Ganho" : "Gasto"}
-  </span>
-  <div className="pessoal-expense-actions">
-    <button onClick={() => handleEditExpense(expense)} className="pessoal-edit-btn">
-      Editar
-    </button>
-    <button onClick={() => handleDeleteExpense(expense.id)} className="pessoal-delete-btn">
-      Excluir
-    </button>
-  </div>
-</div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </>
         ) : (
-          <li className="pessoal-no-expenses">Nenhuma despesa encontrada para este mês</li>
+          <li className="pessoal-no-expenses">
+            {viewFilter === "TODOS" 
+              ? "Nenhuma despesa encontrada para este mês"
+              : `Nenhum ${viewFilter.toLowerCase()} encontrado para este mês`
+            }
+          </li>
         )}
       </ul>
 

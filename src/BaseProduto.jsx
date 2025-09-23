@@ -296,7 +296,7 @@ const ProductList = () => {
 
   return (
     <div className="product-list-container">
-      <h2 className="fixed-title">Estoque de Produtos</h2>
+      <h2 className="fixed-title">Estoque</h2>
       
       {/* Filtro */}
       <div className="search-bar">

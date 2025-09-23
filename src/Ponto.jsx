@@ -922,59 +922,62 @@ const handleSaveEdit = () => {
         </button>
       </div>
       
-      {selectedTab === "weekly" && (
-        <div className="week-tabs" style={{ margin: "16px 0", display: "flex", gap: 8 }}>
-          {(() => {
-            const date = parseISODate(selectedDate);
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            const lastDay = new Date(year, month + 1, 0);
-            const weeks = [];
-            let current = new Date(year, month, 1);
+    {selectedTab === "weekly" && (
+  <div className="week-tabs" style={{ margin: "16px 0", display: "flex", gap: 8 }}>
+    {(() => {
+      const date = parseISODate(selectedDate);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const lastDay = new Date(year, month + 1, 0);
+      const weeks = [];
+      let current = new Date(year, month, 1);
 
-            while (current.getDay() !== 2) {
-              current.setDate(current.getDate() + 1);
-              if (current > lastDay) break;
-            }
+      while (current.getDay() !== 2) {
+        current.setDate(current.getDate() + 1);
+        if (current > lastDay) break;
+      }
 
-            while (current <= lastDay) {
-              const start = new Date(current);
-              const end = new Date(start);
-              end.setDate(start.getDate() + 5);
-              if (end > lastDay) end.setTime(lastDay.getTime());
-              weeks.push({ start: new Date(start), end: new Date(end) });
-              current.setDate(current.getDate() + 7);
-            }
+      while (current <= lastDay) {
+        const start = new Date(current);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 5);
+        if (end > lastDay) end.setTime(lastDay.getTime());
+        weeks.push({ start: new Date(start), end: new Date(end) });
+        current.setDate(current.getDate() + 7);
+      }
 
-            return weeks.map((week, idx) => {
-              const label = `${week.start.toLocaleDateString("pt-BR")} - ${week.end.toLocaleDateString("pt-BR")}`;
-              const selected = parseISODate(selectedDate);
-              selected.setHours(0, 0, 0, 0);
-              const isActive = selected >= week.start && selected <= week.end;
-              return (
-                <button
-                  key={idx}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 4,
-                    border: "none",
-                    background: isActive ? "#022448" : "#0056b3",
-                    color: "#fff",
-                    fontWeight: isActive ? "bold" : "normal",
-                    cursor: "pointer",
-                    opacity: 1,
-                    outline: isActive ? "2px solid #fff" : "none",
-                    transition: "opacity 0.2s",
-                  }}
-                  onClick={() => setSelectedDate(week.start.toISOString().split("T")[0])}
-                >
-                  {label}
-                </button>
-              );
-            });
-          })()}
-        </div>
-      )}
+      return weeks.map((week, idx) => {
+        const label = `${week.start.toLocaleDateString("pt-BR")} - ${week.end.toLocaleDateString("pt-BR")}`;
+        const selected = parseISODate(selectedDate);
+        selected.setHours(0, 0, 0, 0);
+        const isActive = selected >= week.start && selected <= week.end;
+        return (
+          <button
+            key={idx}
+            style={{
+              padding: "6px 12px",
+              borderRadius: 4,
+              border: "none",
+              background: isActive 
+                ? "linear-gradient(135deg, #0d29a5 0%, #330363 100%)" 
+                : "#007bff",
+              color: "#fff",
+              fontWeight: isActive ? "bold" : "normal",
+              cursor: "pointer",
+              opacity: 1,
+              outline: isActive ? "2px solid #fff" : "none",
+              transition: "all 0.3s ease",
+            }}
+            onClick={() => setSelectedDate(week.start.toISOString().split("T")[0])}
+
+          >
+            {label}
+          </button>
+        );
+      });
+    })()}
+  </div>
+)}
 
       <div className="add-employee">
         <input type="text" value={newEmployeeName} onChange={(e) => setNewEmployeeName(e.target.value)} placeholder="Nome do Empregado" />
@@ -1017,7 +1020,7 @@ const handleSaveEdit = () => {
         />
       </div>
       <div style={{ marginBottom: 12, textShadow: "none" }}>
-        <label style={{ fontWeight: "bold", textShadow: "none" }}>Carga Horária:</label>
+        <label style={{ fontWeight: "bold", textShadow: "none" }}>Valor h/:</label>
         <input
           style={{ marginLeft: 8, padding: 6, borderRadius: 4, border: "1px solid #ccc", width: 80, textShadow: "none" }}
           type="number"
@@ -1025,7 +1028,7 @@ const handleSaveEdit = () => {
           max={24}
           value={editValues.carga}
           onChange={e => handleEditChange("carga", e.target.value)}
-        /> h/dia
+        /> 
       </div>
       <div>
         <button
@@ -1070,7 +1073,7 @@ const handleSaveEdit = () => {
             <th>Entrada</th>
             <th>Saída</th>
             {/* <th>Portão Aberto</th> */}
-            <th>Carga Horária</th>
+            <th>Valor Hora</th>
             <th>Horas Trabalhadas</th>
             <th>Horas Extras/Faltantes</th>
             {/* <th>Tempo para Abrir Portão</th> */}
@@ -1127,7 +1130,7 @@ const handleSaveEdit = () => {
                   <input
                     className="input-funcionario"
                     type="number"
-                    value={employee.carga || 8}
+                    value={employee.carga}
                     onChange={(e) =>
                       handleUpdateEmployee(employee.id, {
                         carga: parseInt(e.target.value),
@@ -1238,7 +1241,7 @@ const handleSaveEdit = () => {
                       <input
                         className="input-funcionario"
                         type="number"
-                        value={employee.carga || 8}
+                        value={employee.carga}
                         onChange={(e) =>
                           handleUpdateEmployee(employee.id, {
                             carga: parseInt(e.target.value),
@@ -1269,14 +1272,14 @@ const handleSaveEdit = () => {
                   </tr>
                 )),
                 <tr key={employee.id + "-resumo"}>
-                  <td colSpan={6} style={{ textAlign: "center", fontWeight: "bold", background: "black", color: "#fff" }}>
+                  <td colSpan={5} style={{ textAlign: "center", fontWeight: "bold", background: "black", color: "#fff" }}>
                     Resumo horas:
                   </td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalCarga}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatHM(totalWorked)}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatExtra(totalExtras)}</td>
-                  {/* <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td>
-                  <td style={{ background: "black" }}></td> */}
+                  {/* <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td> */}
+                  <td style={{ background: "black" }}></td>
                 </tr>,
               ];
             })}
@@ -1354,7 +1357,7 @@ const handleSaveEdit = () => {
                       <input
                         className="input-funcionario"
                         type="number"
-                        value={employee.carga || 8}
+                        value={employee.carga}
                         onChange={(e) =>
                           handleUpdateEmployee(employee.id, {
                             carga: parseInt(e.target.value),
@@ -1385,14 +1388,14 @@ const handleSaveEdit = () => {
                   </tr>
                 )),
                 <tr key={employee.id + "-resumo"}>
-                  <td colSpan={6} style={{ textAlign: "center", fontWeight: "bold", background: "black", color: "#fff" }}>
+                  <td colSpan={5} style={{ textAlign: "center", fontWeight: "bold", background: "black", color: "#fff" }}>
                     Resumo horas:
                   </td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalCarga}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatHM(totalWorked)}</td>
                   <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{formatExtra(totalExtras)}</td>
                   {/* <td style={{ fontWeight: "bold", background: "black", color: "#fff" }}>{totalGate}m</td> */}
-                  {/* <td style={{ background: "black" }}></td> */}
+                  <td style={{ background: "black" }}></td>
                 </tr>,
               ];
             })}

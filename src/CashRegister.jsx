@@ -413,42 +413,45 @@ const CashRegister = () => {
         <div className="balance-list">
           <h3 className="saldo">Saldo Caixa</h3>
           <ul>
-            {sortedBalances.map((entry, index) => (
-              <li className="registro" key={index}>
-                <span className="balance-value">
-                  {format(parseISO(entry.date), "eee - dd/MM", { locale: ptBR })}: <span className="balance-amount">{formatCurrency(entry.balance)}</span>
-                </span>
-                <div className="input-container">
-                  <label className="desc-text-label">Valor Final Dinheiro</label>
-                  <input
-                    className="final-caixa"
-                    type="text"
-                    value={dinheirofimcaixa[entry.id] || ""}
-                    onChange={(e) => setDinheirofimcaixa({ ...dinheirofimcaixa, [entry.id]: e.target.value })}
-                    // onBlur={handleCurrencyChange((value) => setDinheirofimcaixa({ ...dinheirofimcaixa, [entry.id]: value }))}
-                    placeholder="Final caixa dinheiro"
-                  />
-                </div>
-                <div className="input-container">
-                  <label className="desc-text-label">Valor Final Cartão</label>
-                  <input
-                    className="final-caixa"
-                    type="text"
-                    value={cartaofimcaixa[entry.id] || ""}
-                    onChange={(e) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: e.target.value })}
-                    // onBlur={handleCurrencyChange((value) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: value }))}
-                    placeholder="Final caixa cartão"
-                  />
-                </div>
+{sortedBalances.map((entry, index) => (
+  <li className="registro" key={index}>
+    <span className="balance-value">
+      {format(parseISO(entry.date), "eee - dd/MM", { locale: ptBR })}: 
+      <span className="balance-amount">{formatCurrency(entry.balance)}</span>
+    </span>
+    
+    <div className="input-container-cx">
+      <label className="desc-text-label">Valor Final Dinheiro</label>
+      <input
+        className="final-caixa"
+        type="text"
+        value={dinheirofimcaixa[entry.id] || ""}
+        onChange={(e) => setDinheirofimcaixa({ ...dinheirofimcaixa, [entry.id]: e.target.value })}
+        placeholder="Final caixa dinheiro"
+      />
+    </div>
+    
+    <div className="input-container-cx">
+      <label className="desc-text-label">Valor Final Cartão</label>
+      <input
+        className="final-caixa"
+        type="text"
+        value={cartaofimcaixa[entry.id] || ""}
+        onChange={(e) => setCartaofimcaixa({ ...cartaofimcaixa, [entry.id]: e.target.value })}
+        placeholder="Final caixa cartão"
+      />
+    </div>
 
-                <button onClick={() => handleUpdateBalance(entry.id)} className="update-button">
-                  Atualizar
-                </button>
-                <button onClick={() => handleDeleteBalance(entry.id)} className="delete-button">
-                  Excluir
-                </button>
-              </li>
-            ))}
+    <div className="button-group-cx">
+      <button onClick={() => handleUpdateBalance(entry.id)} className="update-button-cx">
+        Atualizar
+      </button>
+      <button onClick={() => handleDeleteBalance(entry.id)} className="delete-button-cx">
+        Excluir
+      </button>
+    </div>
+  </li>
+))}
           </ul>
         </div>
       )}

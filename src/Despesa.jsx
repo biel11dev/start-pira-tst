@@ -37,10 +37,17 @@ const Despesa = () => {
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/api/despesas")
+      .get("http://localhost:3000/api/despesas")
       .then((response) => {
         setExpenses(response.data);
         console.log("Despesas carregadas:", response.data);
+        // Expandir todos os grupos por padrão
+        const groupedData = groupExpensesByDescription(response.data);
+        const initialExpandedState = {};
+        Object.keys(groupedData).forEach(key => {
+          initialExpandedState[key] = true;
+        });
+        setExpandedGroups(initialExpandedState);
       })
       .catch((error) => {
         console.error("Erro ao buscar despesas:", error);
@@ -63,6 +70,7 @@ const Despesa = () => {
     const handleClickOutside = (e) => {
       if (!e.target.closest(".custom-selectt")) {
         setIsExpenseModalOpen(false);
+        setExpenseFilter("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -86,7 +94,16 @@ const Despesa = () => {
       axios
         .post("https://api-start-pira.vercel.app/api/despesas", newExpenseData)
         .then((response) => {
-          setExpenses([...expenses, response.data]);
+          const updatedExpenses = [...expenses, response.data];
+          setExpenses(updatedExpenses);
+          
+          // Expandir o grupo da nova despesa
+          const groupName = response.data.nomeDespesa || "Sem Descrição";
+          setExpandedGroups(prev => ({
+            ...prev,
+            [groupName]: true
+          }));
+          
           setNewExpense("");
           setAmount("");
           setDescription("");
@@ -169,6 +186,10 @@ const Despesa = () => {
   };
 
   const handleEditExpense = (expense) => {
+    // Fechar dropdown se estiver aberto
+    setIsExpenseModalOpen(false);
+    setExpenseFilter("");
+    
     setEditDespesa(expense.nomeDespesa);
     setEditExpenseId(expense.id);
     setEditAmount(expense.valorDespesa);
@@ -182,7 +203,7 @@ const Despesa = () => {
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
 
     axios
-      .put(`https://api-start-pira.vercel.app/api/despesas/${id}`, {
+      .put(`http://localhost:3000/api/despesas/${id}`, {
         nomeDespesa: updateNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
@@ -212,6 +233,10 @@ const Despesa = () => {
   };
 
   const handleDeleteExpense = (expenseId) => {
+    // Fechar dropdown se estiver aberto
+    setIsExpenseModalOpen(false);
+    setExpenseFilter("");
+    
     setConfirmDelete({ show: true, id: expenseId });
   };
 
@@ -283,31 +308,30 @@ const Despesa = () => {
     }));
   };
 
-// Substitua a parte do chartData por este código:
+  // Substitua a parte do chartData por este código:
+  const groupedExpenses = groupExpensesByDescription(filteredExpenses);
 
-const groupedExpenses = groupExpensesByDescription(filteredExpenses);
+  // Criar array com os dados e ordenar por valor decrescente
+  const sortedExpenseData = Object.entries(groupedExpenses)
+    .map(([description, group]) => ({
+      description,
+      total: group.reduce((sum, expense) => sum + expense.valorDespesa, 0),
+      group
+    }))
+    .sort((a, b) => b.total - a.total); // Ordenação decrescente (maior para menor)
 
-// Criar array com os dados e ordenar por valor decrescente
-const sortedExpenseData = Object.entries(groupedExpenses)
-  .map(([description, group]) => ({
-    description,
-    total: group.reduce((sum, expense) => sum + expense.valorDespesa, 0),
-    group
-  }))
-  .sort((a, b) => b.total - a.total); // Ordenação decrescente (maior para menor)
-
-const chartData = {
-  labels: sortedExpenseData.map(item => item.description),
-  datasets: [
-    {
-      label: "Despesas",
-      data: sortedExpenseData.map(item => item.total),
-      backgroundColor: "rgba(75, 192, 192, 0.2)",
-      borderColor: "rgba(75, 192, 192, 1)",
-      borderWidth: 1,
-    },
-  ],
-};
+  const chartData = {
+    labels: sortedExpenseData.map(item => item.description),
+    datasets: [
+      {
+        label: "Despesas",
+        data: sortedExpenseData.map(item => item.total),
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
 
   const chartOptions = {
     plugins: {
@@ -437,6 +461,15 @@ const chartData = {
         </button>
       </div>
 
+      {/* Header da lista de despesas */}
+      <div className="expense-list-header">
+        <span className="header-name">Nome da Despesa</span>
+        <span className="header-date">Data</span>
+        <span className="header-description">Descrição</span>
+        <span className="header-amount">Valor</span>
+        <span className="header-actions">Ações</span>
+      </div>
+
       <ul className="expense-list">
         {Object.entries(groupedExpenses).map(([description, group]) => (
           <li key={description} className="expense-group">
@@ -448,7 +481,7 @@ const chartData = {
             {expandedGroups[description] && (
               <ul className="group-details">
                 {group.map((expense) => (
-                  <li key={expense.id} className="expense-item">
+                  <li key={expense.id} className="expense-item-desp">
                     {editExpenseId === expense.id ? (
                       // Renderiza os campos de edição
                       <div className="edit-expense">
@@ -485,25 +518,28 @@ const chartData = {
                             className="edit-input-desc"
                           />
                         </div>
-                        <button onClick={() => handleUpdateExpense(expense.id)} className="update-button">
-                          Salvar
+                        <button onClick={() => handleUpdateExpense(expense.id)} className="update-button" disabled={isLoadingSave}>
+                          {isLoadingSave ? <FaSpinner className="loading-iconnn" /> : "Salvar"}
                         </button>
                         <button onClick={() => setEditExpenseId(null)} className="cancel-button">
                           Cancelar
                         </button>
                       </div>
                     ) : (
-                      // Renderiza os dados normais da despesa
+                      // Renderiza os dados normais da despesa com layout grid
                       <div className="expense-info">
                         <span className="expense-name">{expense.nomeDespesa}</span>
                         <span className="expense-date">{format(addDays(parseISO(expense.date), 1), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        <span className="expense-description">{expense.descDespesa || "Sem descrição"}</span>
                         <span className="expense-amount">{formatCurrency(expense.valorDespesa)}</span>
-                        <button onClick={() => handleEditExpense(expense)} className="edit-button">
-                          Editar
-                        </button>
-                        <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
-                          Excluir
-                        </button>
+                        <div className="expense-actions">
+                          <button onClick={() => handleEditExpense(expense)} className="edit-button">
+                            Editar
+                          </button>
+                          <button onClick={() => handleDeleteExpense(expense.id)} className="delete-button">
+                            Excluir
+                          </button>
+                        </div>
                       </div>
                     )}
                   </li>
@@ -513,6 +549,7 @@ const chartData = {
           </li>
         ))}
       </ul>
+
       <button onClick={handleExportToExcel} className="export-button">
         Exportar para Excel
       </button>

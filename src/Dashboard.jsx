@@ -7,7 +7,7 @@ const Dashboard = ({ permissions = {} }) => {
 
   const modules = [
     { name: "CAIXA", path: "/cash-register", key: "caixa" },
-    { name: "PRODUTOS", path: "/products", key: "produtos" },
+    { name: "LISTA DE COMPRAS", path: "/products", key: "produtos" },
     { name: "MÁQUINAS", path: "/machines", key: "maquinas" },
     { name: "FIADO", path: "/fiado", key: "fiado" },
     { name: "DESPESAS", path: "/despesas", key: "despesas" },

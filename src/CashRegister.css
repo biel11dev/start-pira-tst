@@ -1,219 +1,450 @@
+/* Estilos específicos para CashRegister - evita conflitos */
 .cash-register-container {
   padding: 20px;
-  /* background-image: url("./assets/startok3.png"); */
-  /* background-position: top left; /* Mo a imagem de fundo para a esquerda */
-  /* background-repeat: no-repeat; */
-  min-height: 100vh; /* Garante que o contêiner ocupe pelo menos a altura total da janela de visualização */
-  box-sizing: border-box; /* Inclui preenchimento e borda na altura total */
-  margin-right: 150px;
-  align-items: center !important;
+  text-align: center;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .cash-register-container h2 {
+  color: #fff;
   margin-bottom: 30px;
-  color: #fff;
 }
 
+/* Formulário de entrada principal */
 .input-cash {
-  transform: translateY(15px);
   display: flex;
-  flex-direction: column; /* Alinha os elementos verticalmente */
-  justify-content: center;
-  margin-bottom: 4px;
+  flex-direction: column;
   align-items: center;
+  margin: 15px 0;
+  width: 100%;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.input-cash .desc-text {
-  display: block !important;
-  margin-bottom: 13px !important; /* Adiciona espaço entre o rótulo e o campo de entrada */
+.desc-text {
   color: #fff;
-  text-shadow: none;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
 }
 
 .input-cash input {
   width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  margin-bottom: 20px; /* Adiciona espaço entre os campos de entrada */
-  margin-left: 15px;
-  position: relative;
-  transform: translateY(-10px);
+  padding: 12px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  box-sizing: border-box;
   text-shadow: none;
-  width: 250px;
-  margin-top: 13px;
+}
+
+.input-cash input:focus {
+  border-color: #007bff;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .confirm-button {
-  margin-top: 25px;
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 5px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
-  background-color: #28a745;
-  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 20px;
-  margin-bottom: 50px;
+  font-weight: 600;
+  font-size: 16px;
+  margin: 20px 0;
+  transition: all 0.3s ease;
+  text-align: center;
 }
 
+.confirm-button:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Lista de saldos */
 .balance-list {
-  margin-top: 20px;
-  text-align: left;
-  color: #fff;
+  margin: 40px 0;
+  width: 100%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.balance-list h3.saldo {
-  position: relative;
-  top: -70px; /* Mover a descrição 30px para cima */
-  margin-bottom: -30px; /* Ajustar a margem inferior para compensar a movimentação */
+.saldo {
   color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
 }
 
 .balance-list ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.balance-list li {
-  margin-bottom: 20px;
-  height: 80px;
-  width: 100%;
-}
-
-.balance-list .balance-amount {
-  margin-bottom: 10px;
-  color: #218838;
-}
-
-.balance-list .final-caixa {
-  text-shadow: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  color-scheme: #fff;
-  width: 150px;
-  background-color: black;
-  color: #fff !important;
-  display: block;
-}
-
-.tabs {
-  margin-top: 20px;
-}
-
-.tabs button {
-  padding: 10px 20px;
-  margin-right: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background-color: #28a745;
-  color: #fff;
-}
-
-.tabs button.active {
-  background-color: #218838;
-}
-
-.tab-content {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.chart-container {
-  width: 100%;
-  margin-top: 20px;
-}
-
-.tab-content .grafico-mes {
-  width: 1067px;
-  margin-top: 20px;
-}
-
+/* Item de registro - Layout horizontal */
 .registro {
-  width: 100% !important;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px;
+  margin: 15px 0;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  flex-wrap: wrap;
 }
 
-.update-button {
-  font-size: 16px;
-  border-radius: 5px;
-  border: none;
-  background-color: #28a745;
+.registro:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Valor do saldo */
+.balance-value {
   color: #fff;
-  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  min-width: 150px;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.balance-amount {
+  color: #28a745;
+  font-weight: 700;
+}
+
+/* Container dos inputs */
+.input-container-cx {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .desc-text-label {
-  display: block !important;
-  color: #ccc;
-  font-size: xx-small;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  margin-left: 0;
+  text-align: center;
+  width: 100%;
+}
+
+.final-caixa {
+  width: 140px !important;
+  padding: 8px 12px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  background: black !important;
+  color: #fff !important;
+  box-sizing: border-box !important;
+  text-align: center;
+}
+
+.final-caixa:focus {
+  border-color: #007bff !important;
+  outline: none !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: #fff !important;
+}
+
+/* Botões de ação - Layout vertical */
+.registro .update-button-cx,
+.registro .delete-button-cx {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 70px;
+  width: 70px;
+  height: 32px;
+  margin: 2px 0;
+  text-align: center !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-button-cx {
+  background-color: #28a745;
+  color: white;
   margin-bottom: 5px;
 }
 
-.input-container {
+.update-button-cx:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.delete-button-cx {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete-button-cx:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Container dos botões para alinhamento vertical */
+.registro > .update-button-cx,
+.registro > .delete-button-cx {
+  align-self: center;
+}
+
+/* Organizar os botões em coluna quando necessário */
+.button-group-cx {
   display: flex;
   flex-direction: column;
-  margin-bottom: 10px;
+  gap: 5px;
   align-items: center;
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 40px 0 20px 0;
+}
+
+.tabs button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-align: center;
+}
+
+.tabs button.active {
+  background: linear-gradient(135deg, #0d29a5 0%, #330363 100%);
+}
+
+.tabs button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Seletor de mês */
 .month-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.but-mes,
+.but-prox-mes {
+  padding: 10px 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  color: #fff;
-  justify-content: space-between;
-  text-shadow: none;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  text-align: center;
 }
 
-.month-selector .but-mes {
+.but-mes:hover,
+.but-prox-mes:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateY(-2px);
+}
+
+.month-selector span {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  text-transform: capitalize;
+  min-width: 150px;
+  text-align: center;
+}
+
+/* Conteúdo das tabs */
+.tab-content {
+  margin: 30px 0;
+}
+
+.titulo-semanal {
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Seletor de semana */
+.week-selector {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.week-selector button {
+  padding: 10px 15px;
   border: none;
-  border-radius: 2px;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+  
   color: #fff;
-  background-color: cornflowerblue;
-  margin-right: 12px;
-  text-shadow: none;
+  text-align: center;
 }
 
-.month-selector .but-prox-mes {
-  border: none;
-  border-radius: 2px;
-  cursor: pointer;
-  color: #fff;
-  background-color: cornflowerblue;
-  margin-left: 10px;
-  text-shadow: none;
+.week-selector button.active {
+  background: linear-gradient(135deg, #0d29a5 0%, #330363 100%);
 }
 
-.month-selector .but-mes:hover {
-  background-color: #022448;
+.week-selector button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
-.month-selector .but-prox-mes:hover {
-  background-color: #022448;
+/* Container do gráfico */
+.chart-container,
+.grafico-mes {
+  width: 100%;
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.tab-content .total-lucro-semana {
-  color: green;
+.total-lucro-semana {
   display: block;
   text-align: center;
-  margin-top: 50px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: rgba(40, 167, 69, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
-.titulo-mes {
-  color: #fff;
-  text-shadow: none;
-  margin-top: -200px !important;
-  margin-bottom: 38px;
+/* Responsividade */
+@media (max-width: 768px) {
+  .registro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .balance-value {
+    text-align: center;
+    min-width: auto;
+  }
+
+  .input-container-cx {
+    align-items: center;
+    min-width: auto;
+    width: 100%;
+  }
+
+  .desc-text-label {
+    text-align: center;
+    margin-left: 0;
+  }
+
+  .final-caixa {
+    width: 100% !important;
+    max-width: 200px !important;
+    text-align: center !important;
+  }
+
+  .registro .update-button-cx,
+  .registro .delete-button-cx {
+    width: 100%;
+    max-width: 200px;
+    margin: 5px 0;
+    text-align: center !important;
+  }
+
+  .tabs {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tabs button {
+    width: 200px;
+    text-align: center;
+  }
+
+  .month-selector {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .week-selector {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .week-selector button {
+    width: 200px;
+    text-align: center;
+  }
 }
-.tab-content .titulo-semana {
-  color: #fff;
-  text-shadow: none;
-  margin-bottom: 38px;
-}
-.week-selector button.active {
-  background-color: #022448;
-  color: #fff;
+
+@media (max-width: 1200px) and (min-width: 769px) {
+  .registro {
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+
+  .balance-value {
+    flex-basis: 100%;
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .input-container-cx {
+    min-width: 120px;
+    align-items: center;
+  }
+
+  .final-caixa {
+    width: 120px !important;
+    text-align: center !important;
+  }
+
+  .registro .update-button-cx,
+  .registro .delete-button-cx {
+    text-align: center !important;
+  }
 }

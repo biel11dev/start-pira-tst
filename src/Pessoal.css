@@ -74,6 +74,92 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+.pessoal-btn-prev:focus,
+.pessoal-btn-prev:active,
+.pessoal-btn-next:focus,
+.pessoal-btn-next:active {
+  background: #6c757d !important;
+  transform: none;
+}
+
+/* Filtros de visualização */
+.pessoal-view-filter {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.pessoal-filter-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-align: center;
+  min-width: 100px;
+}
+
+.pessoal-filter-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.pessoal-filter-btn:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.pessoal-filter-btn:focus,
+.pessoal-filter-btn:active {
+  background: #6c757d !important;
+}
+
+/* Indicador de filtro ativo */
+.pessoal-filter-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.pessoal-filter-indicator strong {
+  color: #667eea;
+}
+
+.pessoal-clear-filter {
+  padding: 5px 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.pessoal-clear-filter:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  transform: translateY(-1px);
+}
+
+.pessoal-clear-filter:focus,
+.pessoal-clear-filter:active {
+  background: #6c757d !important;
+  transform: none;
+}
+
 /* Formulário */
 .pessoal-form-container {
   display: flex;
@@ -333,6 +419,12 @@
   box-shadow: none;
 }
 
+.pessoal-save-btn:focus,
+.pessoal-save-btn:active {
+  background: #6c757d !important;
+  transform: none;
+}
+
 .pessoal-loading-icon {
   animation: pessoalSpin 1s linear infinite;
   font-size: 18px;
@@ -393,8 +485,9 @@
   margin-right: 10px;
   white-space: nowrap;
 }
+
 .pessoal-expand-btn {
-  background-color: rgba(0, 123, 255, 0.8);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   padding: 8px 12px;
@@ -407,59 +500,20 @@
   justify-self: end;
   flex-shrink: 0;
 }
-/* AJUSTE PRINCIPAL - Header do grupo com alinhamento correto */
-.pessoal-group-header {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  padding: 15px 20px;
-  background-color: rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  width: 100%;
-  box-sizing: border-box;
-  gap: 15px;
-  color: #fff;
-  font-weight: 600;
-}
 
 .pessoal-group-header:hover {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-.pessoal-group-header span:first-child {
-  text-align: left;
-  font-size: 16px;
-  justify-self: start;
-}
-
-.pessoal-group-header span:nth-child(2) {
-  text-align: right;
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  justify-self: end;
-  margin-right: 10px;
-}
-
-.pessoal-expand-btn {
-  background-color: rgba(0, 123, 255, 0.8);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  justify-self: end;
-}
-
 .pessoal-expand-btn:hover {
-  background-color: rgba(0, 123, 255, 1);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   transform: scale(1.05);
+}
+
+.pessoal-expand-btn:focus,
+.pessoal-expand-btn:active {
+  background: #6c757d !important;
+  transform: none;
 }
 
 .pessoal-group-details {
@@ -634,12 +688,18 @@
 }
 
 .pessoal-edit-btn {
-  background-color: #28a745;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
 .pessoal-edit-btn:hover {
-  background-color: #218838;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.pessoal-edit-btn:focus,
+.pessoal-edit-btn:active {
+  background: #6c757d !important;
+  transform: none;
 }
 
 .pessoal-delete-btn {
@@ -651,19 +711,31 @@
   background-color: #c82333;
 }
 
+.pessoal-delete-btn:focus,
+.pessoal-delete-btn:active {
+  background: #6c757d !important;
+  transform: none;
+}
+
 .pessoal-update-btn {
-  background-color: #007bff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 10px 20px;
 }
 
 .pessoal-update-btn:hover {
-  background-color: #0056b3;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
 .pessoal-update-btn:disabled {
   background-color: #6c757d;
   cursor: not-allowed;
+}
+
+.pessoal-update-btn:focus,
+.pessoal-update-btn:active {
+  background: #6c757d !important;
+  transform: none;
 }
 
 .pessoal-cancel-btn {
@@ -676,6 +748,12 @@
   background-color: #5a6268;
 }
 
+.pessoal-cancel-btn:focus,
+.pessoal-cancel-btn:active {
+  background: #5a6268 !important;
+  transform: none;
+}
+
 /* Botão exportar */
 .pessoal-export-btn {
   margin: 30px 0;
@@ -683,55 +761,23 @@
   font-size: 16px;
   border-radius: 8px;
   border: none;
-  background-color: #28a745;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
-
-/* Responsividade */
-@media (max-width: 768px) {
-  .pessoal-expense-info {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto auto auto;
-    gap: 8px;
-    text-align: left;
-  }
-  
-  .pessoal-expense-info span {
-    text-align: left !important;
-  }
-  
-  .pessoal-expense-actions {
-    flex-direction: row;
-    width: 100%;
-    justify-content: flex-start;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  
-  .pessoal-edit-btn,
-  .pessoal-delete-btn {
-    width: auto;
-    flex: 1;
-    max-width: 80px;
-    height: 32px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .pessoal-expense-info {
-    grid-template-columns: 1.5fr 0.8fr 1.2fr 1fr 1fr 85px;
-    gap: 8px;
-  }
-}
-
 .pessoal-export-btn:hover {
-  background-color: #218838;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.pessoal-export-btn:focus,
+.pessoal-export-btn:active {
+  background: #6c757d !important;
+  transform: none;
 }
 
 /* Container do gráfico */
@@ -857,12 +903,17 @@
 }
 
 .pessoal-modal-buttons button:first-child {
-  background-color: #28a745;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
 .pessoal-modal-buttons button:first-child:hover {
-  background-color: #218838;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.pessoal-modal-buttons button:first-child:focus,
+.pessoal-modal-buttons button:first-child:active {
+  background: #6c757d !important;
 }
 
 .pessoal-modal-buttons button:last-child {
@@ -874,12 +925,36 @@
   background-color: #5a6268;
 }
 
+.pessoal-modal-buttons button:last-child:focus,
+.pessoal-modal-buttons button:last-child:active {
+  background-color: #5a6268 !important;
+}
+
 /* Mensagem de nenhuma despesa */
 .pessoal-no-expenses {
   text-align: center;
   color: #ccc;
   font-style: italic;
   padding: 20px;
+}
+
+/* Responsividade para os filtros */
+@media (max-width: 768px) {
+  .pessoal-view-filter {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .pessoal-filter-btn {
+    width: 200px;
+    margin: 5px 0;
+  }
+  
+  .pessoal-filter-indicator {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
 }
 
 /* Responsivo */
@@ -932,14 +1007,30 @@
   }
 
   .pessoal-expense-info {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto auto;
     gap: 8px;
+    text-align: left;
   }
-
+  
   .pessoal-expense-info span {
-    width: 100%;
     text-align: left !important;
+  }
+  
+  .pessoal-expense-actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .pessoal-edit-btn,
+  .pessoal-delete-btn {
+    width: auto;
+    flex: 1;
+    max-width: 80px;
+    height: 32px;
   }
 
   .pessoal-group-header {
@@ -976,6 +1067,13 @@
   }
 }
 
+@media (max-width: 1200px) {
+  .pessoal-expense-info {
+    grid-template-columns: 1.5fr 0.8fr 1.2fr 1fr 1fr 85px;
+    gap: 8px;
+  }
+}
+
 @media (max-width: 480px) {
   .pessoal-title {
     font-size: 18px;
@@ -1001,8 +1099,6 @@
     height: 35px;
     font-size: 12px;
   }
-
-
 
   .pessoal-save-btn {
     width: 280px;

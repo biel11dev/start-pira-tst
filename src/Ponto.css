@@ -1,5 +1,5 @@
 .ponto-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   background-color: #f9f9f9;
@@ -30,8 +30,7 @@
 .ponto-table {
   width: 100vh;
   border-collapse: collapse;
-  margin: 0 auto; /* <-- essa linha centraliza */
-  margin-left: -120px !important;
+  margin: 0 auto;
 }
 
 .ponto-table th,
@@ -259,6 +258,7 @@
 }
 
 .tabs button.active {
-  background-color: #022448;
+background: linear-gradient(135deg, #0d29a5 0%, #330363 100%);
+
   color: #fff;
 }
