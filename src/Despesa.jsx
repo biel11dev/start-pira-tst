@@ -37,7 +37,7 @@ const Despesa = () => {
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
     axios
-      .get("http://localhost:3000/api/despesas")
+      .get("https://api-start-pira.vercel.app/api/despesas")
       .then((response) => {
         setExpenses(response.data);
         console.log("Despesas carregadas:", response.data);
@@ -203,7 +203,7 @@ const Despesa = () => {
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
 
     axios
-      .put(`http://localhost:3000/api/despesas/${id}`, {
+      .put(`https://api-start-pira.vercel.app/api/despesas/${id}`, {
         nomeDespesa: updateNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
