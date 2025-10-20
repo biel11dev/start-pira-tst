@@ -66,7 +66,7 @@ const Pessoal = () => {
   useEffect(() => {
     // Buscar despesas pessoais da API
     axios
-      .get("https://api-start-pira.vercel.app/api/desp-pessoal")
+      .get("https://api-start-pira-tst.vercel.app/api/desp-pessoal")
       .then((response) => {
         setExpenses(response.data);
         console.log("Despesas pessoais carregadas:", response.data);
@@ -81,7 +81,7 @@ const Pessoal = () => {
   useEffect(() => {
     // Buscar categorias da API
     axios
-      .get("https://api-start-pira.vercel.app/api/cat-desp-pessoal")
+      .get("https://api-start-pira-tst.vercel.app/api/cat-desp-pessoal")
       .then((response) => {
         setCategories(response.data);
         console.log("Categorias carregadas:", response.data);
@@ -123,7 +123,7 @@ const Pessoal = () => {
       console.log("Dados enviados:", newExpenseData);
 
       axios
-        .post("https://api-start-pira.vercel.app/api/desp-pessoal", newExpenseData)
+        .post("https://api-start-pira-tst.vercel.app/api/desp-pessoal", newExpenseData)
         .then((response) => {
           let updatedExpenses = [...expenses, response.data];
           setExpenses(updatedExpenses);
@@ -141,7 +141,7 @@ const Pessoal = () => {
             };
             
             axios
-              .post("https://api-start-pira.vercel.app/api/desp-pessoal", valeData)
+              .post("https://api-start-pira-tst.vercel.app/api/desp-pessoal", valeData)
               .then((valeResponse) => {
                 setExpenses((prevExpenses) => [...prevExpenses, valeResponse.data]);
                 console.log("VALE adicionado automaticamente:", valeResponse.data);
@@ -185,7 +185,7 @@ const Pessoal = () => {
               };
 
               axios
-                .post("https://api-start-pira.vercel.app/api/desp-pessoal", futureExpenseData)
+                .post("https://api-start-pira-tst.vercel.app/api/desp-pessoal", futureExpenseData)
                 .then((response) => {
                   setExpenses((prevExpenses) => [...prevExpenses, response.data]);
                 })
@@ -215,7 +215,7 @@ const Pessoal = () => {
     if (newCategory.trim() !== "" && !categories.some((cat) => cat.nomeCategoria === newCategory)) {
       setIsLoading(true);
       axios
-        .post("https://api-start-pira.vercel.app/api/cat-desp-pessoal", { nomeCategoria: newCategory })
+        .post("https://api-start-pira-tst.vercel.app/api/cat-desp-pessoal", { nomeCategoria: newCategory })
         .then((response) => {
           setCategories([...categories, response.data]);
           setNewCategory("");
@@ -233,7 +233,7 @@ const Pessoal = () => {
 
   const handleDeleteCategory = (id) => {
     axios
-      .delete(`https://api-start-pira.vercel.app/api/cat-desp-pessoal/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/cat-desp-pessoal/${id}`)
       .then(() => {
         setCategories(categories.filter((cat) => cat.id !== id));
         setConfirmDeleteCategory({ show: false, id: null });
@@ -257,7 +257,7 @@ const Pessoal = () => {
     if (editingCategoryName.trim() !== "" && !categories.some((cat) => cat.nomeCategoria === editingCategoryName && cat.id !== editingCategoryId)) {
       setIsLoading(true);
       axios
-        .put(`https://api-start-pira.vercel.app/api/cat-desp-pessoal/${editingCategoryId}`, { 
+        .put(`https://api-start-pira-tst.vercel.app/api/cat-desp-pessoal/${editingCategoryId}`, { 
           nomeCategoria: editingCategoryName 
         })
         .then((response) => {
@@ -312,7 +312,7 @@ const Pessoal = () => {
     });
 
     axios
-      .put(`https://api-start-pira.vercel.app/api/desp-pessoal/${id}`, {
+      .put(`https://api-start-pira-tst.vercel.app/api/desp-pessoal/${id}`, {
         nomeDespesa: updatedNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
@@ -363,7 +363,7 @@ const Pessoal = () => {
   const confirmDeleteExpense = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/api/desp-pessoal/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/desp-pessoal/${id}`)
       .then(() => {
         setExpenses(expenses.filter((e) => e.id !== id));
         setConfirmDelete({ show: false, id: null });

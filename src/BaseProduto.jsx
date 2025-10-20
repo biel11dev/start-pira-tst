@@ -57,7 +57,7 @@ const ProductList = () => {
 
   const fetchProducts = () => {
     axios
-      .get("https://api-start-pira.vercel.app/api/products")
+      .get("https://api-start-pira-tst.vercel.app/api/products")
       .then((response) => {
         setProducts(response.data);
         setFilteredProducts(response.data);
@@ -74,7 +74,7 @@ const ProductList = () => {
 
   const fetchCategories = () => {
     axios
-      .get("https://api-start-pira.vercel.app/api/categories")
+      .get("https://api-start-pira-tst.vercel.app/api/categories")
       .then((response) => setCategories(response.data))
       .catch((error) => console.error("Erro ao buscar categorias:", error));
   };
@@ -167,7 +167,7 @@ const ProductList = () => {
     ) {
       setIsLoading(true);
       axios
-        .post("https://api-start-pira.vercel.app/api/products", {
+        .post("https://api-start-pira-tst.vercel.app/api/products", {
           name: newProduct,
           quantity,
           unit,
@@ -230,7 +230,7 @@ const ProductList = () => {
       const { name, quantity, unit, value, valuecusto, categoryId } = editingProductData;
       const finalCategoryId = categoryId ? parseInt(categoryId) : null;
       axios
-        .put(`https://api-start-pira.vercel.app/api/estoque_prod/${editingProduct}`, { 
+        .put(`https://api-start-pira-tst.vercel.app/api/estoque_prod/${editingProduct}`, { 
           name, 
           quantity, 
           unit, 
@@ -259,7 +259,7 @@ const ProductList = () => {
   const confirmDeleteProduct = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/api/estoque_prod/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/estoque_prod/${id}`)
       .then(() => {
         setProducts(products.filter((p) => p.id !== id));
         setConfirmDelete({ show: false, id: null });

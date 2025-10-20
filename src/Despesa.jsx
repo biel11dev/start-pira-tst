@@ -37,7 +37,7 @@ const Despesa = () => {
   useEffect(() => {
     // Buscar despesas da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/api/despesas")
+      .get("https://api-start-pira-tst.vercel.app/api/despesas")
       .then((response) => {
         setExpenses(response.data);
         console.log("Despesas carregadas:", response.data);
@@ -56,7 +56,7 @@ const Despesa = () => {
 
   useEffect(() => {
     axios
-      .get("https://api-start-pira.vercel.app/api/cadastrodesp")
+      .get("https://api-start-pira-tst.vercel.app/api/cadastrodesp")
       .then((response) => setExpenseOptions(response.data))
       .catch((error) => console.error("Erro ao buscar tipos de despesas:", error));
   }, []);
@@ -92,7 +92,7 @@ const Despesa = () => {
       console.log("Dados enviados:", newExpenseData); // Log dos dados enviados
 
       axios
-        .post("https://api-start-pira.vercel.app/api/despesas", newExpenseData)
+        .post("https://api-start-pira-tst.vercel.app/api/despesas", newExpenseData)
         .then((response) => {
           const updatedExpenses = [...expenses, response.data];
           setExpenses(updatedExpenses);
@@ -132,7 +132,7 @@ const Despesa = () => {
               };
 
               axios
-                .post("https://api-start-pira.vercel.app/api/despesas", futureExpenseData)
+                .post("https://api-start-pira-tst.vercel.app/api/despesas", futureExpenseData)
                 .then((response) => {
                   setExpenses((prevExpenses) => [...prevExpenses, response.data]);
                 })
@@ -164,7 +164,7 @@ const Despesa = () => {
 
   const handleAddExpenseOption = () => {
     if (newExpenseOption.trim() !== "" && !expenseOptions.some((opt) => opt.nomeDespesa === newExpenseOption)) {
-      axios.post("https://api-start-pira.vercel.app/api/cadastrodesp", { nomeDespesa: newExpenseOption }).then((response) => {
+      axios.post("https://api-start-pira-tst.vercel.app/api/cadastrodesp", { nomeDespesa: newExpenseOption }).then((response) => {
         setExpenseOptions([...expenseOptions, response.data]);
         setNewExpenseOption("");
         setIsExpenseModalAdd(false);
@@ -177,7 +177,7 @@ const Despesa = () => {
   };
 
   const handleDeleteExpenseOption = (id) => {
-    axios.delete(`https://api-start-pira.vercel.app/api/cadastrodesp/${id}`).then(() => {
+    axios.delete(`https://api-start-pira-tst.vercel.app/api/cadastrodesp/${id}`).then(() => {
       setExpenseOptions(expenseOptions.filter((opt) => opt.id !== id));
       if (newExpense && expenseOptions.find((opt) => opt.id === id)?.nomeDespesa === newExpense) {
         setNewExpense("");
@@ -203,7 +203,7 @@ const Despesa = () => {
     const updatedDescription = editDescription.trim() !== "" ? editDescription : null; // Permitir descrição nula
 
     axios
-      .put(`https://api-start-pira.vercel.app/api/despesas/${id}`, {
+      .put(`https://api-start-pira-tst.vercel.app/api/despesas/${id}`, {
         nomeDespesa: updateNome,
         valorDespesa: updatedAmount,
         descDespesa: updatedDescription,
@@ -243,7 +243,7 @@ const Despesa = () => {
   const confirmDeleteExpense = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/api/despesas/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/despesas/${id}`)
       .then(() => {
         setExpenses(expenses.filter((e) => e.id !== id));
         setConfirmDelete({ show: false, id: null });

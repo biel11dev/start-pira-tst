@@ -23,7 +23,7 @@ const ClientDetails = ({ clients, setClients }) => {
 
   const fetchClientDetails = () => {
     axios
-      .get(`https://api-start-pira.vercel.app/api/clients/${id}`)
+      .get(`https://api-start-pira-tst.vercel.app/api/clients/${id}`)
       .then((response) => {
         const clientData = response.data;
         // Inicializar purchases e payments como arrays vazios se não estiverem definidos
@@ -41,7 +41,7 @@ const ClientDetails = ({ clients, setClients }) => {
 
     // Buscar produtos da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/api/products")
+      .get("https://api-start-pira-tst.vercel.app/api/products")
       .then((response) => {
         setProducts(response.data);
       })
@@ -56,11 +56,11 @@ const ClientDetails = ({ clients, setClients }) => {
       const product = products.find((p) => p.name === selectedProduct);
       const total = product.value * parseInt(quantity, 10); // Converter quantity para inteiro
       axios
-        .post("https://api-start-pira.vercel.app/api/purchases", { product: selectedProduct, quantity, total, date: purchaseDate, clientId: client.id })
+        .post("https://api-start-pira-tst.vercel.app/api/purchases", { product: selectedProduct, quantity, total, date: purchaseDate, clientId: client.id })
         .then((response) => {
           const updatedTotalDebt = client.totalDebt + total;
           axios
-            .put(`https://api-start-pira.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
+            .put(`https://api-start-pira-tst.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
             .then(() => {
               fetchClientDetails(); // Recarregar os detalhes do cliente após adicionar a compra
               setSelectedProduct("");
@@ -97,11 +97,11 @@ const ClientDetails = ({ clients, setClients }) => {
       setLoadingPaidAmount(true); // Ativa o estado de carregamento
       const amount = parseFloat(paidAmount);
       axios
-        .post("https://api-start-pira.vercel.app/api/payments", { amount, date: new Date().toISOString().substr(0, 10), clientId: client.id })
+        .post("https://api-start-pira-tst.vercel.app/api/payments", { amount, date: new Date().toISOString().substr(0, 10), clientId: client.id })
         .then((response) => {
           const updatedTotalDebt = client.totalDebt - amount;
           axios
-            .put(`https://api-start-pira.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
+            .put(`https://api-start-pira-tst.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
             .then(() => {
               fetchClientDetails(); // Recarregar os detalhes do cliente após registrar o pagamento
               setPaidAmount("");
@@ -136,10 +136,10 @@ const ClientDetails = ({ clients, setClients }) => {
     if (purchase) {
       const updatedTotalDebt = client.totalDebt - purchase.total;
       axios
-        .delete(`https://api-start-pira.vercel.app/api/purchases/${purchaseId}`)
+        .delete(`https://api-start-pira-tst.vercel.app/api/purchases/${purchaseId}`)
         .then(() => {
           axios
-            .put(`https://api-start-pira.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
+            .put(`https://api-start-pira-tst.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
             .then(() => {
               fetchClientDetails(); // Recarregar os detalhes do cliente após excluir a compra
             })
@@ -158,10 +158,10 @@ const ClientDetails = ({ clients, setClients }) => {
     if (payment) {
       const updatedTotalDebt = client.totalDebt + payment.amount;
       axios
-        .delete(`https://api-start-pira.vercel.app/api/payments/${paymentId}`)
+        .delete(`https://api-start-pira-tst.vercel.app/api/payments/${paymentId}`)
         .then(() => {
           axios
-            .put(`https://api-start-pira.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
+            .put(`https://api-start-pira-tst.vercel.app/api/clients/${client.id}`, { totalDebt: updatedTotalDebt })
             .then(() => {
               fetchClientDetails(); // Recarregar os detalhes do cliente após excluir o pagamento
             })
@@ -197,7 +197,7 @@ const ClientDetails = ({ clients, setClients }) => {
     if (editingPurchase) {
       const { product, quantity, total, date } = editingPurchaseData;
       axios
-        .put(`https://api-start-pira.vercel.app/api/purchases/${editingPurchase}`, { product, quantity, total, date, clientId: client.id })
+        .put(`https://api-start-pira-tst.vercel.app/api/purchases/${editingPurchase}`, { product, quantity, total, date, clientId: client.id })
         .then(() => {
           fetchClientDetails(); // Recarregar os detalhes do cliente após atualizar a compra
           setEditingPurchase(null);
@@ -215,7 +215,7 @@ const ClientDetails = ({ clients, setClients }) => {
       const amountfloat = parseFloat(amount);
       const datestr = new Date(date).toISOString().substr(0, 10);
       axios
-        .put(`https://api-start-pira.vercel.app/api/payments/${editingPayment}`, { amount: amountfloat, date: datestr, clientId: client.id })
+        .put(`https://api-start-pira-tst.vercel.app/api/payments/${editingPayment}`, { amount: amountfloat, date: datestr, clientId: client.id })
         .then(() => {
           fetchClientDetails(); // Recarregar os detalhes do cliente após atualizar o pagamento
           setEditingPayment(null);

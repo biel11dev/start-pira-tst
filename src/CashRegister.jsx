@@ -27,7 +27,7 @@ const CashRegister = () => {
   useEffect(() => {
     // Buscar saldos da API quando o componente for montado
     axios
-      .get("https://api-start-pira.vercel.app/api/balances")
+      .get("https://api-start-pira-tst.vercel.app/api/balances")
       .then((response) => {
         setBalances(response.data);
         // Inicializar os estados dos inputs com os valores retornados
@@ -59,7 +59,7 @@ const CashRegister = () => {
       const week = selectedWeek + 1;
 
       try {
-        const res = await axios.get(`https://api-start-pira.vercel.app/api/machine-week-value?year=${year}&month=${month}&week=${week}`);
+        const res = await axios.get(`https://api-start-pira-tst.vercel.app/api/machine-week-value?year=${year}&month=${month}&week=${week}`);
         const valor = res.data[0]?.value || 0;
         setValorMaquinaSemana((prev) => ({
           ...prev,
@@ -85,7 +85,7 @@ const CashRegister = () => {
     const newBalance = { date: formattedDate, balance: totalBalance, cartao: cardValue, dinheiro: cashValue };
 
     axios
-      .post("https://api-start-pira.vercel.app/api/balances", newBalance)
+      .post("https://api-start-pira-tst.vercel.app/api/balances", newBalance)
       .then((response) => {
         setBalances([...balances, response.data]);
         setBalance(totalBalance);
@@ -106,7 +106,7 @@ const CashRegister = () => {
     const lucroValue = balancefimValue - (balances.find((balance) => balance.id === id)?.balance || 0);
 
     axios
-      .put(`https://api-start-pira.vercel.app/api/balances/${id}`, {
+      .put(`https://api-start-pira-tst.vercel.app/api/balances/${id}`, {
         cartaofimcaixa: cartaofimcaixaValue,
         dinheirofimcaixa: dinheirofimcaixaValue,
         balancefim: balancefimValue,
@@ -135,7 +135,7 @@ const CashRegister = () => {
   const confirmDeleteBalance = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/api/balances/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/balances/${id}`)
       .then(() => {
         const updatedBalances = balances.filter((balance) => balance.id !== id);
         setBalances(updatedBalances);
@@ -517,7 +517,7 @@ const CashRegister = () => {
                 const week = selectedWeek + 1;
                 const value = valorMaquinaSemana[selectedWeek] || 0;
                 try {
-                  await axios.post("https://api-start-pira.vercel.app/api/machine-week-value", { year, month, week, value });
+                  await axios.post("https://api-start-pira-tst.vercel.app/api/machine-week-value", { year, month, week, value });
                   setShowMessage(true);
 
                   setTimeout(() => {

@@ -29,7 +29,7 @@ const Ponto = () => {
   const fetchEmployees = async (date) => {
     setLoading(true);
     try {
-      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
+      const employeesResponse = await axios.get("https://api-start-pira-tst.vercel.app/api/employees");
       const employeesData = employeesResponse.data;
 
       // Se não há funcionário selecionado, seleciona o primeiro
@@ -37,7 +37,7 @@ const Ponto = () => {
         setSelectedEmployeeId(employeesData[0].id);
       }
 
-      const dailyPointsResponse = await axios.get("https://api-start-pira.vercel.app/api/daily-points");
+      const dailyPointsResponse = await axios.get("https://api-start-pira-tst.vercel.app/api/daily-points");
       const dailyPointsData = dailyPointsResponse.data;
 
       const filteredDate = date || new Date().toISOString().split("T")[0];
@@ -358,8 +358,8 @@ const addWatermark = () => {
     const endDateStr = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}`;
 
     try {
-      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
-      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?startDate=${startDateStr}&endDate=${endDateStr}`);
+      const employeesResponse = await axios.get("https://api-start-pira-tst.vercel.app/api/employees");
+      const dailyPointsResponse = await axios.get(`https://api-start-pira-tst.vercel.app/api/daily-points?startDate=${startDateStr}&endDate=${endDateStr}`);
 
       const dailyPointsData = dailyPointsResponse.data;
 
@@ -387,8 +387,8 @@ const addWatermark = () => {
     setLoading(true);
     const currentMonth = (dateRef || new Date()).toISOString().slice(0, 7);
     try {
-      const employeesResponse = await axios.get("https://api-start-pira.vercel.app/api/employees");
-      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points?month=${currentMonth}`);
+      const employeesResponse = await axios.get("https://api-start-pira-tst.vercel.app/api/employees");
+      const dailyPointsResponse = await axios.get(`https://api-start-pira-tst.vercel.app/api/daily-points?month=${currentMonth}`);
 
       const dailyPointsData = dailyPointsResponse.data;
 
@@ -468,7 +468,7 @@ const handleSaveEdit = () => {
 
       const currentDate = selectedDate;
 
-      const dailyPointsResponse = await axios.get(`https://api-start-pira.vercel.app/api/daily-points/${id}?date=${currentDate}`);
+      const dailyPointsResponse = await axios.get(`https://api-start-pira-tst.vercel.app/api/daily-points/${id}?date=${currentDate}`);
 
       const dailyPoints = dailyPointsResponse.data;
       const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
@@ -480,9 +480,9 @@ const handleSaveEdit = () => {
       };
 
       if (dailyPoint && dailyPoint.id) {
-        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${dailyPoint.id}`, dataToUpdate);
+        await axios.put(`https://api-start-pira-tst.vercel.app/api/daily-points/${dailyPoint.id}`, dataToUpdate);
       } else {
-        await axios.post(`https://api-start-pira.vercel.app/api/daily-points`, dataToUpdate);
+        await axios.post(`https://api-start-pira-tst.vercel.app/api/daily-points`, dataToUpdate);
       }
 
       setEmployees((prev) =>
@@ -555,7 +555,7 @@ const handleSaveEdit = () => {
         dailyHours: 8,
       };
 
-      const response = await axios.post("https://api-start-pira.vercel.app/api/employees", newEmployee);
+      const response = await axios.post("https://api-start-pira-tst.vercel.app/api/employees", newEmployee);
 
       setEmployees([...employees, response.data]);
       setNewEmployeeName("");
@@ -583,8 +583,8 @@ const handleSaveEdit = () => {
       type: "confirm",
       onConfirm: async () => {
         try {
-          await axios.delete(`https://api-start-pira.vercel.app/api/daily-points?employeeId=${id}`);
-          await axios.delete(`https://api-start-pira.vercel.app/api/employees/${id}`);
+          await axios.delete(`https://api-start-pira-tst.vercel.app/api/daily-points?employeeId=${id}`);
+          await axios.delete(`https://api-start-pira-tst.vercel.app/api/employees/${id}`);
 
           setEmployees((prevEmployees) => prevEmployees.filter((employee) => employee.id !== id));
           
@@ -613,12 +613,12 @@ const handleSaveEdit = () => {
   const handleDeleteDailyPoint = async (employeeId, date) => {
     try {
       const currentDate = new Date(date);
-      const response = await axios.get(`https://api-start-pira.vercel.app/api/daily-points/${employeeId}?employeeId=${employeeId}&date=${currentDate.toISOString().split("T")[0]}`);
+      const response = await axios.get(`https://api-start-pira-tst.vercel.app/api/daily-points/${employeeId}?employeeId=${employeeId}&date=${currentDate.toISOString().split("T")[0]}`);
       const dailyPoints = response.data;
       const dailyPoint = Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
 
       if (dailyPoint && dailyPoint.id) {
-        await axios.delete(`https://api-start-pira.vercel.app/api/daily-points/${dailyPoint.id}`);
+        await axios.delete(`https://api-start-pira-tst.vercel.app/api/daily-points/${dailyPoint.id}`);
         setMessage({ text: "Registro de ponto removido com sucesso!", type: "success" });
         if (selectedTab === "weekly") {
           fetchWeeklyData();
@@ -641,7 +641,7 @@ const handleSaveEdit = () => {
 
   const handleUpdateEmployee = async (id, updatedData) => {
     try {
-      await axios.put(`https://api-start-pira.vercel.app/api/employees/${id}`, updatedData);
+      await axios.put(`https://api-start-pira-tst.vercel.app/api/employees/${id}`, updatedData);
 
       setEmployees((prev) => prev.map((employee) => (employee.id === id ? { ...employee, ...updatedData } : employee)));
       setMessage("Dados atualizados com sucesso!");
@@ -762,7 +762,7 @@ const handleSaveEdit = () => {
 
   const getDailyPointForEmployee = (employeeId, date) => {
     const dateWithTime = `${date} 00:00:00`;
-    return axios.get(`https://api-start-pira.vercel.app/api/daily-points/${employeeId}?date=${encodeURIComponent(dateWithTime)}`).then((res) => {
+    return axios.get(`https://api-start-pira-tst.vercel.app/api/daily-points/${employeeId}?date=${encodeURIComponent(dateWithTime)}`).then((res) => {
       const dailyPoints = res.data;
       return Array.isArray(dailyPoints) ? dailyPoints[0] : dailyPoints;
     });
@@ -790,9 +790,9 @@ const handleSaveEdit = () => {
       };
 
       if (faltaPoint && faltaPoint.id && tipo === "falta") {
-        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/falta/${faltaEmployee.id}`, dataToUpdate);
+        await axios.put(`https://api-start-pira-tst.vercel.app/api/daily-points/falta/${faltaEmployee.id}`, dataToUpdate);
       } else {
-        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${faltaEmployee.id}`, dataToUpdate);
+        await axios.put(`https://api-start-pira-tst.vercel.app/api/daily-points/${faltaEmployee.id}`, dataToUpdate);
       }
 
       setShowFaltaModal(false);
@@ -830,9 +830,9 @@ const handleSaveEdit = () => {
       };
 
       if (faltaPointManual && tipo === "falta") {
-        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/falta-manual/${faltaEmployeeManual.id}`, dataToUpdate);
+        await axios.put(`https://api-start-pira-tst.vercel.app/api/daily-points/falta-manual/${faltaEmployeeManual.id}`, dataToUpdate);
       } else {
-        await axios.put(`https://api-start-pira.vercel.app/api/daily-points/${faltaEmployeeManual.id}`, dataToUpdate);
+        await axios.put(`https://api-start-pira-tst.vercel.app/api/daily-points/${faltaEmployeeManual.id}`, dataToUpdate);
       }
 
       setShowFaltaManualModal(false);

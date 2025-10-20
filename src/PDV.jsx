@@ -45,7 +45,7 @@ const PDV = () => {
 
   const fetchProducts = () => {
     axios
-      .get("https://api-start-pira.vercel.app/api/products")
+      .get("https://api-start-pira-tst.vercel.app/api/products")
       .then((response) => {
         setProducts(response.data);
         setFilteredProducts(response.data);
@@ -137,7 +137,7 @@ const PDV = () => {
 
     // Simular salvamento da venda
     axios
-      .post("https://api-start-pira.vercel.app/api/sales", saleData)
+      .post("https://api-start-pira-tst.vercel.app/api/sales", saleData)
       .then((response) => {
         setMessage({ show: true, text: "Venda realizada com sucesso!", type: "success" });
         clearCart();

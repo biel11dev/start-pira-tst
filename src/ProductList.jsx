@@ -42,7 +42,7 @@ const ProductList = () => {
 
   useEffect(() => {
     axios
-      .get("https://api-start-pira.vercel.app/api/products")
+      .get("https://api-start-pira-tst.vercel.app/api/products")
       .then((response) => {
         setProducts(response.data);
         setFilteredProducts(response.data);
@@ -55,7 +55,7 @@ const ProductList = () => {
 
   useEffect(() => {
     axios
-      .get("https://api-start-pira.vercel.app/api/unit-equivalences")
+      .get("https://api-start-pira-tst.vercel.app/api/unit-equivalences")
       .then((response) => {
         const equivalencesObj = response.data.reduce((acc, equiv) => {
           acc[equiv.unitName] = equiv.value;
@@ -78,7 +78,7 @@ const ProductList = () => {
 
   useEffect(() => {
     axios
-      .get("https://api-start-pira.vercel.app/api/categories")
+      .get("https://api-start-pira-tst.vercel.app/api/categories")
       .then((response) => {
         setCategories(response.data);
         console.log("Categorias carregadas:", response.data);
@@ -116,7 +116,7 @@ const ProductList = () => {
       setIsLoading(true);
       const categoryId = selectedCategory ? parseInt(selectedCategory) : null;
       axios
-        .post("https://api-start-pira.vercel.app/api/products", { 
+        .post("https://api-start-pira-tst.vercel.app/api/products", { 
           name: newProduct, 
           quantity, 
           unit, 
@@ -178,10 +178,10 @@ const ProductList = () => {
       const equivalenceValue = parseFloat(unitEquivalence);
       
       const apiCall = isEditing 
-        ? axios.put(`https://api-start-pira.vercel.app/api/unit-equivalences/${selectedUnitForEquivalence}`, {
+        ? axios.put(`https://api-start-pira-tst.vercel.app/api/unit-equivalences/${selectedUnitForEquivalence}`, {
             value: equivalenceValue
           })
-        : axios.post("https://api-start-pira.vercel.app/api/unit-equivalences", {
+        : axios.post("https://api-start-pira-tst.vercel.app/api/unit-equivalences", {
             unitName: selectedUnitForEquivalence,
             value: equivalenceValue
           });
@@ -225,7 +225,7 @@ const ProductList = () => {
   const handleDeleteUnit = (unitToDelete) => {
     if (unitEquivalences[unitToDelete]) {
       axios
-        .delete(`https://api-start-pira.vercel.app/api/unit-equivalences/${unitToDelete}`)
+        .delete(`https://api-start-pira-tst.vercel.app/api/unit-equivalences/${unitToDelete}`)
         .then(() => {
           const newEquivalences = { ...unitEquivalences };
           delete newEquivalences[unitToDelete];
@@ -263,12 +263,12 @@ const ProductList = () => {
     if (newCategory.trim() !== "" && !getAllCategories().some((cat) => cat.name === newCategory)) {
       setIsLoading(true);
       axios
-        .post("https://api-start-pira.vercel.app/api/categories", { 
+        .post("https://api-start-pira-tst.vercel.app/api/categories", { 
           name: newCategory, 
           parentId: parentId || null 
         })
         .then(() => {
-          return axios.get("https://api-start-pira.vercel.app/api/categories");
+          return axios.get("https://api-start-pira-tst.vercel.app/api/categories");
         })
         .then((response) => {
           setCategories(response.data);
@@ -288,9 +288,9 @@ const ProductList = () => {
 
   const handleDeleteCategory = (id) => {
     axios
-      .delete(`https://api-start-pira.vercel.app/api/categories/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/categories/${id}`)
       .then(() => {
-        return axios.get("https://api-start-pira.vercel.app/api/categories");
+        return axios.get("https://api-start-pira-tst.vercel.app/api/categories");
       })
       .then((response) => {
         setCategories(response.data);
@@ -363,7 +363,7 @@ const ProductList = () => {
     const finalCategoryId = categoryId ? parseInt(categoryId) : null;
     
     axios
-      .put(`https://api-start-pira.vercel.app/api/products/${id}`, { 
+      .put(`https://api-start-pira-tst.vercel.app/api/products/${id}`, { 
         name, 
         quantity, 
         unit, 
@@ -402,7 +402,7 @@ const ProductList = () => {
   const confirmDeleteProduct = () => {
     const { id } = confirmDelete;
     axios
-      .delete(`https://api-start-pira.vercel.app/api/products/${id}`)
+      .delete(`https://api-start-pira-tst.vercel.app/api/products/${id}`)
       .then(() => {
         setProducts(products.filter((p) => p.id !== id));
         setConfirmDelete({ show: false, id: null });

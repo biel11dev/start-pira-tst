@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       };
       if (token) {
         try {
-          const response = await axios.post("https://api-start-pira.vercel.app/api/validate-token", { token });
+          const response = await axios.post("https://api-start-pira-tst.vercel.app/api/validate-token", { token });
           setAuth({ isAuthenticated: true, token, permissions: storedPermissions });
         } catch (error) {
           console.error("Token inválido ou expirado:", error);
