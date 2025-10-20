@@ -37,7 +37,7 @@ function App() {
 
   return (
     <div className={`App ${isLoginRegisterDashboard ? "background-login-register-dashboard" : "background-other"}`}>
-      {isLoginRegisterDashboard && <h1 className="app-title">Start Pira</h1>} {/* Exibe o título apenas nas rotas especificadas */}
+      {isLoginRegisterDashboard && <h1 className="app-title">Start Pira Teste</h1>} {/* Exibe o título apenas nas rotas especificadas */}
       {!isLoginRoute && !isResetRoute && !isForgotRoute && auth.isAuthenticated && <Sidebar permissions={auth.permissions} />}{" "}
       {/* Renderiza a Sidebar apenas se o usuário estiver autenticado */}
       <div className="content">
