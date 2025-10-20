@@ -17,7 +17,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("https://api-start-pira.vercel.app/api/login", { username, password });
+      const response = await axios.post("https://api-start-pira-tst.vercel.app/api/login", { username, password });
       const { token, permissions } = response.data;
 
       login(token, permissions); // Chama a função de login do contexto
